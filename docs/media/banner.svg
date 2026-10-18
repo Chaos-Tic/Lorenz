@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+<title id="title">Metroid — Change the format. Keep control.</title>
+<desc id="desc">A local file converter with a charcoal background, red accents, and a geometric M emblem.</desc>
+<rect width="1200" height="300" fill="#080808"/>
+<path d="M0 299H1200" stroke="#773034" stroke-width="2"/>
+<g stroke="#242020" fill="none"><path d="M865 0v300M965 0v300M1065 0v300M1165 0v300M825 50h375M825 150h375M825 250h375"/></g>
+<path d="M900 210V90l45-22 55 80 55-80 45 22v120h-40v-78l-60 86-60-86v78Z" fill="#ff5454"/>
+<rect x="48" y="46" width="4" height="22" fill="#ff5454"/>
+<g font-family="DejaVu Sans,Arial,sans-serif">
+<text x="66" y="62" fill="#bdb3b3" font-size="13" letter-spacing="4">LOCAL FILE CONVERTER</text>
+<text x="48" y="133" fill="#f2eeee" font-size="54" font-weight="800" letter-spacing="6">METROID</text>
+<text x="50" y="183" fill="#f2eeee" font-size="24">Change the format. Keep control.</text>
+<text x="50" y="245" fill="#a39797" font-size="13" letter-spacing="2">RUST CORE  /  QT6 DESKTOP  /  LINUX + WINDOWS</text>
+</g></svg>

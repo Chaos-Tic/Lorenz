@@ -1,3 +1,11 @@
+<p align="center">
+  <img src="docs/media/banner.svg" alt="Metroid — Change the format. Keep control." width="100%">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Chaos-Tic/Metroid/actions/workflows/ci.yml"><img src="https://github.com/Chaos-Tic/Metroid/actions/workflows/ci.yml/badge.svg" alt="Build and test status"></a>
+</p>
+
 # Metroid
 
 A native file converter for Linux and Windows, with a Rust core and a Qt6 desktop.
@@ -7,6 +15,29 @@ application server, or cloud service is required.
 **Status: version 0.1, under development.** This is an independent implementation;
 it contains no Tangerine source code and is not affiliated with any namesake franchise.
 All repository documentation, commit messages, comments, and application text are in English.
+
+[Get started](#linux-installation) · [Desktop guide](docs/USER_GUIDE.md) · [Formats](#implemented-conversions) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Architecture](docs/ARCHITECTURE.md)
+
+## At a glance
+
+| Local workflow | Native desktop | Original files preserved |
+| --- | --- | --- |
+| Run installed engines on your computer | Qt6 interface with a Rust core | New output names; no silent replacement |
+| No account or application server | Drop area, format wheel, batch queue | Cancellation and temporary-output cleanup |
+
+![Metroid desktop after converting a sample PNG to WebP](docs/media/desktop-converted.png)
+
+*Actual application screenshot using a generated sample image.*
+
+<details>
+<summary>View the animated workflow</summary>
+
+![Two-state walkthrough: empty desktop, then a completed conversion](docs/media/workflow.gif)
+
+A short slideshow of actual app captures, not a real-time recording. The still
+image above shows the final state without motion.
+
+</details>
 
 ## Using the desktop
 
@@ -120,6 +151,17 @@ Tests use installed engines and explicitly skip missing optional engines. CI cov
 Rust and Qt on Linux/Windows, plus Debian stable/testing, Arch, and Fedora stable/rawhide
 for the core. Desktop-specific behavior also needs manual validation, described in
 `docs/TESTING.md`.
+
+## Documentation
+
+| Guide | What it covers |
+| --- | --- |
+| [Desktop guide](docs/USER_GUIDE.md) | First conversion, batches, status messages, cancellation |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Missing engines, Pandoc, filesystems, desktop integration |
+| [Architecture](docs/ARCHITECTURE.md) | Data flow, source map, subprocess interfaces, extension points |
+| [Validation](docs/TESTING.md) | Automated coverage and a manual platform checklist |
+| [Distribution](packaging/README.md) | Installation boundaries and packaging plans |
+| [Visual assets](docs/media/README.md) | Screenshot provenance and refresh instructions |
 
 ## Roadmap
 
