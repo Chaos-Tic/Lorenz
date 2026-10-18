@@ -1,56 +1,62 @@
-# Desktop guide
+# Interaction guide
 
 [Back to the README](../README.md)
 
-## Convert your first file
+## Drag, tap Shift, drop
 
-1. Open **Metroid** from your application menu.
-2. Drag a local file onto the drop area, or click **Add files** (`Ctrl+O`).
-3. Select an **Output format**. The round button opens the format wheel.
-4. Leave **Save to** set to **Next to the originals**, or choose an existing folder.
-5. Click **Convert**. When the status reads **Done**, click **Open last output folder**.
+On KDE Wayland with the [KWin integration](../integrations/kwin/README.md) enabled:
 
-![A PNG converted to WebP in the native desktop](media/desktop-converted.png)
+1. Start dragging a local file from your file manager.
+2. Tap **Shift** without releasing the mouse button.
+3. Release Shift. The format wheel stays open near the cursor.
+4. Move onto a format; its sector turns red.
+5. Release the mouse button. Conversion runs locally and reports completion by notification.
 
-The example uses a generated sample image. Your original file is preserved. The
-output becomes `sample-metroid.webp`; another conversion creates a numbered name.
+![The real Shift-drag wheel with WebP selected](media/shift-drag-wheel.png)
 
-## Work with a batch
+You do not need to open a window, add a file to a list, or press a Convert button.
+Multiple selected files use their common available formats. The source files remain
+unchanged; outputs use `name-metroid.ext` and numbered names on later runs.
 
-Files are processed one at a time. Only formats shared by every queued input are
-shown. If incompatible file types have no common output, clear the queue and process
-each family separately. Duplicate paths are not added twice.
+## Cancel safely
 
-**Clear** removes all queued rows, not files on disk. Adding files, changing the
-format, and changing the destination are disabled during processing. A failed file
-does not prevent subsequent files from being processed.
+Press **Escape**, or release in the center or outside the wheel. No conversion starts.
+Releasing Shift alone does not cancel. Shift without a drag opens nothing; dragging
+without Shift retains the file manager's normal behavior.
 
-## Read the result
+If format discovery times out, the drag is cancelled. Files are not moved. While an
+engine is running, a temporary tray icon provides **Cancel conversion**.
 
-| Status | Meaning | Next step |
-| --- | --- | --- |
-| Queued | Waiting to start | Select the format and click Convert |
-| Conversion… | The local engine is running | Wait or cancel |
-| Done | The output has been published | Hover for its path or open the output folder |
-| Failed | The engine or publication failed | Hover over the status for details |
-| Cancelled | The running file was interrupted | Adjust settings and retry if needed |
-| Not processed | The queue stopped before reaching this file | Start another batch |
+## Context-menu fallback
 
-The progress strip indicates activity; it is not a percentage estimate. The summary
-reports completed and failed files. **Open last output folder** refers to the most
-recent successful output, including when a later file fails.
+A file-manager **Convert with Metroid** action opens the same compact wheel for the
+selected paths. Click a format to start; click its center to close. This is available
+without global drag interception. Windows **Send to → Metroid** uses this path too.
 
-## Cancel or close
+## Optional batch manager
 
-Click **Cancel** or press `Escape` to stop the current engine and the remaining queue.
-Closing during processing requests cancellation and keeps the window open; close it
-again after processing stops. The queue is not saved when the application exits.
+Launching Metroid from the application menu opens a tray companion. Choose **Open
+batch manager** from its menu for explicit queue management and diagnostics. It can
+also be launched with `metroid-desktop --manager`.
 
-## Check your engines
+<details>
+<summary>View the secondary batch manager</summary>
 
-**Diagnostics** reports whether each executable is available. Missing engines remove
-associated formats from the picker. Installed engines may still lack individual
-codecs or supporting data. See [Troubleshooting](TROUBLESHOOTING.md).
+![Secondary batch manager after a sample conversion](media/desktop-converted.png)
 
-**Always on top** requests a floating window, subject to the desktop compositor's
-rules. It does not provide system-wide drag interception or a global keyboard shortcut.
+</details>
+
+Add files with **Add files** or `Ctrl+O`, select a common output format and optional
+destination, then click **Convert**. **Clear** removes rows, not disk files. Files run
+sequentially; errors do not stop the remaining queue. Hover over a status for details.
+The progress strip indicates activity, not percentage. **Open last output folder**
+opens the directory of the most recent successful output.
+
+Closing during processing requests cancellation and keeps the window open until it
+stops. Close it again afterward. The queue is not persisted between launches.
+
+## Platform boundaries
+
+The global gesture currently requires KWin 6.8 on Wayland. Other environments can
+use the context-menu wheel, CLI, or batch manager. The converter building on Windows
+does not imply native Windows Shift-drag support. See [Troubleshooting](TROUBLESHOOTING.md).

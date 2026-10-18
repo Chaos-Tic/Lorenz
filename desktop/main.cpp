@@ -1,5 +1,6 @@
 #include <QtWidgets>
 #include <cmath>
+#include "radialwheel.h"
 
 static QString corePath() {
     QString name = "metroid";
@@ -249,11 +250,68 @@ int main(int argc,char **argv) {
         QToolTip { background:#231719; color:#f2eeee; border:1px solid #773034; }
         QMenu { background:#101010; border:1px solid #413b3b; } QMenu::item { padding:10px; } QMenu::item:selected { background:#773034; }
     )");
-    Window window; QStringList files;
-    const auto args=app.arguments(); bool smoke=args.contains("--smoke-test");
+    const auto args=app.arguments();
+    QPixmap mark(64,64); mark.fill(QColor("#101010"));
+    { QPainter p(&mark); p.setPen(QColor("#ff5454")); p.setFont(QFont("DejaVu Sans",32,QFont::Bold)); p.drawText(mark.rect(),Qt::AlignCenter,"M"); }
+    QSystemTrayIcon tray{QIcon(mark)};
+    tray.setToolTip("Metroid · Shift-drag conversion");
+    auto notify=[&](const QString &title,const QString &message) {
+        const QString sender=QStandardPaths::findExecutable("notify-send");
+        if (!sender.isEmpty()) QProcess::startDetached(sender,{"--app-name=Metroid","--icon=metroid",title,message});
+        else if (QSystemTrayIcon::isSystemTrayAvailable()) tray.showMessage(title,message);
+    };
+    const int convertIndex=args.indexOf("--convert-to");
+    if (convertIndex>=0) {
+        if (args.size()<convertIndex+3 || corePath().isEmpty()) return 2;
+        app.setQuitOnLastWindowClosed(false);
+        QProcess job; QTemporaryDir cancellationSignal; QByteArray result;
+        if (!cancellationSignal.isValid()) return 2;
+        QMenu menu; auto *cancel=menu.addAction("Cancel conversion");
+        QObject::connect(cancel,&QAction::triggered,&app,[&]{ QFile flag(cancellationSignal.path()+"/cancel"); if (!flag.open(QIODevice::WriteOnly)) notify("Cancellation failed",flag.errorString()); });
+        tray.setContextMenu(&menu); tray.show();
+        QObject::connect(&job,&QProcess::readyReadStandardOutput,&app,[&]{ result+=job.readAllStandardOutput(); });
+        QObject::connect(&job,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),&app,[&](int code,QProcess::ExitStatus){
+            result+=job.readAllStandardOutput(); int done=0; QString failure;
+            for (const auto &line:result.split('\n')) { if (line.trimmed().isEmpty()) continue;
+                const auto item=QJsonDocument::fromJson(line).object();
+                if (item["ok"].toBool()) ++done; else failure=item["error"].toString();
+            }
+            notify(code==0?"Conversion complete":"Conversion failed",code==0?QString("%1 file(s) converted. Originals preserved.").arg(done):failure.left(300));
+            app.exit(code);
+        });
+        QObject::connect(&job,&QProcess::errorOccurred,&app,[&](QProcess::ProcessError e){ if (e==QProcess::FailedToStart) { notify("Conversion failed",job.errorString()); app.exit(2); } });
+        QStringList command{"convert","--json","--to",args[convertIndex+1],"--cancel-file",cancellationSignal.path()+"/cancel","--"};
+        command.append(args.mid(convertIndex+2)); job.start(corePath(),command);
+        return app.exec();
+    }
+    QStringList files;
     for (int i=1;i<args.size();++i) if (!args[i].startsWith("--")) files << args[i];
-    window.addFiles(files); window.show();
-    if (args.contains("--test-convert")) QTimer::singleShot(100,&window,[&]{ window.testConversion(); });
-    if (smoke) QTimer::singleShot(400,&app,[&]{ const QString path=qEnvironmentVariable("METROID_SCREENSHOT"); if (!path.isEmpty()) window.grab().save(path); app.quit(); });
+    if (args.contains("--manager") || args.contains("--smoke-test") || args.contains("--test-convert")) {
+        Window window; window.addFiles(files); window.show();
+        if (args.contains("--test-convert")) QTimer::singleShot(100,&window,[&]{ window.testConversion(); });
+        if (args.contains("--smoke-test")) QTimer::singleShot(400,&app,[&]{ const QString path=qEnvironmentVariable("METROID_SCREENSHOT"); if (!path.isEmpty()) window.grab().save(path); app.quit(); });
+        return app.exec();
+    }
+    if (!files.isEmpty()) {
+        RadialWheel wheel; QSet<QString> common;
+        for (int i=0;i<files.size();++i) {
+            QSet<QString> formats;
+            for (const auto entry:query({"formats",QFileInfo(files[i]).absoluteFilePath(),"--json"}).array()) {
+                const auto f=entry.toObject(); if (f["available"].toBool()) formats.insert(f["target"].toString());
+            }
+            if (i==0) common=formats; else common.intersect(formats);
+        }
+        wheel.formats=common.values(); wheel.formats.sort(); wheel.message="No common format\nClick to close";
+        wheel.chosen=[&](const QString &target){ if (!target.isEmpty()) { QStringList command{"--convert-to",target}; command.append(files); QProcess::startDetached(app.applicationFilePath(),command); } app.quit(); };
+        wheel.openAt(QCursor::pos());
+        return app.exec();
+    }
+    app.setQuitOnLastWindowClosed(false);
+    QMenu menu;
+    auto *manager=menu.addAction("Open batch manager");
+    QObject::connect(manager,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--manager"}); });
+    menu.addSeparator(); auto *quit=menu.addAction("Quit tray companion"); QObject::connect(quit,&QAction::triggered,&app,&QApplication::quit);
+    tray.setContextMenu(&menu); tray.show();
+    notify("Metroid","Shift-drag a file to convert with the KWin integration. The batch manager is available from the tray.");
     return app.exec();
 }

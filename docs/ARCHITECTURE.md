@@ -67,3 +67,19 @@ failure cleanup. Templates support `{input}`, `{output}`, `{output_stem}`, and
 `{writer}` as complete arguments. New routes must not require shell interpolation.
 Do not expose an output in the desktop until its publication behavior is understood,
 particularly for engines that emit multiple files.
+
+## Primary interaction: compositor wheel
+
+`integrations/kwin/plugin.cpp` adds the global Shift-drag gesture for KWin 6.8 Wayland.
+The input filter activates only for a local file drag, reads its URI list through an
+asynchronous pipe, and asks the CLI for common formats. `desktop/radialwheel.h` is
+shared with the file-context fallback and provides rendering and sector hit testing.
+
+The wheel is latched after a Shift tap. On release, the plugin cancels the original
+source drag to prevent Shift's move behavior, then starts `metroid-desktop --convert-to`
+as a separate job. Conversion processes do not run inside KWin. The default application
+entry point is a tray companion; `--manager` opens the secondary batch window.
+
+`tests/kwin_input.cpp` is an isolated-test-only input module, excluded by default and
+never installed. Production installation copies only `metroid.so`. See the
+[KWin guide](../integrations/kwin/README.md) for ABI constraints and test isolation.

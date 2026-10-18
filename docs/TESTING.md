@@ -33,3 +33,10 @@ sets an absolute screenshot destination for either desktop test mode.
 
 Run this checklist on GNOME Wayland, KDE Wayland, Hyprland, Sway, XFCE X11,
 Windows 10, and Windows 11. Successful compilation does not validate these interactions.
+
+## Global Shift-drag
+
+Run `scripts/test-kwin-isolated.sh` to exercise a real Wayland drag and conversion
+in a private KWin session. See the [integration guide](../integrations/kwin/README.md).
+CTest also validates radial segment selection and screen-edge placement. The manual
+batch-window checklist above covers the secondary interface, not global gestures.

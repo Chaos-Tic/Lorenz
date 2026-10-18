@@ -8,11 +8,14 @@
 
 # Metroid
 
-A native file converter for Linux and Windows, with a Rust core and a Qt6 desktop.
-Original files are preserved and conversions run on your computer. No account,
-application server, or cloud service is required.
+**Drag a file. Tap Shift. Drop onto a format.**
 
-**Status: version 0.1, under development.** This is an independent implementation;
+Metroid brings a conversion wheel to your cursor without opening a batch window.
+The global gesture is implemented for **KDE Plasma / KWin 6.8 on Wayland**. The
+Rust conversion core and secondary Qt batch manager also build on Linux and Windows.
+Originals are preserved. No account, application server, or cloud service is required.
+
+**Status: under development. The Shift-drag integration is KWin-specific.** This is an independent implementation;
 it contains no Tangerine source code and is not affiliated with any namesake franchise.
 All repository documentation, commit messages, comments, and application text are in English.
 
@@ -20,36 +23,41 @@ All repository documentation, commit messages, comments, and application text ar
 
 ## At a glance
 
-| Local workflow | Native desktop | Original files preserved |
+| Shift-drag workflow | Local processing | Original files preserved |
 | --- | --- | --- |
-| Run installed engines on your computer | Qt6 interface with a Rust core | New output names; no silent replacement |
-| No account or application server | Drop area, format wheel, batch queue | Cancellation and temporary-output cleanup |
+| Tap Shift while dragging a local file | Installed engines and a Rust core | New output names; no silent replacement |
+| Release the key; the wheel stays open | No account or application server | Center / Escape to cancel |
 
-![Metroid desktop after converting a sample PNG to WebP](docs/media/desktop-converted.png)
+![Metroid Shift-drag wheel with WebP highlighted](docs/media/shift-drag-wheel.png)
 
-*Actual application screenshot using a generated sample image.*
+*Actual wheel captured during a Wayland file drag in an isolated KWin session.*
 
 <details>
 <summary>View the animated workflow</summary>
 
-![Two-state walkthrough: empty desktop, then a completed conversion](docs/media/workflow.gif)
+![The Shift-drag wheel before and after hovering WebP](docs/media/shift-drag.gif)
 
-A short slideshow of actual app captures, not a real-time recording. The still
-image above shows the final state without motion.
+Two real wheel captures, not a real-time recording. The still image above shows
+the highlighted sector without motion.
 
 </details>
 
-## Using the desktop
+## Convert without opening a window
 
-Open **Metroid** from your application menu, drop files, choose an output format,
-and click **Convert**. The list shows formats shared by all selected files whose
-engine is installed. The round button opens the format wheel. `Ctrl+O` adds files;
-`Escape` requests cancellation. Diagnostics lists local engines. Hover over a file's
-status to see detailed errors.
+1. Start dragging a local file from Dolphin or another Wayland application.
+2. **Tap Shift** while holding the mouse button. The wheel opens at the cursor.
+3. Release Shift and move onto the desired format.
+4. Release the mouse button to convert. A notification reports the result.
 
-Output names use `name-metroid.ext`, then `name-metroid-2.ext`, and so on. Files are
-processed sequentially. An error does not stop the remaining queue; cancellation
-does. File paths are passed directly to processes, never through a shell.
+Drop in the center or outside the wheel, or press **Escape**, to cancel. Shift
+without a file drag does nothing. A drag without Shift keeps its normal behavior.
+Metroid cancels the source's move operation before converting, so Shift does not
+move or delete the original. Mixed selections show only common formats.
+
+Launching Metroid from the application menu opens a small tray companion.
+**Open batch manager** is available from its menu when you need queue management;
+it is no longer the primary workflow. File-manager context actions open the small
+format wheel directly. See the [interaction guide](docs/USER_GUIDE.md).
 
 ## Linux installation
 
@@ -65,10 +73,25 @@ integrations. It starts no background service. Optional engines: ImageMagick 7
 package manager. Engine detection does not guarantee every codec: HEIC, AVIF, and
 H.264 support depends on the installed builds.
 
-On Wayland, the desktop uses a regular window; always-on-top behavior depends on
-the compositor. No global drag operations or keystrokes are intercepted. For Thunar,
-create a custom action using `metroid gui %F`. On a tiling desktop, bind a shortcut
-to `metroid gui`, or pass a file to `metroid pick`.
+For Thunar, create a custom action using `metroid gui %F`. On other desktops,
+pass a file to `metroid pick` or use a file-manager context action. These are
+fallbacks, not global Shift-drag support.
+
+### Enable Shift-drag on KDE Wayland
+
+Install KWin 6.8 development headers, Extra CMake Modules, Vulkan headers, and the
+Qt/KDE build dependencies, then run:
+
+```sh
+./scripts/install-kwin.sh
+```
+
+This builds an extension against the installed KWin version, installs its production
+module into Qt's plugin directory (administrator access), loads it without restarting
+KWin, and enables it for future logins. No input-device permissions or raw keyboard
+access are granted. **Rebuild after a KWin update**; incompatible versions are rejected.
+See the [KWin integration guide](integrations/kwin/README.md) for scope, validation,
+and removal.
 
 ## Windows installation
 
@@ -81,7 +104,8 @@ to Qt and put its tools on `PATH`, then run:
 
 The user installation adds Metroid to Start and Send to. Install conversion engines
 separately and put them on `PATH`. Windows compilation is configured in CI;
-interactive Windows 10/11 validation remains pending.
+interactive Windows 10/11 validation remains pending. The Windows global Shift-drag
+gesture is not implemented yet; use the file-context wheel or batch manager there.
 
 ## Implemented conversions
 
@@ -156,7 +180,8 @@ for the core. Desktop-specific behavior also needs manual validation, described 
 
 | Guide | What it covers |
 | --- | --- |
-| [Desktop guide](docs/USER_GUIDE.md) | First conversion, batches, status messages, cancellation |
+| [Interaction guide](docs/USER_GUIDE.md) | Shift-drag, cancellation, context wheel, secondary batch manager |
+| [KWin integration](integrations/kwin/README.md) | Installation, supported versions, isolated gesture tests, removal |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Missing engines, Pandoc, filesystems, desktop integration |
 | [Architecture](docs/ARCHITECTURE.md) | Data flow, source map, subprocess interfaces, extension points |
 | [Validation](docs/TESTING.md) | Automated coverage and a manual platform checklist |
@@ -170,7 +195,8 @@ for the core. Desktop-specific behavior also needs manual validation, described 
 - Persistent worker queues, notifications, configurable local history.
 - Safe archive extraction, Office/LibreOffice, spreadsheets, multipage PDF output.
 - Compression, resizing, cropping, and trimming with desktop controls.
-- XDG portals, optional layer-shell support, desktop-specific global shortcuts.
+- Additional compositor integrations and a native Windows Shift-drag implementation.
+- Tools/actions wheels and configurable trigger keys.
 - Context-menu validation across desktops and Windows 11 integration.
 - Native packages, Flatpak/AppImage, signed Windows installer, publication license.
 

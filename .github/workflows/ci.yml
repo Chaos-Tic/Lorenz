@@ -54,6 +54,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y qt6-base-dev
       - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build --parallel 2
+      - run: ctest --test-dir build --output-on-failure
       - run: QT_QPA_PLATFORM=offscreen build/metroid-desktop --smoke-test
   desktop-windows:
     runs-on: windows-latest
@@ -70,3 +71,11 @@ jobs:
           windeployqt --release build/Release/metroid-desktop.exe
           $env:QT_QPA_PLATFORM = 'offscreen'
           build/Release/metroid-desktop.exe --smoke-test
+
+  kwin-extension:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - run: pacman -Syu --noconfirm --needed base-devel cmake git curl kwin extra-cmake-modules vulkan-headers
+      - uses: actions/checkout@v4
+      - run: ./scripts/build-kwin.sh

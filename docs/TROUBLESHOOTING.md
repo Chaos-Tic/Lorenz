@@ -37,8 +37,8 @@ operation rather than a desktop control in this version.
 ## The window does not stay on top
 
 Wayland compositors control window placement and stacking. The checkbox requests
-this behavior; it cannot override compositor rules. Metroid uses a normal window,
-not layer-shell or a global drag-and-drop overlay.
+this behavior; it cannot override compositor rules. This checkbox belongs to the secondary batch manager. The KWin Shift-drag wheel
+is a separate compositor integration.
 
 ## Menus are missing after installation
 
@@ -59,3 +59,14 @@ Include the operating system, desktop/session type, Metroid version, input/outpu
 formats, and the engine error. Review diagnostics and screenshots before sharing:
 engine paths, file names, and document content may be personal. Prefer a generated
 sample that reproduces the issue over uploading an original private document.
+
+## Shift does not open a wheel during dragging
+
+The global gesture needs the KWin 6.8 Wayland integration, not merely the standalone
+app. Start dragging the file first, then tap Shift while still holding the mouse
+button. No wheel is expected for text-only drags, folders, or Shift alone.
+
+After a KWin update, rebuild and reinstall the matching extension. Other compositors
+and Windows do not yet have global Shift-drag integration; use a context action there.
+Opening the application menu entry shows a tray companion, not the old batch window.
+The batch manager remains available from its tray menu.
