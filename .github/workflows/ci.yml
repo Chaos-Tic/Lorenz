@@ -1,0 +1,72 @@
+name: Build and test
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
+      - run: cargo build --release --locked
+      - uses: actions/upload-artifact@v4
+        with:
+          name: core-${{ matrix.os }}
+          path: |
+            target/release/metroid
+            target/release/metroid.exe
+  linux-families:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:stable', 'debian:testing', 'archlinux:latest', 'fedora:latest', 'fedora:rawhide']
+    container: ${{ matrix.image }}
+    steps:
+      - name: Install build tools and optional engines
+        shell: bash
+        run: |
+          if command -v apt-get >/dev/null; then
+            apt-get update
+            apt-get install -y curl ca-certificates build-essential git ffmpeg imagemagick pandoc poppler-utils qpdf
+          elif command -v pacman >/dev/null; then
+            pacman -Syu --noconfirm --needed base-devel curl git ffmpeg imagemagick pandoc-cli poppler qpdf
+          else
+            dnf install -y gcc gcc-c++ make curl git ffmpeg-free ImageMagick pandoc poppler-utils qpdf
+          fi
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --locked
+      - run: cargo run --locked -- doctor
+  desktop-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y qt6-base-dev
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build --parallel 2
+      - run: QT_QPA_PLATFORM=offscreen build/metroid-desktop --smoke-test
+  desktop-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          cache: true
+      - run: cmake -S . -B build
+      - run: cmake --build build --config Release
+      - shell: pwsh
+        run: |
+          windeployqt --release build/Release/metroid-desktop.exe
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          build/Release/metroid-desktop.exe --smoke-test

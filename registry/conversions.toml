@@ -1,0 +1,49 @@
+# Arguments are passed directly to processes, never to a shell.
+[[conversion]]
+category = "Images"
+inputs = ["png", "jpg", "jpeg", "webp", "tif", "tiff", "bmp", "heic", "avif"]
+outputs = ["png", "jpg", "webp", "tiff", "bmp", "avif", "pdf"]
+backend = "magick"
+args = ["{input}", "-auto-orient", "{output}"]
+
+[[conversion]]
+category = "Audio"
+inputs = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "wma", "mp4", "mov", "mkv", "webm", "avi", "wmv"]
+outputs = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff"]
+backend = "ffmpeg"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-vn", "{output}"]
+
+[[conversion]]
+category = "Vidéo"
+inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv"]
+outputs = ["mp4", "mov", "mkv", "webm", "avi", "gif"]
+backend = "ffmpeg"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "{output}"]
+
+[[conversion]]
+category = "Documents"
+inputs = ["md", "docx", "epub", "html", "rtf", "odt"]
+outputs = ["md", "docx", "epub", "html", "odt", "txt"]
+backend = "pandoc"
+args = ["--sandbox", "{input}", "-t", "{writer}", "-o", "{output}"]
+
+[[conversion]]
+category = "PDF · texte"
+inputs = ["pdf"]
+outputs = ["txt"]
+backend = "pdftotext"
+args = ["-layout", "{input}", "{output}"]
+
+[[conversion]]
+category = "PDF · première page"
+inputs = ["pdf"]
+outputs = ["png"]
+backend = "pdftoppm"
+args = ["-f", "1", "-singlefile", "-r", "150", "-png", "{input}", "{output_stem}"]
+
+[[conversion]]
+category = "Sous-titres"
+inputs = ["srt", "vtt"]
+outputs = ["srt", "vtt"]
+backend = "ffmpeg"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "{output}"]
