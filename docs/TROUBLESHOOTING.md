@@ -16,12 +16,13 @@ FFmpeg codecs vary across packages: Fedora's `ffmpeg-free` cannot encode H.264, 
 **Compress** for video fails there until RPM Fusion's `ffmpeg` is installed. Metroid
 uses ImageMagick 7's `magick`, or ImageMagick 6's `convert` when `magick` is absent.
 
-## Pandoc cannot find a data file
+## Images missing from a converted document
 
-Some distribution builds cannot export DOCX/ODT with `--sandbox` because they need
-external data resources. Use a Pandoc build compiled with `embed_data_files`.
-Metroid does not silently disable the sandbox after failure. Text and HTML routes
-can still work. See [Pandoc's sandbox documentation](https://pandoc.org/MANUAL.html#general-options).
+Documents are read in Pandoc's sandbox, then written through a filter. Images
+linked from other files or from the web (rather than stored in the document) are
+replaced by their caption in DOCX, ODT and EPUB, and raw HTML is removed from EPUB.
+This prevents a received document from carrying your other files into its output.
+See [Pandoc's sandbox documentation](https://pandoc.org/MANUAL.html#general-options).
 
 ## Saving to a removable drive fails
 

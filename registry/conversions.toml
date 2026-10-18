@@ -33,7 +33,10 @@ glyph = "document"
 inputs = ["md", "docx", "epub", "html", "rtf", "odt"]
 outputs = ["md", "docx", "epub", "html", "odt", "txt"]
 backend = "pandoc"
-args = ["--sandbox", "{input}", "-t", "{writer}", "-o", "{output}"]
+# Read in the sandbox; write from the staged document through a filter that
+# drops anything the writer could embed from elsewhere (see PANDOC_FILTER).
+args = ["--sandbox", "{input}", "-t", "json", "--extract-media", "{media}", "-o", "{stage}"]
+then = ["-f", "json", "{stage}", "--lua-filter", "{pandoc_filter}", "-t", "{writer}", "-o", "{output}"]
 
 # LibreOffice writes into a private directory with a private profile, so a
 # running office instance is neither reused nor modified.

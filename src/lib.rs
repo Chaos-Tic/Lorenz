@@ -22,6 +22,9 @@ pub struct Conversion {
     pub outputs: Vec<String>,
     pub backend: String,
     pub args: Vec<String>,
+    /// Optional second run of the same engine, reading what `args` staged.
+    #[serde(default)]
+    pub then: Vec<String>,
 }
 #[derive(Deserialize)]
 struct Registry {
@@ -285,6 +288,7 @@ pub struct Expansion<'a> {
     pub output_dir: Option<&'a Path>,
     pub target: &'a str,
     pub profile: Option<&'a Path>,
+    pub workspace: Option<&'a Path>,
 }
 fn file_url(path: &Path) -> String {
     let text = path.to_string_lossy().replace('\\', "/");
@@ -356,6 +360,19 @@ pub fn expand(args: &[String], values: &Expansion) -> Vec<String> {
                 "-env:UserInstallation={}",
                 file_url(values.profile.unwrap_or(Path::new("profile")))
             )),
+            "{stage}" | "{media}" | "{pandoc_filter}" => {
+                let name = match arg.as_str() {
+                    "{stage}" => "stage.json",
+                    "{media}" => "media",
+                    _ => "pandoc/safe.lua",
+                };
+                expanded.push(
+                    values
+                        .workspace
+                        .map(|w| lossy(&w.join(name)))
+                        .unwrap_or_default(),
+                )
+            }
             other => match (other.strip_prefix("{output_dir}/"), values.output_dir) {
                 (Some(name), Some(dir)) => expanded.push(lossy(&dir.join(name))),
                 _ => expanded.push(other.to_owned()),
@@ -366,9 +383,36 @@ pub fn expand(args: &[String], values: &Expansion) -> Vec<String> {
 }
 /// Restrictive engine settings, written into each private workspace:
 /// - an ImageMagick policy refusing script, text, URL and `@file` coders;
-/// - a LibreOffice profile that never updates links nor runs active content.
+/// - a LibreOffice profile that never updates links nor runs active content;
+/// - a pandoc filter for writers that embed files (see `PANDOC_FILTER`).
 ///
 /// `run_backend` points ImageMagick at the policy when it exists.
+/// Distribution builds of pandoc cannot write DOCX or EPUB with `--sandbox`
+/// (their data files are not embedded). Documents are therefore read in the
+/// sandbox, with media extracted into the workspace, then written outside it.
+/// The writer would embed any file an image or metadata names, so this filter
+/// keeps only extracted media, a few plain metadata fields, and no raw HTML
+/// in EPUB (whose writer also embeds files named by raw `<img>` tags).
+const PANDOC_FILTER: &str = r#"
+local media = os.getenv("METROID_MEDIA") or "\0"
+local embeds = FORMAT:match("docx") or FORMAT:match("odt") or FORMAT:match("epub") or FORMAT:match("pptx")
+local function extracted(src)
+  return src:sub(1, #media + 1) == media .. "/" and not src:find("..", 1, true)
+end
+local keep = { title = true, subtitle = true, author = true, date = true, lang = true,
+  dir = true, abstract = true, keywords = true, subject = true, description = true }
+return {{
+  Image = function(image)
+    if embeds and not extracted(image.src) then return image.caption end
+  end,
+  RawInline = function(raw) if FORMAT:match("epub") then return {} end end,
+  RawBlock = function(raw) if FORMAT:match("epub") then return {} end end,
+  Meta = function(meta)
+    for key in pairs(meta) do if not keep[key] then meta[key] = nil end end
+    return meta
+  end,
+}}
+"#;
 fn harden(workspace: &Path) -> Result<()> {
     let magick = workspace.join("magick");
     fs::create_dir_all(&magick)?;
@@ -381,6 +425,8 @@ fn harden(workspace: &Path) -> Result<()> {
 </policymap>
 "#,
     )?;
+    fs::create_dir_all(workspace.join("pandoc"))?;
+    fs::write(workspace.join("pandoc/safe.lua"), PANDOC_FILTER)?;
     let user = workspace.join("profile/user");
     fs::create_dir_all(&user)?;
     let item = |path: &str, name: &str, value: &str| {
@@ -459,6 +505,7 @@ pub fn run_backend(
     if policy.is_dir() {
         command.env("MAGICK_CONFIGURE_PATH", &policy);
     }
+    command.env("METROID_MEDIA", log_dir.join("media"));
     let mut child = command
         .args(args)
         .stdin(Stdio::null())
@@ -523,17 +570,25 @@ pub fn convert(
         .tempdir_in(&directory)?;
     let staging = Staging::new(workspace.path(), &target)?;
     let inputs = [input.clone()];
-    let args = expand(
-        &rule.args,
-        &Expansion {
-            inputs: &inputs,
-            output: Some(&staging.output),
-            output_dir: Some(&staging.output_dir),
-            target: &target,
-            profile: Some(&staging.profile),
-        },
-    );
-    run_backend(&backend, &args, workspace.path(), cancel, timeout)?;
+    let values = Expansion {
+        inputs: &inputs,
+        output: Some(&staging.output),
+        output_dir: Some(&staging.output_dir),
+        target: &target,
+        profile: Some(&staging.profile),
+        workspace: Some(workspace.path()),
+    };
+    for step in [&rule.args, &rule.then] {
+        if !step.is_empty() {
+            run_backend(
+                &backend,
+                &expand(step, &values),
+                workspace.path(),
+                cancel,
+                timeout,
+            )?;
+        }
+    }
     let output = staging.single_output()?;
     ensure!(!cancel.is_some_and(Path::exists), "Conversion cancelled");
     publish(&output, &input, &directory, &target)

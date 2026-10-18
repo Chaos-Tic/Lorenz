@@ -219,8 +219,11 @@ updated and be careful with files from untrusted sources:
   SVG input is not offered, because SVG renderers can embed other local files.
 - LibreOffice runs with a private temporary profile that never updates links and
   blocks macros and active content; it never touches your open documents.
-- Pandoc runs with `--sandbox`; some builds then cannot write DOCX/ODT (see
-  [Troubleshooting](docs/TROUBLESHOOTING.md)). FFmpeg reads local files only.
+- Pandoc reads documents with `--sandbox`. The output is then written outside the
+  sandbox (distribution builds cannot write DOCX or EPUB inside it), through a
+  filter that keeps only the document's own images, a few plain metadata fields,
+  and no raw HTML in EPUB, so nothing else on disk can be embedded.
+  FFmpeg reads local files only.
 - Archives are extracted by bsdtar, which refuses absolute paths and `..` entries.
 
 ## Command line

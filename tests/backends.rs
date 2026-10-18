@@ -96,22 +96,21 @@ fn rejects_directories() {
 #[cfg(unix)]
 #[test]
 fn backend_cancellation_and_timeout_reap_process() {
-    use std::os::unix::fs::PermissionsExt;
     let d = tempfile::tempdir().unwrap();
-    let sleeper = d.path().join("sleeper");
-    // exec prevents leaving an extra shell child behind.
-    fs::write(&sleeper, "#!/bin/sh\nexec sleep 20\n").unwrap();
-    fs::set_permissions(&sleeper, fs::Permissions::from_mode(0o755)).unwrap();
+    // A script written by the test could not be executed while a parallel test
+    // forks with its descriptor still open ("text file busy"); use sleep itself.
+    let sleeper = executable("sleep").unwrap();
+    let wait = ["20".to_owned()];
     let cancel = d.path().join("cancel");
     std::thread::scope(|s| {
         s.spawn(|| {
             std::thread::sleep(std::time::Duration::from_millis(200));
             fs::write(&cancel, "").unwrap();
         });
-        let error = metroid::run_backend(&sleeper, &[], d.path(), Some(&cancel), 10).unwrap_err();
+        let error = metroid::run_backend(&sleeper, &wait, d.path(), Some(&cancel), 10).unwrap_err();
         assert!(error.to_string().contains("cancelled"));
     });
-    let error = metroid::run_backend(&sleeper, &[], d.path(), None, 0).unwrap_err();
+    let error = metroid::run_backend(&sleeper, &wait, d.path(), None, 0).unwrap_err();
     assert!(error.to_string().contains("timed out"));
 }
 
@@ -211,4 +210,68 @@ fn audio_and_video_conversion() {
     );
     let gif = convert(&video, "gif", None, None, 30).unwrap();
     assert!(fs::read(gif).unwrap().starts_with(b"GIF"));
+}
+#[test]
+fn documents_embed_only_their_own_media() {
+    let (Some(_), Some(magick)) = (executable("pandoc"), executable("magick")) else {
+        eprintln!("SKIP: pandoc or magick absent");
+        return;
+    };
+    let d = tempfile::tempdir().unwrap();
+    let dir = d.path().join("my notes");
+    fs::create_dir(&dir).unwrap();
+    // A file the document names but must never carry into its output.
+    let secret = d.path().join("secret.png");
+    assert!(
+        Command::new(magick)
+            .args(["-size", "8x8", "xc:blue"])
+            .arg(&secret)
+            .status()
+            .unwrap()
+            .success()
+    );
+    let input = dir.join("notes.md");
+    fs::write(
+        &input,
+        format!(
+            "---\ncover-image: {0}\n---\n# Hello\n\n![leak]({0})\n\n<img src=\"{0}\">\n",
+            secret.display()
+        ),
+    )
+    .unwrap();
+    let size = |path: &Path| fs::metadata(path).unwrap().len();
+    for target in ["docx", "odt", "epub"] {
+        let out = convert(&input, target, None, None, 60).unwrap();
+        let listing = Command::new("bsdtar")
+            .arg("-tf")
+            .arg(&out)
+            .output()
+            .unwrap();
+        let names = String::from_utf8_lossy(&listing.stdout);
+        assert!(
+            !names.lines().any(|n| n.ends_with(".png")),
+            "{target} embedded a foreign file: {names}"
+        );
+        assert!(size(&out) > 0);
+    }
+    // Images that belong to the source document survive a conversion.
+    let picture = dir.join("own.png");
+    fs::copy(&secret, &picture).unwrap();
+    let own = dir.join("own.md");
+    fs::write(&own, "![own](own.png)\n").unwrap();
+    assert!(
+        Command::new(executable("pandoc").unwrap())
+            .current_dir(&dir)
+            .args(["own.md", "-o", "own.docx"])
+            .status()
+            .unwrap()
+            .success()
+    );
+    let odt = convert(&dir.join("own.docx"), "odt", None, None, 60).unwrap();
+    let listing = Command::new("bsdtar")
+        .arg("-tf")
+        .arg(&odt)
+        .output()
+        .unwrap();
+    assert!(String::from_utf8_lossy(&listing.stdout).contains(".png"));
 }

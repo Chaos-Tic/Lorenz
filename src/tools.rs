@@ -133,6 +133,7 @@ fn run_once(
             output_dir: Some(&staging.output_dir),
             target: &extension,
             profile: Some(&staging.profile),
+            workspace: Some(workspace.path()),
         },
     );
     run_backend(&backend, &args, workspace.path(), cancel, timeout)?;
