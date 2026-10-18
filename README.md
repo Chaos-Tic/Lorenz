@@ -13,7 +13,8 @@
 Metroid brings a conversion wheel to your cursor without opening a batch window.
 The global gesture is implemented for **KDE Plasma / KWin 6.8 on Wayland**. The
 Rust conversion core and secondary Qt batch manager also build on Linux and Windows.
-Originals are preserved. No account, application server, or cloud service is required.
+The filename stays the same: `photo.png` becomes `photo.webp`. A number is added
+only when the destination already exists (`photo-2.webp`). Originals are preserved. No account, application server, or cloud service is required.
 
 **Status: under development. The Shift-drag integration is KWin-specific.** This is an independent implementation;
 it contains no Tangerine source code and is not affiliated with any namesake franchise.
@@ -37,8 +38,8 @@ All repository documentation, commit messages, comments, and application text ar
 
 ![The Shift-drag wheel before and after hovering WebP](docs/media/shift-drag.gif)
 
-Two real wheel captures, not a real-time recording. The still image above shows
-the highlighted sector without motion.
+Native widget frames show the opening and hover transitions. The still image above
+shows the highlighted sector without motion.
 
 </details>
 

@@ -128,17 +128,16 @@ pub fn doctor() -> Doctor {
 // Publishing uses a hard link on the same filesystem: atomic, and refuses any
 // existing destination (including dangling symlinks). Sources are never opened writable.
 pub fn publish(source: &Path, input: &Path, directory: &Path, target: &str) -> Result<PathBuf> {
-    let stem = input
-        .file_stem()
-        .context("Missing file name")?
-        .to_string_lossy();
+    let stem = input.file_stem().context("Missing file name")?;
     for index in 1..10000 {
         let suffix = if index == 1 {
             String::new()
         } else {
             format!("-{index}")
         };
-        let output = directory.join(format!("{stem}-metroid{suffix}.{target}"));
+        let mut name = stem.to_os_string();
+        name.push(format!("{suffix}.{target}"));
+        let output = directory.join(name);
         match fs::hard_link(source, &output) {
             Ok(()) => return Ok(output),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -311,15 +310,23 @@ mod tests {
         );
     }
     #[test]
+    fn preserves_filename() {
+        let d = tempfile::tempdir().unwrap();
+        let source = d.path().join("staged");
+        fs::write(&source, b"new").unwrap();
+        let output = publish(&source, Path::new("été.final 01.jpg"), d.path(), "webp").unwrap();
+        assert_eq!(output.file_name().unwrap(), "été.final 01.webp");
+    }
+    #[test]
     fn never_overwrites() {
         let d = tempfile::tempdir().unwrap();
         let source = d.path().join("staged");
         fs::write(&source, b"new").unwrap();
-        let old = d.path().join("photo-metroid.png");
+        let old = d.path().join("photo.png");
         fs::write(&old, b"old").unwrap();
         let output = publish(&source, Path::new("photo.jpg"), d.path(), "png").unwrap();
         assert_eq!(fs::read(old).unwrap(), b"old");
-        assert_eq!(output.file_name().unwrap(), "photo-metroid-2.png");
+        assert_eq!(output.file_name().unwrap(), "photo-2.png");
     }
     #[test]
     fn concurrent_publication_is_safe() {

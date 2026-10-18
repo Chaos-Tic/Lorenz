@@ -5,7 +5,7 @@
 | Asset | Purpose |
 | --- | --- |
 | `shift-drag-wheel.png` | Actual KWin wheel while hovering WebP during a file drag |
-| `shift-drag.gif` | Two wheel states, each held for two seconds; not a real-time recording |
+| `shift-drag.gif` | Native wheel frames captured every 20 ms, showing opening and hover |
 | `banner.svg` | Vector header using the desktop's charcoal, red, and muted-gray palette |
 | `desktop-ready.png` | Actual native Qt window before adding files |
 | `desktop-converted.png` | Actual successful PNG-to-WebP conversion using generated sample data |
@@ -13,8 +13,7 @@
 
 Screenshots contain generated demonstration data, no private documents or personal
 paths. The batch screenshots are 1060 × 820 and their slideshow holds each state for
-three seconds. The primary wheel captures are 440 × 440 and their slideshow holds
-each state for two seconds. A still image is available beside the optional animation in the main
+three seconds. The primary wheel captures are 360 × 360; the animation uses native widget frames at 20 ms intervals. A still image is available beside the optional animation in the main
 README. Keep future captures in English and avoid decorative motion outside the demo.
 
 To refresh the visuals on Linux, build and install the current app, generate a PNG
@@ -33,3 +32,6 @@ before publishing. The SVG is editable source; no external font or image fetch i
 
 Wheel captures come from the isolated KWin interaction test. The input driver can
 capture only the wheel widget, avoiding unrelated desktop content.
+
+To capture the wheel animation frames: `QT_QPA_PLATFORM=offscreen
+METROID_WHEEL_FRAMES=/absolute/path/frames build/metroid-wheel-test`.

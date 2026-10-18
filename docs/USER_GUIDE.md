@@ -16,7 +16,7 @@ On KDE Wayland with the [KWin integration](../integrations/kwin/README.md) enabl
 
 You do not need to open a window, add a file to a list, or press a Convert button.
 Multiple selected files use their common available formats. The source files remain
-unchanged; outputs use `name-metroid.ext` and numbered names on later runs.
+unchanged; outputs use `name.ext` and numbered names on later runs.
 
 ## Cancel safely
 

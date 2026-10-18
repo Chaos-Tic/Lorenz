@@ -89,7 +89,7 @@ public:
         formatBox->addLayout(formatRow); settings->addLayout(formatBox,1);
         auto *destBox = new QVBoxLayout; destBox->addWidget(label("SAVE TO", "eyebrow"));
         choose = new QPushButton("Next to the originals  ▾"); destBox->addWidget(choose); settings->addLayout(destBox,2); main->addLayout(settings);
-        destination = label("Originals are preserved. Converted files use the -metroid suffix.", "muted"); main->addWidget(destination);
+        destination = label("Originals are preserved. Only the extension changes; existing files are never replaced.", "muted"); main->addWidget(destination);
         progress = new QProgressBar; progress->setRange(0,1); progress->setValue(0); progress->setTextVisible(false); progress->setFixedHeight(4); main->addWidget(progress);
         auto *bottom = new QHBoxLayout; status = label("Ready to convert", "muted"); bottom->addWidget(status,1);
         stop = new QPushButton("Cancel"); stop->setEnabled(false); bottom->addWidget(stop);

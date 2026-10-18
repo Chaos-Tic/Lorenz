@@ -39,16 +39,17 @@ call Key 42 false
 formats=$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Formats)
 [[ "$formats" == $'avif\nbmp\njpg\npdf\ntiff\nwebp' ]]
 # WebP is the upper-left sector for this registry and sample.
-call Move 230 179
+call Move 240 197
+sleep 0.3
 call Snapshot "$METROID_TEST_RUN/wheel.png"
 call Button false
 [[ "$(active)" == false ]]
 [[ "$(call Dragging)" == false ]]
 for attempt in $(seq 1 100); do
-    [[ -f "$METROID_TEST_RUN/sample-metroid.webp" ]] && break
+    [[ -f "$METROID_TEST_RUN/sample.webp" ]] && break
     sleep 0.1
  done
-[[ -s "$METROID_TEST_RUN/sample-metroid.webp" ]]
+[[ -s "$METROID_TEST_RUN/sample.webp" ]]
 [[ "$(sha256sum "$METROID_TEST_RUN/sample.png")" == "$original" ]]
 # Escape must cancel without producing a second output.
 call Move 210 210
@@ -64,7 +65,7 @@ call Key 1 false
 call Button false
 [[ "$(active)" == false ]]
 [[ "$(call Dragging)" == false ]]
-[[ ! -e "$METROID_TEST_RUN/sample-metroid-2.webp" ]]
+[[ ! -e "$METROID_TEST_RUN/sample-2.webp" ]]
 # The center is another explicit cancellation target.
 call Move 210 210
 call Button true
@@ -76,7 +77,7 @@ call Key 42 false
 call Move 300 300
 call Button false
 [[ "$(active)" == false ]]
-[[ ! -e "$METROID_TEST_RUN/sample-metroid-2.webp" ]]
+[[ ! -e "$METROID_TEST_RUN/sample-2.webp" ]]
 # A normal drag still works without activating the conversion wheel.
 call Move 210 210
 call Button true
