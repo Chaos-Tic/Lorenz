@@ -381,29 +381,36 @@ pub fn expand(args: &[String], values: &Expansion) -> Vec<String> {
     }
     expanded
 }
-/// Restrictive engine settings, written into each private workspace:
-/// - an ImageMagick policy refusing script, text, URL and `@file` coders;
-/// - a LibreOffice profile that never updates links nor runs active content;
-/// - a pandoc filter for writers that embed files (see `PANDOC_FILTER`).
-///
-/// `run_backend` points ImageMagick at the policy when it exists.
 /// Distribution builds of pandoc cannot write DOCX or EPUB with `--sandbox`
 /// (their data files are not embedded). Documents are therefore read in the
 /// sandbox, with media extracted into the workspace, then written outside it.
 /// The writer would embed any file an image or metadata names, so this filter
-/// keeps only extracted media, a few plain metadata fields, and no raw HTML
-/// in EPUB (whose writer also embeds files named by raw `<img>` tags).
+/// keeps only images that are exactly one of the extracted files, a few plain
+/// metadata fields, and no raw HTML in EPUB (whose writer also embeds files
+/// named by raw `<img>` tags).
 const PANDOC_FILTER: &str = r#"
 local media = os.getenv("METROID_MEDIA") or "\0"
 local embeds = FORMAT:match("docx") or FORMAT:match("odt") or FORMAT:match("epub") or FORMAT:match("pptx")
-local function extracted(src)
-  return src:sub(1, #media + 1) == media .. "/" and not src:find("..", 1, true)
+-- Exact paths of the files the sandboxed reader extracted. Escapes are refused
+-- outright: the writer could decode them into another path.
+local extracted = {}
+local function collect(dir)
+  local ok, names = pcall(pandoc.system.list_directory, dir)
+  if not ok then return end
+  for _, name in ipairs(names) do
+    local path = dir .. "/" .. name
+    if pcall(pandoc.system.list_directory, path) then collect(path) else extracted[path] = true end
+  end
+end
+collect(media)
+local function allowed(src)
+  return extracted[src] and not src:find("[%%\\]") and not src:find("..", 1, true)
 end
 local keep = { title = true, subtitle = true, author = true, date = true, lang = true,
   dir = true, abstract = true, keywords = true, subject = true, description = true }
 return {{
   Image = function(image)
-    if embeds and not extracted(image.src) then return image.caption end
+    if embeds and not allowed(image.src) then return image.caption end
   end,
   RawInline = function(raw) if FORMAT:match("epub") then return {} end end,
   RawBlock = function(raw) if FORMAT:match("epub") then return {} end end,
@@ -413,6 +420,12 @@ return {{
   end,
 }}
 "#;
+/// Restrictive engine settings, written into each private workspace:
+/// - an ImageMagick policy refusing script, text, URL and `@file` coders;
+/// - a LibreOffice profile that never updates links nor runs active content;
+/// - a pandoc filter for writers that embed files (see `PANDOC_FILTER`).
+///
+/// `run_backend` points ImageMagick at the policy when it exists.
 fn harden(workspace: &Path) -> Result<()> {
     let magick = workspace.join("magick");
     fs::create_dir_all(&magick)?;
