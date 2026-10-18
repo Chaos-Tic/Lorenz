@@ -43,6 +43,11 @@ Metroid starts LibreOffice with a private temporary profile; a LibreOffice windo
 that is already open is neither reused nor modified. The first conversion can take
 several seconds while that profile is created.
 
+The profile is created in the system temporary folder rather than beside the file,
+because LibreOffice on Windows crashes (exit code `0xc0000409`) when its profile
+path is longer than about 148 characters. If Office conversions still fail with that
+code, check that `TEMP` points to a short path such as `%LOCALAPPDATA%\Temp`.
+
 ## The window does not stay on top
 
 Wayland compositors control window placement and stacking. The checkbox requests

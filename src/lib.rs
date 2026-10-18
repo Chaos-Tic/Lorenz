@@ -520,11 +520,12 @@ return {{
 "#;
 /// Restrictive engine settings, written into each private workspace:
 /// - an ImageMagick policy refusing script, text, URL and `@file` coders;
-/// - a LibreOffice profile that never updates links nor runs active content;
+/// - a LibreOffice profile (in `profile`) that never updates links nor runs
+///   active content;
 /// - a pandoc filter for writers that embed files (see `PANDOC_FILTER`).
 ///
 /// `run_backend` points ImageMagick at the policy when it exists.
-fn harden(workspace: &Path) -> Result<()> {
+fn harden(workspace: &Path, profile: &Path) -> Result<()> {
     let magick = workspace.join("magick");
     fs::create_dir_all(&magick)?;
     fs::write(
@@ -538,7 +539,7 @@ fn harden(workspace: &Path) -> Result<()> {
     )?;
     fs::create_dir_all(workspace.join("pandoc"))?;
     fs::write(workspace.join("pandoc/safe.lua"), PANDOC_FILTER)?;
-    let user = workspace.join("profile/user");
+    let user = profile.join("user");
     fs::create_dir_all(&user)?;
     let item = |path: &str, name: &str, value: &str| {
         format!(
@@ -561,20 +562,29 @@ fn harden(workspace: &Path) -> Result<()> {
     Ok(())
 }
 /// Private destinations inside a workspace for one engine run.
+///
+/// The LibreOffice profile lives in its own short temporary folder, not in the
+/// workspace beside the destination: LibreOffice on Windows crashes
+/// (0xc0000409) when the profile path is longer than about 148 characters,
+/// which a deep or synced folder easily reaches. It is removed with `Staging`.
 pub struct Staging {
     pub output: PathBuf,
     pub output_dir: PathBuf,
     pub profile: PathBuf,
+    _office: tempfile::TempDir,
 }
 impl Staging {
     pub fn new(workspace: &Path, extension: &str) -> Result<Self> {
         let output_dir = workspace.join("result");
         fs::create_dir(&output_dir)?;
-        harden(workspace)?;
+        let office = tempfile::Builder::new().prefix("metroid-").tempdir()?;
+        let profile = office.path().join("profile");
+        harden(workspace, &profile)?;
         Ok(Self {
             output: workspace.join(format!("converted.{extension}")),
             output_dir,
-            profile: workspace.join("profile"),
+            profile,
+            _office: office,
         })
     }
     /// The file produced by the engine: `{output}`, or the single file an
@@ -723,7 +733,7 @@ pub fn merge_pdf(inputs: &[PathBuf], directory: &Path) -> Result<PathBuf> {
     }
     args.extend(["--".into(), output.to_string_lossy().into_owned()]);
     run_backend(
-        &executable("qpdf").context("Missing engine: qpdf")?,
+        &engine("qpdf").context("Missing engine: qpdf")?,
         &args,
         workspace.path(),
         None,
