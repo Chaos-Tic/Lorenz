@@ -5,6 +5,9 @@
 #include <wayland_server.h>
 #include <wayland/seat.h>
 #include <abstract_data_source.h>
+#include <main.h>
+#include <scene/workspacescene.h>
+#include <scene/item.h>
 #include <utils/filedescriptor.h>
 #include <QSocketNotifier>
 #include <QProcess>
@@ -45,6 +48,14 @@ QVector<WheelKey> wheelKeys() {
     return keys;
 }
 const QStringList kinds{"convert","tools","actions"};
+// KWin paints the dragged file's icon above every window, so it would cover
+// the lower sectors. Find it by class name: the type is not exported.
+KWin::Item *dragIconItem(KWin::Item *item) {
+    if (!item) return nullptr;
+    if (qstrcmp(item->metaObject()->className(),"KWin::DragAndDropIconItem")==0) return item;
+    for (auto *child:item->childItems()) if (auto *found=dragIconItem(child)) return found;
+    return nullptr;
+}
 }
 
 class MetroidPlugin : public KWin::Plugin, public KWin::InputEventFilter {
@@ -54,6 +65,7 @@ class MetroidPlugin : public KWin::Plugin, public KWin::InputEventFilter {
     QTimer deadline;
     QProcess probe;
     QPointer<KWin::AbstractDataSource> source;
+    QPointer<KWin::Item> hiddenIcon;
     QSocketNotifier *reader=nullptr;
     int readFd=-1;
     bool active=false;
@@ -96,6 +108,8 @@ public:
     Q_PROPERTY(QStringList Formats READ formatList)
     Q_PROPERTY(QPoint WheelPosition READ wheelPosition)
     Q_PROPERTY(QString Mode READ modeName)
+    Q_PROPERTY(bool DragIconHidden READ dragIconHidden)
+    bool dragIconHidden() const { return hiddenIcon && !hiddenIcon->isVisible(); }
     QString modeName() const { return kinds[mode]; }
     bool isActive() const { return active; }
     QStringList formatList() const { return wheel.formats; }
@@ -153,7 +167,7 @@ private:
         source=candidate; active=true; payload.clear(); files.clear(); mode=wanted;
         QStringList labels; for (const auto &k:keys) labels << k.label; wheel.tabKeys=labels;
         wheel.mode=mode; wheel.setItems({}); wheel.setLoading(true); wheel.sourceName.clear(); wheel.sourceType.clear();
-        wheel.message="Reading files…"; wheel.openAt(pos.toPoint());
+        wheel.message="Reading files…"; wheel.openAt(pos.toPoint()); hideDragIcon();
         seat->setDragTarget(nullptr,nullptr,pos,QMatrix4x4());
         readFd=pipeFd[0]; reader=new QSocketNotifier(readFd,QSocketNotifier::Read,this);
         connect(reader,&QSocketNotifier::activated,this,[this]{ readUris(); });
@@ -210,7 +224,14 @@ private:
         }
     }
     void query() { deadline.start(); probe.start(executable("metroid"),QStringList{"menu",kinds[mode],"--json","--"}+files); }
+    void hideDragIcon() {
+        auto *scene=KWin::kwinApp()->scene(); if (!scene) return;
+        auto *icon=dragIconItem(scene->overlayItem()); if (!icon) icon=dragIconItem(scene->containerItem());
+        if (icon) { icon->setVisible(false); hiddenIcon=icon; }
+    }
     void reset() {
+        if (hiddenIcon) hiddenIcon->setVisible(true);
+        hiddenIcon.clear();
         active=false; deadline.stop(); closePipe(); wheel.dismiss(); source.clear();
         if (probe.state()!=QProcess::NotRunning) probe.kill();
     }
