@@ -1,6 +1,7 @@
 #include <plugin.h>
 #include <input.h>
 #include <input_event.h>
+#include <pointer_input.h>
 #include <wayland_server.h>
 #include <wayland/seat.h>
 #include <abstract_data_source.h>
@@ -108,6 +109,7 @@ private:
     void maybeActivate(Qt::KeyboardModifiers modifiers,QPointF pos) {
         auto *seat=KWin::waylandServer()->seat();
         if (active || probe.state()!=QProcess::NotRunning || !modifiers.testFlag(Qt::ShiftModifier) || !seat->isDragPointer()) return;
+        if (!KWin::input()->pointer()->buttons().testFlag(Qt::LeftButton)) return;
         auto *candidate=seat->dragSource();
         if (!candidate || !candidate->mimeTypes().contains("text/uri-list")) return;
         if (executable("metroid").isEmpty() || executable("metroid-desktop").isEmpty()) return;
