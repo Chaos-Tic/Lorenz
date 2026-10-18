@@ -363,10 +363,7 @@ fn reveal(paths: &[PathBuf]) -> Result<()> {
 pub fn run(id: &str, paths: &[PathBuf], destination: Option<&Path>) -> Result<Vec<PathBuf>> {
     let paths = paths
         .iter()
-        .map(|p| {
-            p.canonicalize()
-                .with_context(|| format!("Not found: {}", p.display()))
-        })
+        .map(|p| crate::canonical(p).with_context(|| format!("Not found: {}", p.display())))
         .collect::<Result<Vec<_>>>()?;
     ensure!(!paths.is_empty(), "Select at least one file");
     ensure!(
@@ -406,9 +403,7 @@ pub fn run(id: &str, paths: &[PathBuf], destination: Option<&Path>) -> Result<Ve
         }
         "reveal" => reveal(&paths)?,
         "copy-to" | "move-to" => {
-            let destination = destination
-                .context("Choose a destination folder")?
-                .canonicalize()
+            let destination = crate::canonical(destination.context("Choose a destination folder")?)
                 .context("Destination folder not found")?;
             ensure!(destination.is_dir(), "Destination must be a folder");
             return paths

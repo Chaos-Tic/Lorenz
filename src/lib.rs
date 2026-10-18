@@ -137,19 +137,25 @@ fn windows_install(name: &str) -> Option<PathBuf> {
 /// winget installs portable engines as links; running the real file lets
 /// Windows find the libraries stored beside it.
 fn real_path(path: &Path) -> PathBuf {
-    if !cfg!(windows) {
-        return path.to_path_buf();
+    if cfg!(windows) {
+        canonical(path).unwrap_or_else(|_| path.to_path_buf())
+    } else {
+        path.to_path_buf()
     }
-    match fs::canonicalize(path) {
-        Ok(real) => {
-            let text = real.to_string_lossy();
-            match text.strip_prefix(r"\\?\") {
-                Some(rest) if !rest.starts_with("UNC") => PathBuf::from(rest),
-                _ => real,
+}
+/// `Path::canonicalize`, without the `\\?\` prefix Windows adds to local
+/// paths: several engines (and Pandoc's file handling) do not accept it.
+pub fn canonical(path: &Path) -> std::io::Result<PathBuf> {
+    let real = path.canonicalize()?;
+    if cfg!(windows) {
+        let text = real.to_string_lossy();
+        if let Some(rest) = text.strip_prefix(r"\\?\") {
+            if !rest.starts_with("UNC") {
+                return Ok(PathBuf::from(rest));
             }
         }
-        Err(_) => path.to_path_buf(),
     }
+    Ok(real)
 }
 pub fn extension(path: &Path) -> String {
     path.extension()
@@ -473,23 +479,26 @@ local media = os.getenv("METROID_MEDIA") or "\0"
 local embeds = FORMAT:match("docx") or FORMAT:match("odt") or FORMAT:match("epub") or FORMAT:match("pptx")
 -- Exact paths of the files the sandboxed reader extracted. Escapes are refused
 -- outright: the writer could decode them into another path.
--- Windows paths may mix both separators, so paths are compared with "/".
+-- Files are matched by their path inside the media folder, compared with "/"
+-- because Windows paths may mix both separators. The listed path then replaces
+-- the source, so the writer opens exactly a file that was checked.
 local function slashes(path) return (path:gsub("\\", "/")) end
 local extracted = {}
-local function collect(dir)
+local function collect(dir, relative)
   local ok, names = pcall(pandoc.system.list_directory, dir)
   if not ok then return end
   for _, name in ipairs(names) do
-    local path = dir .. "/" .. name
-    if pcall(pandoc.system.list_directory, path) then collect(path) else extracted[slashes(path)] = path end
+    local path, inside = dir .. "/" .. name, relative .. "/" .. name
+    if pcall(pandoc.system.list_directory, path) then collect(path, inside) else extracted[inside] = path end
   end
 end
-collect(media)
--- The listed path itself replaces the source, so the writer opens exactly the
--- file that was checked.
+collect(media, "")
 local function allowed(src)
   if src:find("%", 1, true) or src:find("..", 1, true) then return nil end
-  return extracted[slashes(src)]
+  src = slashes(src)
+  for inside, path in pairs(extracted) do
+    if src:sub(-#inside) == inside then return path end
+  end
 end
 local keep = { title = true, subtitle = true, author = true, date = true, lang = true,
   dir = true, abstract = true, keywords = true, subject = true, description = true }
@@ -585,10 +594,9 @@ impl Staging {
     }
 }
 pub fn output_directory(input: &Path, directory: Option<&Path>) -> Result<PathBuf> {
-    let directory = directory
-        .unwrap_or(input.parent().context("Missing parent folder")?)
-        .canonicalize()
-        .context("Output directory not found")?;
+    let directory =
+        canonical(directory.unwrap_or(input.parent().context("Missing parent folder")?))
+            .context("Output directory not found")?;
     ensure!(directory.is_dir(), "Destination must be a directory");
     Ok(directory)
 }
@@ -653,7 +661,7 @@ pub fn convert(
     timeout: u64,
 ) -> Result<PathBuf> {
     ensure!(!cancel.is_some_and(Path::exists), "Conversion cancelled");
-    let input = input.canonicalize().context("Source file not found")?;
+    let input = canonical(input).context("Source file not found")?;
     ensure!(input.is_file(), "Source must be a regular file");
     let target = target.to_ascii_lowercase();
     let rule = registry()
@@ -698,14 +706,14 @@ pub fn convert(
 
 pub fn merge_pdf(inputs: &[PathBuf], directory: &Path) -> Result<PathBuf> {
     ensure!(inputs.len() >= 2, "Select at least two PDF files");
-    let directory = directory.canonicalize()?;
+    let directory = canonical(directory)?;
     let workspace = tempfile::Builder::new()
         .prefix(".metroid-")
         .tempdir_in(&directory)?;
     let output = workspace.path().join("merged.pdf");
     let mut args = vec!["--empty".into(), "--pages".into()];
     for input in inputs {
-        let input = input.canonicalize()?;
+        let input = canonical(input)?;
         ensure!(
             input.is_file() && extension(&input) == "pdf",
             "Each source must be a PDF file"

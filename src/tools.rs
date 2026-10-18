@@ -155,10 +155,7 @@ pub fn run(
 ) -> Result<Vec<(PathBuf, Result<PathBuf>)>> {
     let inputs = inputs
         .iter()
-        .map(|p| {
-            p.canonicalize()
-                .with_context(|| format!("Source not found: {}", p.display()))
-        })
+        .map(|p| crate::canonical(p).with_context(|| format!("Source not found: {}", p.display())))
         .collect::<Result<Vec<_>>>()?;
     let tool = applies(id, &inputs).context("This tool does not apply to the selection")?;
     if tool.combine {
