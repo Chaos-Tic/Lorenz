@@ -1,10 +1,11 @@
-# Shift-drag integration for KDE Wayland
+# Drag gesture for KDE Plasma (Wayland)
 
 [Back to Metroid](../../README.md)
 
-This compositor extension is the primary Metroid interaction: **drag a local file,
-tap Shift, and release over a format in the wheel at the cursor**. Releasing Shift
-does not close the wheel. The batch window is optional.
+This compositor extension is the primary Metroid interaction: **drag local files,
+tap Shift (convert), Ctrl (tools) or Alt (actions), and release over a sector of the
+wheel at the cursor**. Releasing the key does not close the wheel; tapping another
+wheel key switches wheels in place. The batch window is optional.
 
 ## Supported scope
 
@@ -12,15 +13,19 @@ does not close the wheel. The batch window is optional.
   `text/uri-list` files. The build script currently accepts the 6.8 release series.
 - XWayland source apps, touch/tablet drags, GNOME, other compositors, and native
   Windows gesture interception are not validated or implemented by this extension.
-- Folders, remote URLs, and non-file drags are not converted. Mixed file selections
-  use common formats only. Batches are limited to 128 paths and 256 KiB of URI data.
-- Shift is the current trigger. Tools/actions wheels and configurable keys are future work.
+- Remote URLs and non-file drags are ignored. Folders get the actions and ZIP tool.
+  Mixed selections show common items only. Batches are limited to 128 paths and
+  256 KiB of URI data.
+- Keys are configurable per wheel (Shift, Ctrl, Alt or off) in the companion's
+  settings, stored in `~/.config/metroid/metroid.conf` and read at each drag.
 
 ## Install and remove
 
-First install the core and desktop with `scripts/install-linux.sh`. Install KWin
-headers and build dependencies through your distribution. On Arch these include
-`base-devel`, `cmake`, `kwin`, `extra-cmake-modules`, and `vulkan-headers`.
+`./install.sh` offers this step automatically on KDE Plasma 6.8. To run it by hand,
+install the core and desktop first, then KWin headers and build files through your
+distribution: `kwin extra-cmake-modules vulkan-headers` on Arch, `kwin-dev
+extra-cmake-modules libvulkan-dev` on Debian/Ubuntu, `kwin-devel extra-cmake-modules
+vulkan-headers` on Fedora.
 
 ```sh
 ./scripts/install-kwin.sh
@@ -46,15 +51,18 @@ source is not copied into this repository.
 ## How the gesture works
 
 The input filter runs after screen-lock handling and before normal drag-and-drop.
-It activates only when Shift accompanies an active pointer drag offering file URIs.
-It reads the URI payload asynchronously, asks the Rust registry for common formats,
-and anchors the internal Qt wheel to the compositor pointer position at the Shift
-press. The anchor stays fixed while selecting; screen-edge placement keeps the wheel
+It activates only on a configured key *press* during an active left-button pointer
+drag offering file URIs; a modifier held before the drag keeps its normal copy/move
+meaning. It reads the URI payload asynchronously, asks `metroid menu` for the wheel's
+items, and anchors the internal Qt wheel to the compositor pointer position at the
+key press. The anchor stays fixed while selecting; screen-edge placement keeps the wheel
 visible. It does not use the Wayland seat position, which can be stale during a drag. It never records typed text.
 
-Releasing over a sector cancels the original drag, then launches a separate conversion
-process. Cancellation is deliberate: Shift's usual move action must not remove the
-original. Escape, the center, and the outside of the wheel cancel without conversion.
+Releasing over a sector (or pressing Enter after choosing with the arrow keys) cancels
+the original drag, then launches a separate conversion, tool or action process.
+Cancellation is deliberate: Shift's usual move action must not remove the original.
+Escape, the center, and the outside of the wheel cancel without running anything.
+Modifier keys still reach applications; other keys are swallowed while a wheel is open.
 URI and format discovery have a five-second timeout; processing never waits for a
 conversion engine inside the compositor. A short-lived tray job handles cancellation
 and a desktop notification reports the result.
@@ -71,13 +79,16 @@ a working desktop. The standalone core remains useful if the integration is disa
 The test uses a private D-Bus session, a virtual KWin output, generated sample data,
 and a real Wayland drag source. A separately built test module injects input only
 inside that session. It checks Shift without a drag, an ordinary drag, a Shift tap
-that remains latched, hover selection, actual PNG-to-WebP conversion, original-file
-preservation, Escape, center cancellation, and plugin unload/reload.
+that remains latched at the pointer, hover selection, actual PNG-to-WebP conversion,
+original-file preservation, the Ctrl tools wheel, switching to Alt and back to Shift,
+keyboard selection running **Compress**, Ctrl held before a drag (no wheel), Escape,
+center cancellation, and plugin unload/reload.
 
 The test driver is **not installed** by any installation script. Its factory refuses
 to load without the isolated-test environment flag. The test requires a working
-virtual KWin rendering backend and installed Metroid executables; it is separate from
-the CI build check. The Qt wheel's geometry and segment hit testing also run through CTest.
+virtual KWin rendering backend; it builds the core and desktop from the working tree
+and points the extension at them with `METROID_BIN_DIR`. It is separate from the CI
+build check. The Qt wheel's geometry and segment hit testing also run through CTest.
 
 ### Live updates
 
@@ -88,4 +99,6 @@ for future logins. It never restarts the compositor or closes desktop applicatio
 Old libraries may remain mapped until logout; they no longer have active input filters.
 
 Inspect the running version with `qdbus6 org.kde.KWin /Metroid org.metroid.KWin.BuildId`.
-`org.metroid.KWin.WheelSize` reports the actual loaded wheel size (384 pixels, including transparent margins and the cancellation hint).
+`org.metroid.KWin.WheelSize` reports the actual loaded wheel size (384 pixels, including
+transparent margins and the wheel tabs). `Mode` and `Formats` report the open wheel and
+its item identifiers.

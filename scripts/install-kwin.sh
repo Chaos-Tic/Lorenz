@@ -5,28 +5,32 @@ cd "$(dirname "$0")/.."
 qtpaths_tool=$(command -v qtpaths6 || true)
 if [[ -z "$qtpaths_tool" ]]; then qtpaths_tool=/usr/lib/qt6/bin/qtpaths6; fi
 plugin_dir=$("$qtpaths_tool" --query QT_INSTALL_PLUGINS)
+# Distributions name the Qt 6 D-Bus tool differently.
+qdbus=$(command -v qdbus6 || command -v qdbus-qt6 || echo /usr/lib/qt6/bin/qdbus)
 [[ -x "$HOME/.local/bin/metroid" && -x "$HOME/.local/bin/metroid-desktop" ]] || {
-    echo 'Install the core and desktop first with scripts/install-linux.sh.' >&2; exit 1;
+    echo 'Install the core and desktop first with ./install.sh.' >&2; exit 1;
 }
 # A unique path prevents Qt from reusing an older mapped library.
 plugin_id=$(cat build/kwin/plugin-id)
 [[ "$plugin_id" =~ ^metroid-[0-9a-f]{12}$ ]]
-previous=()
-while IFS= read -r id; do
-    if [[ "$id" == metroid || "$id" =~ ^metroid-[0-9a-f]{12}$ ]]; then
-        previous+=("$id")
-        qdbus6 org.kde.KWin /Plugins org.kde.KWin.Plugins.UnloadPlugin "$id"
-    fi
-done < <(qdbus6 org.kde.KWin /Plugins org.kde.KWin.Plugins.LoadedPlugins)
+# Install the file first: if administrator access fails, nothing has changed.
 if [[ ! -f "$plugin_dir/kwin/plugins/$plugin_id.so" ]]; then
     sudo install -m755 build/kwin/metroid.so "$plugin_dir/kwin/plugins/$plugin_id.so"
 fi
-if [[ "$(qdbus6 org.kde.KWin /Plugins org.kde.KWin.Plugins.LoadPlugin "$plugin_id")" != true ]]; then
-    for id in "${previous[@]}"; do qdbus6 org.kde.KWin /Plugins org.kde.KWin.Plugins.LoadPlugin "$id"; done
-    echo 'KWin did not load the update; previous plugins were restored.' >&2
-    exit 1
-fi
-[[ "$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.BuildId)" == "$plugin_id" ]]
+previous=()
+while IFS= read -r id; do
+    if [[ "$id" == metroid || "$id" =~ ^metroid-[0-9a-f]{12}$ ]]; then previous+=("$id"); fi
+done < <("$qdbus" org.kde.KWin /Plugins org.kde.KWin.Plugins.LoadedPlugins)
+# From here on, any failure reloads the revisions that were active before.
+restore() {
+    for id in "${previous[@]}"; do "$qdbus" org.kde.KWin /Plugins org.kde.KWin.Plugins.LoadPlugin "$id" >/dev/null 2>&1 || true; done
+    echo 'KWin did not accept the update; the previous version was restored.' >&2
+}
+trap restore ERR
+for id in "${previous[@]}"; do "$qdbus" org.kde.KWin /Plugins org.kde.KWin.Plugins.UnloadPlugin "$id"; done
+[[ "$("$qdbus" org.kde.KWin /Plugins org.kde.KWin.Plugins.LoadPlugin "$plugin_id")" == true ]]
+[[ "$("$qdbus" org.kde.KWin /Metroid org.metroid.KWin.BuildId)" == "$plugin_id" ]]
+trap - ERR
 # Disable all older installed revisions for future logins.
 for file in "$plugin_dir"/kwin/plugins/metroid*.so; do
     id=$(basename "$file" .so)

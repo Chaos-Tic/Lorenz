@@ -12,8 +12,9 @@ common output. Unknown extensions have no registered routes.
 
 Hover over **Failed** to read the engine error. Executable availability does not
 certify codecs, delegate permissions, or a valid source file. HEIC/AVIF support and
-FFmpeg codecs vary across packages. Metroid currently expects ImageMagick 7's
-`magick` executable; an ImageMagick 6 `convert` executable alone is insufficient.
+FFmpeg codecs vary across packages: Fedora's `ffmpeg-free` cannot encode H.264, so
+**Compress** for video fails there until RPM Fusion's `ffmpeg` is installed. Metroid
+uses ImageMagick 7's `magick`, or ImageMagick 6's `convert` when `magick` is absent.
 
 ## Pandoc cannot find a data file
 
@@ -30,15 +31,35 @@ then copy the finished file to the removable drive.
 
 ## PDF export contains only one page
 
-PDF-to-PNG currently exports the first page at 150 dpi. Multipage PDF image export
-is planned, not implemented. `merge-pdf` merges PDF inputs through qpdf and is a CLI
-operation rather than a desktop control in this version.
+The **Convert** wheel's PNG/JPG route exports the first page at 300 dpi. Use the
+**Tools** wheel (Ctrl) → **Pages to PNG** for every page, in a new folder. **Merge**
+appears in the Tools wheel when two or more PDFs are selected.
+
+## Office, slide or spreadsheet formats are missing
+
+These routes need LibreOffice (`soffice`). Install it, or run `./install.sh --office`.
+Metroid starts LibreOffice with a private temporary profile; a LibreOffice window
+that is already open is neither reused nor modified. The first conversion can take
+several seconds while that profile is created.
 
 ## The window does not stay on top
 
 Wayland compositors control window placement and stacking. The checkbox requests
 this behavior; it cannot override compositor rules. This checkbox belongs to the secondary batch manager. The KWin Shift-drag wheel
 is a separate compositor integration.
+
+## Metroid does not start at login
+
+Check **Settings → Start Metroid when I log in**, or run `metroid autostart status`.
+The entry is `~/.config/autostart/metroid.desktop`. Hyprland, Sway and similar
+compositors may ignore XDG autostart: add `metroid-desktop --background` to your
+compositor's startup commands. The KWin gesture itself does not need the companion.
+
+## An action is missing from the Actions wheel
+
+Actions appear only when their helper exists: **Share** needs KDE Connect, **Float**
+needs `dragon-drop`, `dragon` or `ripdrag`, and **Copy**/**Copy path** need `wl-copy`
+(Wayland) or `xclip` (X11). **Share** is offered for files, not folders.
 
 ## Menus are missing after installation
 
@@ -60,11 +81,13 @@ formats, and the engine error. Review diagnostics and screenshots before sharing
 engine paths, file names, and document content may be personal. Prefer a generated
 sample that reproduces the issue over uploading an original private document.
 
-## Shift does not open a wheel during dragging
+## No wheel opens during dragging
 
 The global gesture needs the KWin 6.8 Wayland integration, not merely the standalone
-app. Start dragging the file first, then tap Shift while still holding the mouse
-button. No wheel is expected for text-only drags, folders, or Shift alone.
+app. Start dragging first, then **tap** the key while still holding the mouse button:
+a key held before the drag starts is deliberately ignored. Check the keys in
+**Settings** (a wheel can be set to *Off*). No wheel is expected for text-only drags
+or a key without a drag.
 
 After a KWin update, rebuild and reinstall the matching extension. Other compositors
 and Windows do not yet have global Shift-drag integration; use a context action there.

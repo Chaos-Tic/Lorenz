@@ -8,40 +8,49 @@ No HTTP server or network socket is involved in this interface.
 
 ```mermaid
 flowchart TD
-    UI[Qt6 desktop] -->|arguments + JSON Lines| CLI[Rust CLI]
+    KWin[KWin drag + Shift / Ctrl / Alt] -->|metroid menu| CLI[Rust CLI]
+    UI[Qt companion, context wheel, batch manager] -->|arguments + JSON Lines| CLI
     Shell[Terminal / file manager / dmenu] --> CLI
-    CLI --> Registry[Embedded TOML registry]
-    Registry --> Engine[Installed conversion engine]
-    Engine --> Temp[Temporary output directory]
+    CLI --> Registry[Embedded TOML registries: conversions + tools]
+    CLI --> Actions[File actions: clipboard, terminal, copy, move]
+    Registry --> Engine[Installed engine]
+    Engine --> Temp[Private .metroid-* directory]
     Temp --> Publish[Atomic publication with a new name]
-    Publish --> Result[Converted file beside the source or in a chosen folder]
-    classDef base fill:#101010,stroke:#413b3b,color:#f2eeee
-    classDef accent fill:#2a1013,stroke:#ff5454,color:#f2eeee
-    class UI,Shell,Registry,Engine,Temp,Result base
-    class CLI,Publish accent
+    Publish --> Result[New file or folder beside the source]
+    classDef base fill:#171d23,stroke:#3b4c54,color:#edf3f1
+    classDef accent fill:#293f3d,stroke:#b6e8d6,color:#edf3f1
+    class UI,Shell,Registry,Engine,Temp,Result,Actions base
+    class KWin,CLI,Publish accent
 ```
 
 ## Source map
 
 | Path | Responsibility |
 | --- | --- |
-| [`src/lib.rs`](../src/lib.rs) | Registry, executable discovery, subprocess execution, output publication |
-| [`src/main.rs`](../src/main.rs) | CLI, JSON Lines worker, picker, desktop integrations |
+| [`src/lib.rs`](../src/lib.rs) | Conversion registry, engine discovery, argument expansion, subprocess execution, publication, wheel menus |
+| [`src/tools.rs`](../src/tools.rs) | Tool registry, selection rules, per-file and combining tool runs |
+| [`src/actions.rs`](../src/actions.rs) | File actions: clipboard, terminal, share, float, reveal, copy/move without replacement |
+| [`src/main.rs`](../src/main.rs) | CLI, JSON Lines worker, picker, autostart, desktop integrations |
 | [`registry/conversions.toml`](../registry/conversions.toml) | Input/output routes and argument templates |
-| [`desktop/main.cpp`](../desktop/main.cpp) | Qt window, file queue, format wheel, diagnostics, cancellation |
-| [`tests/backends.rs`](../tests/backends.rs) | Integration tests with installed engines |
-| [`scripts/`](../scripts/) | User installation scripts |
+| [`registry/tools.toml`](../registry/tools.toml) | Tool definitions and argument templates |
+| [`desktop/radialwheel.h`](../desktop/radialwheel.h) | The shared three-mode wheel: drawing, animation, hit testing, keyboard |
+| [`desktop/main.cpp`](../desktop/main.cpp) | Tray companion, settings, context wheel, background jobs, batch manager |
+| [`integrations/kwin/plugin.cpp`](../integrations/kwin/plugin.cpp) | Compositor input filter for the drag gesture |
+| [`tests/`](../tests/) | Engine integration tests, wheel unit test, isolated KWin session |
+| [`install.sh`](../install.sh), [`uninstall.sh`](../uninstall.sh) | Distribution-aware user installation and removal |
+| [`scripts/`](../scripts/) | KWin build/installation, Windows installation, test harnesses |
 | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | Build and test matrix |
 
 ## Conversion lifecycle
 
-1. Canonicalize the input path and require a regular file.
+1. Canonicalize the input path and require a regular file (tools and actions may accept folders).
 2. Match its extension and the requested output against the embedded registry.
 3. Resolve the engine through `PATH` and validate the output directory.
 4. Create a temporary directory on the destination filesystem.
 5. Expand whole argument tokens and launch the engine directly, without a shell.
 6. Poll for completion, cancellation, or timeout; collect engine errors from a log.
-7. Publish the output with a hard link that refuses existing destination names.
+7. Publish the output with a hard link that refuses existing destination names. Folder
+   outputs (split pages, extraction) are moved into a directory created exclusively.
 8. Remove the temporary directory when the operation returns.
 
 The destination name is tried with increasing numeric suffixes. A concurrent
@@ -50,6 +59,10 @@ publication requires a supporting filesystem; there is no unsafe overwrite fallb
 
 ## Process interfaces
 
+- `menu convert|tools|actions PATH... --json`: the items a wheel shows for this selection,
+  each with `id`, `label`, `category`, and `glyph`. Only usable items are returned.
+- `tool ID PATH... --json`, `action ID PATH... [--dest DIR] --json`: one result line per output.
+- `autostart enable|disable|status`: XDG autostart entry on Linux, `Run` key on Windows.
 - `formats FILE --json`: format objects with `target`, `category`, `backend`, and `available`.
 - `doctor --json`: version, OS/session information, and executable availability.
 - `convert FILE --to FORMAT --json`: one result object per input; errors set a nonzero exit status.
@@ -62,23 +75,31 @@ and persistent queue recovery remain development work.
 
 ## Extending a route
 
-Edit the TOML registry, rebuild the core, and test both a successful conversion and
-failure cleanup. Templates support `{input}`, `{output}`, `{output_stem}`, and
-`{writer}` as complete arguments. New routes must not require shell interpolation.
+Edit a TOML registry, rebuild the core, and test both a successful run and failure
+cleanup. Templates support these complete arguments: `{input}`, `{inputs}` (every
+source), `{relative_inputs}` (bsdtar `-C dir name` pairs), `{archive_input}`,
+`{output}`, `{output_stem}`, `{output_dir}` and `{output_dir}/name` (a private
+directory for engines that choose their own file names), `{target}`, `{writer}`, and
+`{office_profile}` (a private LibreOffice profile). Placeholders are matched only in
+registry templates, never inside file names. New routes must not need a shell.
 Do not expose an output in the desktop until its publication behavior is understood,
 particularly for engines that emit multiple files.
 
-## Primary interaction: compositor wheel
+## Primary interaction: compositor wheels
 
-`integrations/kwin/plugin.cpp` adds the global Shift-drag gesture for KWin 6.8 Wayland.
-The input filter activates only for a local file drag, reads its URI list through an
-asynchronous pipe, and asks the CLI for common formats. `desktop/radialwheel.h` is
-shared with the file-context fallback and provides rendering and sector hit testing.
+`integrations/kwin/plugin.cpp` adds the global drag gesture for KWin 6.8 Wayland.
+On a key press during a pointer drag that offers file URIs, the input filter reads
+the URI list through an asynchronous pipe and asks `metroid menu` for the wheel that
+key opens. Keys come from `~/.config/metroid/metroid.conf` (`[Wheels]` `Convert`,
+`Tools`, `Actions`), written by the companion's settings and read again at each drag.
+Another wheel key switches the mode and re-queries the same paths. Arrow keys and
+Enter select from the keyboard; other keys are swallowed while the wheel is open.
 
-The wheel is latched after a Shift tap. On release, the plugin cancels the original
-source drag to prevent Shift's move behavior, then starts `metroid-desktop --convert-to`
-as a separate job. Conversion processes do not run inside KWin. The default application
-entry point is a tray companion; `--manager` opens the secondary batch window.
+On release, the plugin cancels the source drag so the file manager cannot complete a
+move or copy, then starts `metroid-desktop --convert-to`, `--tool`, or `--action` as
+a separate process. No engine runs inside KWin. `desktop/radialwheel.h` is shared by
+the compositor, the file-manager context wheel (`metroid-desktop --wheel KIND`), and
+the batch manager.
 
 `tests/kwin_input.cpp` is an isolated-test-only input module, excluded by default and
 never installed. Production installation copies only the production module as `metroid-<revision>.so`. See the

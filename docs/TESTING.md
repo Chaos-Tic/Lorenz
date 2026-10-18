@@ -2,10 +2,21 @@
 
 ## Automated coverage
 
-Rust tests cover the registry, extensions, JSON errors, the JSON Lines worker,
+Rust tests cover the registries, extensions, JSON errors, the JSON Lines worker,
 source preservation, concurrent output collisions, unusual file names, cancellation,
-timeouts, and cleanup after failure. Real engine tests cover PNG → WebP, SRT → VTT,
-Markdown → HTML → text, WAV → FLAC, AVI → GIF, PDF → text/PNG, and PDF merging.
+timeouts, cleanup after failure, tool selection rules, and copy/move without
+replacement (files, folders, folder into itself). Real engine tests cover:
+
+- conversions: PNG → WebP, SRT → VTT, Markdown → HTML → text, WAV → FLAC, AVI → GIF,
+  PDF → text/PNG, CSV → XLSX → CSV/PDF, RTF → PDF, PPTX → PNG/PDF/ODP, ZIP → TGZ;
+- tools: image compress (JPEG + PNG in one selection), rotate, resize, name collisions,
+  PDF merge/split/pages to PNG/compress, video first frame/mute/speed/half size,
+  audio mono/normalize, ZIP of a folder and odd names (`-x`, `@x`), extraction,
+  and an archive entry using `..` that must not escape the extraction folder.
+
+Tests skip engines that are absent; read the log to know the real coverage.
+CTest checks the wheel: sector hit testing for 1–8 items, screen-edge placement,
+dismissal and reopening, keyboard stepping, tab targets and mode switching.
 The headless Qt smoke test verifies window construction and shutdown.
 
 A desktop integration test selects WebP and clicks the real conversion button:
@@ -34,9 +45,18 @@ sets an absolute screenshot destination for either desktop test mode.
 Run this checklist on GNOME Wayland, KDE Wayland, Hyprland, Sway, XFCE X11,
 Windows 10, and Windows 11. Successful compilation does not validate these interactions.
 
-## Global Shift-drag
+## Global drag gesture
 
-Run `scripts/test-kwin-isolated.sh` to exercise a real Wayland drag and conversion
-in a private KWin session. See the [integration guide](../integrations/kwin/README.md).
-CTest also validates radial segment selection and screen-edge placement. The manual
-batch-window checklist above covers the secondary interface, not global gestures.
+Run `scripts/test-kwin-isolated.sh` to exercise real Wayland drags in a private KWin
+session with freshly built binaries: Shift conversion by mouse, Ctrl tools by keyboard,
+Alt/Shift switching, a held Ctrl ignored, Escape and center cancellation, and plugin
+reload. See the [integration guide](../integrations/kwin/README.md). Set
+`METROID_TEST_TRACE=1` to trace each step.
+
+## Installer
+
+`scripts/test-install-container.sh IMAGE` copies the source tree into a clean
+container, runs `./install.sh --yes --no-office --no-kwin --no-autostart`, then checks
+`doctor`, a conversion, two tools, the Dolphin menu, the Qt smoke test, autostart and
+`./uninstall.sh`. CI runs it on Debian stable, Ubuntu 24.04, Fedora and Arch. It does
+not exercise the interactive questions or the KWin extension; check those by hand.

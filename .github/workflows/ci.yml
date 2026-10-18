@@ -37,11 +37,11 @@ jobs:
         run: |
           if command -v apt-get >/dev/null; then
             apt-get update
-            apt-get install -y curl ca-certificates build-essential git ffmpeg imagemagick pandoc poppler-utils qpdf
+            apt-get install -y curl ca-certificates build-essential git ffmpeg imagemagick pandoc poppler-utils qpdf ghostscript libarchive-tools
           elif command -v pacman >/dev/null; then
-            pacman -Syu --noconfirm --needed base-devel curl git ffmpeg imagemagick pandoc-cli poppler qpdf
+            pacman -Syu --noconfirm --needed base-devel curl git ffmpeg imagemagick pandoc-cli poppler qpdf ghostscript libarchive
           else
-            dnf install -y gcc gcc-c++ make curl git ffmpeg-free ImageMagick pandoc poppler-utils qpdf
+            dnf install -y gcc gcc-c++ make curl git ffmpeg-free ImageMagick pandoc poppler-utils qpdf ghostscript bsdtar
           fi
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -71,6 +71,16 @@ jobs:
           windeployqt --release build/Release/metroid-desktop.exe
           $env:QT_QPA_PLATFORM = 'offscreen'
           build/Release/metroid-desktop.exe --smoke-test
+
+  installer:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['debian:stable', 'ubuntu:24.04', 'fedora:latest', 'archlinux:latest']
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/test-install-container.sh ${{ matrix.image }}
 
   kwin-extension:
     runs-on: ubuntu-latest

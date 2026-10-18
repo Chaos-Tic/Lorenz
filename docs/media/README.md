@@ -4,8 +4,11 @@
 
 | Asset | Purpose |
 | --- | --- |
-| `shift-drag-wheel.png` | Actual KWin wheel while hovering WebP during a file drag |
-| `shift-drag.gif` | Native wheel frames captured every 20 ms, showing opening, hover, and dismissal |
+| `shift-drag-wheel.png` | Actual KWin Convert wheel while hovering WebP during a file drag |
+| `ctrl-drag-tools.png`, `alt-drag-actions.png` | Actual KWin Tools and Actions wheels from the same isolated session |
+| `three-wheels.png` | The three captures above, side by side |
+| `shift-drag.gif` | Native wheel frames every 20 ms: opening, hover, switching to Tools and Actions, dismissal |
+| `settings.png` | Actual settings dialog (wheel keys and start at login) |
 | `banner.svg` | Vector header using the desktop's graphite, mint, and soft-white palette |
 | `desktop-ready.png` | Actual native Qt window before adding files |
 | `desktop-converted.png` | Actual successful PNG-to-WebP conversion using generated sample data |
@@ -30,8 +33,10 @@ The second command performs a real conversion and leaves a converted file beside
 sample. Inspect captures for layout, filenames, and accidental personal information
 before publishing. The SVG is editable source; no external font or image fetch is needed.
 
-Wheel captures come from the isolated KWin interaction test. The input driver can
-capture only the wheel widget, avoiding unrelated desktop content.
+Wheel captures come from the isolated KWin interaction test (`wheel.png`, `tools.png`,
+`actions.png` in its evidence folder). The input driver captures only the wheel widget,
+avoiding unrelated desktop content. The settings capture uses
+`METROID_SCREENSHOT=/absolute/path/settings.png metroid-desktop --settings`.
 
 To capture the wheel animation frames: `QT_QPA_PLATFORM=offscreen
 METROID_WHEEL_FRAMES=/absolute/path/frames build/metroid-wheel-test`.

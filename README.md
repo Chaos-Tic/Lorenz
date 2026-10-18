@@ -8,209 +8,274 @@
 
 # Metroid
 
-**Drag a file. Tap Shift. Drop onto a format.**
+**Drag a file. Tap a key. Drop onto a choice.**
 
-Metroid brings a conversion wheel to your cursor without opening a batch window.
-The global gesture is implemented for **KDE Plasma / KWin 6.8 on Wayland**. The
-Rust conversion core and secondary Qt batch manager also build on Linux and Windows.
-The filename stays the same: `photo.png` becomes `photo.webp`. A number is added
-only when the destination already exists (`photo-2.webp`). Originals are preserved. No account, application server, or cloud service is required.
+Metroid puts three wheels under your cursor while you drag a file: **Shift** converts
+it, **Ctrl** edits it (compress, resize, rotate, split, merge…) and **Alt** acts on it
+(copy, move, share, terminal…). Everything runs locally with the engines installed
+on your computer. Originals are never modified: `photo.png` becomes `photo.webp`,
+and a tool produces `photo-compressed.png`. A number is added only when a name is
+already taken. No account, server, or cloud service is involved.
 
-**Status: under development. The Shift-drag integration is KWin-specific.** This is an independent implementation;
-it contains no Tangerine source code and is not affiliated with any namesake franchise.
-All repository documentation, commit messages, comments, and application text are in English.
+The global drag gesture is implemented for **KDE Plasma 6.8 on Wayland**. Every
+other Linux desktop gets the same wheels from the file manager's context menu, and
+Windows from **Send to**. This is an independent implementation inspired by the
+interaction of Tangerine for Mac; it contains no Tangerine code and is not affiliated
+with Tangerine or with any namesake franchise. **Status: under development.**
 
-[Get started](#linux-installation) · [Desktop guide](docs/USER_GUIDE.md) · [Formats](#implemented-conversions) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Architecture](docs/ARCHITECTURE.md)
+[Install](#install-on-linux) · [The three wheels](#three-wheels) · [Formats and tools](#what-metroid-can-do) · [Desktop guide](docs/USER_GUIDE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
-## At a glance
+<p align="center">
+  <img src="docs/media/three-wheels.png" alt="The Convert, Tools and Actions wheels captured in a KWin session" width="100%">
+</p>
 
-| Shift-drag workflow | Local processing | Original files preserved |
+*Real wheels captured during a Wayland file drag in an isolated KWin session.*
+
+## Three wheels
+
+| Key (default) | Wheel | What it offers |
 | --- | --- | --- |
-| Tap Shift while dragging a local file | Installed engines and a Rust core | New output names; no silent replacement |
-| Release the key; the wheel stays open | No account or application server | Center / Escape to cancel |
+| **Shift** | Convert | Every format the selection can become, grouped by family |
+| **Ctrl** | Tools | Compress, resize, rotate, mirror, black & white, remove metadata, normalize audio, split or merge PDFs, extract or create archives… |
+| **Alt** | Actions | Share, Float, Copy, Copy to…, Move to…, Copy path, Terminal, Show in folder |
 
-![Metroid Shift-drag wheel with WebP highlighted](docs/media/shift-drag-wheel.png)
+1. Start dragging one or more files (or folders) from your file manager.
+2. **Tap** Shift, Ctrl or Alt while holding the mouse button. The wheel opens at the cursor and stays open.
+3. Tap another of these keys to switch wheels in place.
+4. Move onto a sector, or use the arrow keys, then release the mouse button (or press Enter).
 
-*Actual wheel captured during a Wayland file drag in an isolated KWin session.*
+Escape, the center, or the outside of the wheel cancels. A key already held *before*
+the drag starts keeps its usual meaning, so Ctrl-drag still copies and Shift-drag still
+moves in your file manager. The keys can be changed in **Settings** (tray icon).
 
 <details>
-<summary>View the animated workflow</summary>
+<summary>Watch the wheels switch</summary>
 
-![The Shift-drag wheel before and after hovering WebP](docs/media/shift-drag.gif)
-
-Native widget frames show the opening and hover transitions. The still image above
-shows the highlighted sector without motion.
+![Opening the wheel, hovering WebP, then switching to Tools and Actions](docs/media/shift-drag.gif)
 
 </details>
 
-## Designed around the gesture
-
-A graphite palette, rounded format petals, and a pale mint selection keep the wheel
-readable without a large window. The center shows the source filename and the selected
-format. Image, audio, video, and document glyphs distinguish the available choices.
-
-Opening takes 220 ms; hover transitions follow the pointer, and dismissal takes 110 ms.
-Selection targets stay fixed during animation. A reading indicator covers discovery,
-and an explicit unavailable state handles files without a common conversion route.
-The context wheel, tray icon, and secondary batch manager share the same visual identity.
-
-## Convert without opening a window
-
-1. Start dragging a local file from Dolphin or another Wayland application.
-2. **Tap Shift** while holding the mouse button. The wheel opens at the cursor.
-3. Release Shift and move onto the desired format.
-4. Release the mouse button to convert. A notification reports the result.
-
-Drop in the center or outside the wheel, or press **Escape**, to cancel. Shift
-without a file drag does nothing. A drag without Shift keeps its normal behavior.
-Metroid cancels the source's move operation before converting, so Shift does not
-move or delete the original. Mixed selections show only common formats.
-
-Launching Metroid from the application menu opens a small tray companion.
-**Open batch manager** is available from its menu when you need queue management;
-it is no longer the primary workflow. File-manager context actions open the small
-format wheel directly. See the [interaction guide](docs/USER_GUIDE.md).
-
-## Linux installation
-
-Requirements: stable Rust (2024 edition), a C++ compiler, CMake ≥ 3.21, Qt6 Widgets ≥ 6.4.
+## Install on Linux
 
 ```sh
-./scripts/install-linux.sh
+git clone https://github.com/Chaos-Tic/Metroid.git
+cd Metroid
+./install.sh
 ```
 
-The user installation adds the desktop, core, icon, and Nautilus, Dolphin, and Nemo
-integrations. It starts no background service. Optional engines: ImageMagick 7
-(`magick`), FFmpeg, Pandoc, Poppler, and qpdf. Install them through your distribution's
-package manager. Engine detection does not guarantee every codec: HEIC, AVIF, and
-H.264 support depends on the installed builds.
+The installer detects your distribution, builds Metroid from source, and installs it
+**for your user only** in `~/.local`. It asks before each optional step:
 
-For Thunar, create a custom action using `metroid gui %F`. On other desktops,
-pass a file to `metroid pick` or use a file-manager context action. These are
-fallbacks, not global Shift-drag support.
+| Question | Default | What happens |
+| --- | --- | --- |
+| Install build tools? | Yes | Rust, a C++ compiler, CMake and Qt 6 through your package manager (asks for your password). If your Rust is older than 1.85, it offers the official `rustup` installer. |
+| Install conversion engines? | Yes | FFmpeg, ImageMagick, Pandoc, Poppler, qpdf, Ghostscript, libarchive, clipboard tools. Unavailable packages are skipped, not fatal. |
+| Install LibreOffice? | No | Adds Word/ODT → PDF, PowerPoint and spreadsheet routes (large download). |
+| Install the KWin extension? | Yes, on KDE Plasma 6.8 | Builds the drag gesture against your KWin version and loads it without restarting the session (asks for your password). |
+| **Start Metroid when you log in?** | Yes | Adds the tray companion to your session's autostart. Answer *No* to start it only from the application menu. |
 
-### Enable Shift-drag on KDE Wayland
+You can change the startup choice and the keys later from the tray icon → **Settings…**,
+or with `metroid autostart enable` / `metroid autostart disable`.
 
-Install KWin 6.8 development headers, Extra CMake Modules, Vulkan headers, and the
-Qt/KDE build dependencies, then run:
+### Supported distributions
+
+| Family | Examples | Package manager | Installer validated in a clean container |
+| --- | --- | --- | --- |
+| Arch | Arch, EndeavourOS, Manjaro, CachyOS | pacman | ✅ `archlinux:latest`; also used on the developer's KDE desktop |
+| Debian | Debian, Ubuntu, Linux Mint, Pop!_OS | apt | ✅ `debian:stable`, `ubuntu:24.04` (Rust installed through rustup) |
+| Fedora | Fedora, Nobara, RHEL-like with EPEL | dnf | ✅ `fedora:latest` |
+| openSUSE | Tumbleweed, Leap | zypper | Package list provided, not yet validated |
+| Void, Alpine | | xbps, apk | Package list provided, not yet validated |
+| Others | | — | Install the [requirements](#manual-installation) yourself, then run `./install.sh --no-deps` |
+
+### Unattended installation
 
 ```sh
-./scripts/install-kwin.sh
+./install.sh --yes                       # recommended answers, including start at login
+./install.sh --yes --no-autostart        # same, without starting at login
+./install.sh --no-deps --kwin --office   # use installed packages; force the optional parts
+./install.sh --help                      # every option
 ```
 
-This builds an extension against the installed KWin version, installs its production
-module into Qt's plugin directory (administrator access), loads it without restarting
-KWin, and enables it for future logins. No input-device permissions or raw keyboard
-access are granted. **Rebuild after a KWin update**; incompatible versions are rejected.
-See the [KWin integration guide](integrations/kwin/README.md) for scope, validation,
-and removal.
+### Manual installation
 
-## Windows installation
+Requirements: Rust ≥ 1.85, a C++17 compiler, CMake ≥ 3.21 and Qt 6 Widgets ≥ 6.4.
+Optional engines: `ffmpeg`, ImageMagick (`magick`, or `convert` from version 6),
+`pandoc`, Poppler (`pdftotext`, `pdftoppm`), `qpdf`, `gs`, `bsdtar`, `soffice`,
+and `wl-copy` or `xclip` for clipboard actions.
 
-Install Rust, MSVC C++ build tools, CMake, and Qt6 for MSVC. Set `CMAKE_PREFIX_PATH`
+<details>
+<summary>Package commands per distribution</summary>
+
+```sh
+# Arch and derivatives
+sudo pacman -S --needed base-devel cmake rust qt6-base libnotify \
+  ffmpeg imagemagick pandoc-cli poppler qpdf ghostscript libarchive wl-clipboard xclip
+# Debian, Ubuntu and derivatives (Ubuntu 24.04: install Rust with rustup)
+sudo apt install build-essential cmake cargo rustc qt6-base-dev pkg-config libnotify-bin \
+  ffmpeg imagemagick pandoc poppler-utils qpdf ghostscript libarchive-tools wl-clipboard xclip
+# Fedora (enable RPM Fusion for full FFmpeg codecs)
+sudo dnf install gcc-c++ cmake cargo rust qt6-qtbase-devel libnotify \
+  ffmpeg-free ImageMagick pandoc poppler-utils qpdf ghostscript bsdtar wl-clipboard xclip
+# openSUSE
+sudo zypper install gcc-c++ cmake cargo rust qt6-widgets-devel libnotify-tools \
+  ffmpeg-7 ImageMagick pandoc poppler-tools qpdf ghostscript bsdtar wl-clipboard xclip
+```
+
+LibreOffice: `libreoffice-fresh` (Arch), `libreoffice-writer-nogui libreoffice-calc-nogui
+libreoffice-impress-nogui` (Debian/Ubuntu), `libreoffice-writer libreoffice-calc
+libreoffice-impress` (Fedora, openSUSE).
+
+KWin extension build files: `kwin extra-cmake-modules vulkan-headers` (Arch),
+`kwin-dev extra-cmake-modules libvulkan-dev` (Debian/Ubuntu), `kwin-devel
+extra-cmake-modules vulkan-headers` (Fedora), `kwin6-devel extra-cmake-modules
+vulkan-devel` (openSUSE).
+
+</details>
+
+### Update and uninstall
+
+```sh
+git pull && ./install.sh     # rebuilds and replaces the installed version
+./uninstall.sh               # removes Metroid, its menus, autostart and the KWin extension
+```
+
+Rebuild after every KWin update: the extension is tied to the compositor version.
+Uninstalling never touches your files.
+
+### Where it works
+
+| Desktop | How to open the wheels |
+| --- | --- |
+| KDE Plasma 6.8, Wayland | Drag a file and tap Shift / Ctrl / Alt anywhere |
+| KDE (other versions), GNOME, Cinnamon | Right-click → **Metroid** (Dolphin, Nautilus scripts, Nemo) |
+| XFCE (Thunar) | Add a custom action: `metroid-desktop --wheel convert %F` |
+| Hyprland, Sway, niri | Bind a key to `metroid pick FILE --menu fuzzel` (or `wofi`, `rofi`) |
+| Any | `metroid` command line, or the batch manager from the tray icon |
+
+## Install on Windows
+
+Install Rust, the MSVC C++ build tools, CMake and Qt 6 for MSVC. Set `CMAKE_PREFIX_PATH`
 to Qt and put its tools on `PATH`, then run:
 
 ```powershell
-./scripts/install-windows.ps1
+./scripts/install-windows.ps1              # asks whether to start at sign-in
+./scripts/install-windows.ps1 -Autostart   # or -NoAutostart
 ```
 
-The user installation adds Metroid to Start and Send to. Install conversion engines
-separately and put them on `PATH`. Windows compilation is configured in CI;
-interactive Windows 10/11 validation remains pending. The Windows global Shift-drag
-gesture is not implemented yet; use the file-context wheel or batch manager there.
+Metroid is added to **Start** and **Send to**; *Send to → Metroid* opens the wheels.
+Install the conversion engines separately and put them on `PATH`. Windows builds in
+CI; interactive Windows 10/11 validation and a native Windows drag gesture are pending.
 
-## Implemented conversions
+## What Metroid can do
 
-| Family | Engine | Scope |
+### Convert (Shift)
+
+| Family | Engine | Formats |
 | --- | --- | --- |
-| Images | ImageMagick 7 | PNG, JPG, WebP, TIFF, BMP, AVIF, PDF; HEIC input |
-| Audio | FFmpeg | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF; audio extraction from video |
-| Video | FFmpeg | MP4, MOV, MKV, WebM, AVI, GIF |
-| Documents | Pandoc | MD, DOCX, EPUB, HTML, ODT, TXT; RTF input |
-| PDF | Poppler | Text and first-page PNG at 150 dpi |
+| Images | ImageMagick | PNG, JPG, WebP, TIFF, BMP, AVIF, PDF; HEIC, GIF and SVG input |
+| Video | FFmpeg | MP4, MOV, MKV, WebM, AVI, WMV, GIF |
+| Audio | FFmpeg | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA; audio from any video |
+| Documents | Pandoc · LibreOffice | MD, DOCX, EPUB, HTML, ODT, TXT; RTF input; DOCX/DOC/ODT/RTF → PDF |
+| Slides | LibreOffice | PPT/PPTX/ODP → PDF, PPTX, ODP; first slide → PNG, JPG |
+| Spreadsheets | LibreOffice | XLSX, XLS, ODS, CSV → XLSX, ODS, CSV, PDF |
+| PDF | Poppler | Text; first page → PNG or JPG at 300 dpi |
 | Subtitles | FFmpeg | SRT ↔ VTT |
-| PDF merging | qpdf | `merge-pdf` CLI command |
+| Archives | libarchive | ZIP, TAR, TGZ (GZ, BZ2, XZ, 7Z and RAR input) |
 
-The registry lives in `registry/conversions.toml` and is embedded at build time.
-These are declared routes, not certification of every combination or codec. Input
-detection currently uses extensions; engines validate content. Multipage images
-may produce extra files that are not published: this version targets single-page images.
+### Tools (Ctrl)
 
-Pandoc runs with `--sandbox`. Some Pandoc distributions cannot export DOCX/ODT in
-this mode unless their data files are embedded. Metroid keeps this protection and
-reports the failure; use a Pandoc build with `embed_data_files` for those formats.
-See the [Pandoc manual](https://pandoc.org/MANUAL.html#general-options). External
-resources are not automatically fetched. External engines are not isolated by an
-OS sandbox: local processing is not a network guarantee for every delegate or
-protection against vulnerabilities in those engines.
+| Family | Tools |
+| --- | --- |
+| Images | Compress, Resize 50%, Rotate right/left, Mirror, Black & white, Remove metadata |
+| Video | Compress (H.264), Remove audio, Half size, Rotate right, Speed ×2, First frame |
+| Audio | Normalize volume, Mono, Compress |
+| PDF | Compress, Merge (2+ files), Split pages, Pages to PNG (300 dpi), Rotate right |
+| Archives | Extract into a new folder |
+| Anything | Compress to ZIP (files and folders) |
+
+### Actions (Alt)
+
+| Action | Requires |
+| --- | --- |
+| Share | KDE Connect (`kdeconnect-handler`) |
+| Float | A drag-and-drop helper: `dragon-drop`, `dragon` or `ripdrag` |
+| Copy · Copy path | `wl-copy` (Wayland) or `xclip` (X11); PowerShell on Windows |
+| Copy to… · Move to… | Nothing: a folder picker opens; existing names are never replaced |
+| Terminal | Your desktop's terminal (Konsole, GNOME Terminal, Ptyxis, kitty, foot, …) |
+| Show in folder | Your file manager |
+
+Only items that work on your computer appear: a missing engine hides its routes.
+Selections show what all selected items have in common. These routes are declared in
+[`registry/conversions.toml`](registry/conversions.toml) and
+[`registry/tools.toml`](registry/tools.toml); a declared route is not a certification
+of every codec. HEIC, AVIF and H.264 support depends on how your engines were built.
+
+Pandoc runs with `--sandbox`; some Pandoc builds then cannot write DOCX/ODT (see
+[Troubleshooting](docs/TROUBLESHOOTING.md)). LibreOffice runs with a private,
+temporary profile, so it never touches your open documents. Engines are not
+isolated by an operating-system sandbox; keep them updated.
 
 ## Command line
 
 ```sh
-metroid doctor
-metroid formats photo.png --json
+metroid doctor                                   # installed engines and session
+metroid menu convert photo.png                   # what each wheel offers
+metroid menu tools photo.png --json
 metroid convert photo.png --to webp
 metroid convert movie.mov --to mp4 --output-dir ./exports
-metroid merge-pdf chapter1.pdf chapter2.pdf --output-dir ./exports
-metroid pick photo.png --menu fuzzel
-metroid gui photo.png
+metroid tool compress photo.jpg holiday.png      # photo-compressed.jpg, holiday-compressed.png
+metroid tool merge part1.pdf part2.pdf           # Merged.pdf
+metroid action copy-to --dest ~/Backup report.pdf
+metroid autostart enable                         # start the tray companion at login
+metroid pick photo.png --menu fuzzel             # dmenu-style picker for tiling desktops
+metroid-desktop --wheel tools photo.png          # open a wheel without dragging
 ```
 
-`convert --json` emits one JSON line per file, containing `ok`, `input`, and `output`
-or `error`. Exit status is 1 if any conversion fails. `--timeout` sets the time
-limit in seconds (3600 by default). `--cancel-file` names a signal file: its appearance
-stops the engine and cleans up temporary output. `serve` is a sequential JSON Lines
-worker on stdin/stdout with no network socket:
+`--json` prints one JSON line per result with `ok`, `input`, and `output` or `error`;
+the exit status is 1 if anything fails. `--timeout` limits an engine run (3600 s by
+default) and `--cancel-file` stops it as soon as that file appears. `serve` is a
+sequential JSON Lines worker on stdin/stdout with no network socket.
 
-```json
-{"input":"/path/photo.png","to":"webp","output_dir":"/path/exports"}
-```
-
-Normal shutdown cleans temporary files. A power failure can leave `.metroid-*`
-directories beside outputs; remove them only after checking that no conversion is
-running. Atomic publication uses hard links: filesystems without hard-link support,
-such as FAT/exFAT, return an error. Desktop queues do not persist across launches.
+Outputs are written to a hidden `.metroid-*` folder beside the destination, then
+published atomically with a hard link, which FAT/exFAT do not support. After a power
+failure, such folders can be deleted once no conversion is running.
 
 ## Development and verification
 
 ```sh
 cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings
-cargo test --locked
-cargo build --release --locked
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel 2
-QT_QPA_PLATFORM=offscreen build/metroid-desktop --smoke-test
+cargo test --locked                              # real engines; missing ones are skipped
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
+ctest --test-dir build                           # wheel geometry, modes and keyboard
+./scripts/test-kwin-isolated.sh                  # real drag in a private KWin session
+./scripts/test-install-container.sh debian:stable  # the installer in a clean container
 ```
 
-Tests use installed engines and explicitly skip missing optional engines. CI covers
-Rust and Qt on Linux/Windows, plus Debian stable/testing, Arch, and Fedora stable/rawhide
-for the core. Desktop-specific behavior also needs manual validation, described in
-`docs/TESTING.md`.
+CI builds and tests the core on Linux and Windows, the Qt desktop on both, the core
+on Debian stable/testing, Arch and Fedora stable/rawhide, the KWin extension on Arch,
+and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 
 ## Documentation
 
 | Guide | What it covers |
 | --- | --- |
-| [Interaction guide](docs/USER_GUIDE.md) | Shift-drag, cancellation, context wheel, secondary batch manager |
-| [KWin integration](integrations/kwin/README.md) | Installation, supported versions, isolated gesture tests, removal |
-| [Troubleshooting](docs/TROUBLESHOOTING.md) | Missing engines, Pandoc, filesystems, desktop integration |
-| [Architecture](docs/ARCHITECTURE.md) | Data flow, source map, subprocess interfaces, extension points |
+| [Interaction guide](docs/USER_GUIDE.md) | The three wheels, keys, cancellation, settings, batch manager |
+| [KWin integration](integrations/kwin/README.md) | Drag gesture scope, installation, isolated tests, removal |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Missing engines, Pandoc, filesystems, startup, desktop integration |
+| [Architecture](docs/ARCHITECTURE.md) | Data flow, source map, registries, process interfaces |
 | [Validation](docs/TESTING.md) | Automated coverage and a manual platform checklist |
 | [Distribution](packaging/README.md) | Installation boundaries and packaging plans |
 | [Visual assets](docs/media/README.md) | Screenshot provenance and refresh instructions |
 
 ## Roadmap
 
-- Content/MIME detection, detailed engine/codec capabilities, per-engine progress.
-- Process-tree cancellation and operating-system resource limits.
-- Persistent worker queues, notifications, configurable local history.
-- Safe archive extraction, Office/LibreOffice, spreadsheets, multipage PDF output.
-- Compression, resizing, cropping, and trimming with desktop controls.
-- Additional compositor integrations and a native Windows Shift-drag implementation.
-- Tools/actions wheels and configurable trigger keys.
-- Context-menu validation across desktops and Windows 11 integration.
-- Native packages, Flatpak/AppImage, signed Windows installer, publication license.
+- Drag gesture for GNOME Shell, wlroots compositors and Windows.
+- Tools with parameters (crop, trim, quality slider) and per-tool settings.
+- PDF to DOCX/EPUB, Apple Pages input, multipage image export options.
+- Content/MIME detection, codec capability probing, progress reporting.
+- Native packages (AUR, COPR, deb, Flatpak), signed Windows installer, license choice.
 
-See `packaging/README.md` for distribution plans. No redistribution license has
-been granted yet; a license must be chosen before public distribution.
+No redistribution license has been granted yet; a license must be chosen before
+public distribution. See [`packaging/README.md`](packaging/README.md).
