@@ -94,18 +94,29 @@ fn clipboard(mime: &str) -> Option<(PathBuf, Vec<String>)> {
     })
 }
 fn windows_clipboard(paths: &[PathBuf], files: bool) -> Result<()> {
-    // Paths are passed as arguments, never interpolated into the script.
+    // PowerShell joins arguments after -Command into the script, so paths are
+    // sent on stdin and read by a fixed script; they are never parsed as code.
     let script = if files {
-        "& { Set-Clipboard -LiteralPath $args }"
+        "$p = @([Console]::In.ReadToEnd() -split \"`n\" | Where-Object { $_ }); Set-Clipboard -LiteralPath $p"
     } else {
-        "& { Set-Clipboard -Value ($args -join [Environment]::NewLine) }"
+        "Set-Clipboard -Value ([Console]::In.ReadToEnd().TrimEnd())"
     };
-    let status = Command::new("powershell.exe")
+    let mut child = Command::new("powershell.exe")
         .args(["-NoProfile", "-NonInteractive", "-Command", script])
-        .args(paths)
-        .status()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .spawn()
         .context("Cannot start PowerShell")?;
-    ensure!(status.success(), "The clipboard could not be updated");
+    let text: Vec<String> = paths.iter().map(|p| p.display().to_string()).collect();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(text.join("\n").as_bytes())?;
+    ensure!(
+        child.wait()?.success(),
+        "The clipboard could not be updated"
+    );
     Ok(())
 }
 fn to_clipboard(mime: &str, data: &str) -> Result<()> {
