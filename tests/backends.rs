@@ -1,5 +1,5 @@
 //! Real backend tests. Optional engines are tested when installed; CI installs them.
-use metroid::{convert, engine, executable};
+use metroid::{convert, engine};
 use std::{fs, path::Path, process::Command};
 #[test]
 fn image_roundtrip_with_unusual_filename() {
@@ -99,7 +99,7 @@ fn backend_cancellation_and_timeout_reap_process() {
     let d = tempfile::tempdir().unwrap();
     // A script written by the test could not be executed while a parallel test
     // forks with its descriptor still open ("text file busy"); use sleep itself.
-    let sleeper = executable("sleep").unwrap();
+    let sleeper = metroid::executable("sleep").unwrap();
     let wait = ["20".to_owned()];
     let cancel = d.path().join("cancel");
     std::thread::scope(|s| {

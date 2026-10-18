@@ -481,18 +481,25 @@ local function collect(dir)
   if not ok then return end
   for _, name in ipairs(names) do
     local path = dir .. "/" .. name
-    if pcall(pandoc.system.list_directory, path) then collect(path) else extracted[slashes(path)] = true end
+    if pcall(pandoc.system.list_directory, path) then collect(path) else extracted[slashes(path)] = path end
   end
 end
 collect(media)
+-- The listed path itself replaces the source, so the writer opens exactly the
+-- file that was checked.
 local function allowed(src)
-  return extracted[slashes(src)] and not src:find("%", 1, true) and not src:find("..", 1, true)
+  if src:find("%", 1, true) or src:find("..", 1, true) then return nil end
+  return extracted[slashes(src)]
 end
 local keep = { title = true, subtitle = true, author = true, date = true, lang = true,
   dir = true, abstract = true, keywords = true, subject = true, description = true }
 return {{
   Image = function(image)
-    if embeds and not allowed(image.src) then return image.caption end
+    if not embeds then return end
+    local path = allowed(image.src)
+    if not path then return image.caption end
+    image.src = path
+    return image
   end,
   RawInline = function(raw) if FORMAT:match("epub") then return {} end end,
   RawBlock = function(raw) if FORMAT:match("epub") then return {} end end,

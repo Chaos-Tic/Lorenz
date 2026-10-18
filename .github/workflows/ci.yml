@@ -10,9 +10,10 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
+          toolchain: stable
           components: rustfmt, clippy
       - run: cargo fmt --check
       - run: cargo clippy --locked --all-targets -- -D warnings
@@ -22,7 +23,7 @@ jobs:
         run: choco install -y --no-progress pandoc imagemagick ffmpeg
       - run: cargo test --locked
       - run: cargo build --release --locked
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: core-${{ matrix.os }}
           path: |
@@ -47,14 +48,16 @@ jobs:
           else
             dnf install -y gcc gcc-c++ make curl git ffmpeg-free ImageMagick pandoc poppler-utils qpdf ghostscript bsdtar
           fi
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
       - run: cargo test --locked
       - run: cargo run --locked -- doctor
   desktop-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: sudo apt-get update && sudo apt-get install -y qt6-base-dev
       - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build --parallel 2
@@ -62,11 +65,9 @@ jobs:
       - run: QT_QPA_PLATFORM=offscreen build/metroid-desktop --smoke-test
   desktop-windows:
     runs-on: windows-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: jurplel/install-qt-action@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4
         with:
           version: '6.8.3'
           cache: true
@@ -106,15 +107,27 @@ jobs:
           if ($LASTEXITCODE) { throw 'doctor failed' }
           powershell -NoProfile -ExecutionPolicy Bypass -File test-install/Metroid/uninstall.ps1
           if (Test-Path $installed) { throw 'uninstall left files' }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: Metroid-windows-x64
           path: dist/Metroid-windows-x64.zip
-      - name: Attach the package to a version release
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
+
+  # Only this job may write, and it runs no build code: it publishes the
+  # package that desktop-windows built and tested.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: desktop-windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: Metroid-windows-x64
+      - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" dist/Metroid-windows-x64.zip --verify-tag --generate-notes
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" Metroid-windows-x64.zip --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
 
   installer:
     runs-on: ubuntu-latest
@@ -123,7 +136,7 @@ jobs:
       matrix:
         image: ['debian:stable', 'ubuntu:24.04', 'fedora:latest', 'archlinux:latest']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: ./scripts/test-install-container.sh ${{ matrix.image }}
 
   kwin-extension:
@@ -131,5 +144,5 @@ jobs:
     container: archlinux:latest
     steps:
       - run: pacman -Syu --noconfirm --needed base-devel cmake git curl kwin extra-cmake-modules vulkan-headers
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: ./scripts/build-kwin.sh
