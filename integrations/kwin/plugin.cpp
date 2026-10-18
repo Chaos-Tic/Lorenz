@@ -51,7 +51,7 @@ public:
         connect(KWin::waylandServer()->seat(),&KWin::SeatInterface::dragEnded,this,[this]{ if (!ending) reset(); });
         connect(&probe,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,[this](int code,QProcess::ExitStatus) {
             if (!active) return;
-            if (code!=0) { wheel.message="Engine unavailable\nRelease to cancel"; wheel.update(); return; }
+            if (code!=0) { wheel.message="Engine unavailable"; wheel.setFormats({}); return; }
             QSet<QString> supported;
             for (const auto entry:QJsonDocument::fromJson(probe.readAllStandardOutput()).array()) {
                 const auto f=entry.toObject(); if (f["available"].toBool()) supported.insert(f["target"].toString());
@@ -60,8 +60,8 @@ public:
             ++queryIndex;
             if (queryIndex<files.size()) query();
             else {
-                deadline.stop(); wheel.formats=common.values(); wheel.formats.sort();
-                wheel.message="No common format\nRelease to cancel"; wheel.update();
+                deadline.stop(); auto values=common.values(); values.sort();
+                wheel.message="No common format"; wheel.setFormats(values);
             }
         });
         connect(&probe,&QProcess::errorOccurred,this,[this](QProcess::ProcessError e){ if (e==QProcess::FailedToStart) abort(); });
@@ -120,7 +120,8 @@ private:
         int pipeFd[2]; if (pipe2(pipeFd,O_CLOEXEC)!=0) return;
         fcntl(pipeFd[0],F_SETFL,O_NONBLOCK);
         source=candidate; active=true; payload.clear(); files.clear(); common.clear(); queryIndex=0;
-        wheel.formats.clear(); wheel.message="Reading files…"; wheel.openAt(pos.toPoint());
+        wheel.setFormats({}); wheel.setLoading(true); wheel.sourceName.clear(); wheel.sourceType.clear();
+        wheel.message="Reading files…"; wheel.openAt(pos.toPoint());
         seat->setDragTarget(nullptr,nullptr,pos,QMatrix4x4());
         readFd=pipeFd[0]; reader=new QSocketNotifier(readFd,QSocketNotifier::Read,this);
         connect(reader,&QSocketNotifier::activated,this,[this]{ readUris(); });
@@ -150,6 +151,8 @@ private:
                     if (files.size()>128) { abort(); return; }
                 }
                 if (files.isEmpty()) { abort(); return; }
+                wheel.sourceName=files.size()==1?QFileInfo(files.first()).fileName():QString("%1 files").arg(files.size());
+                wheel.sourceType=QFileInfo(files.first()).suffix().toLower();
                 query(); return;
             } else {
                 if (errno!=EAGAIN && errno!=EINTR) abort();
@@ -159,7 +162,7 @@ private:
     }
     void query() { probe.start(executable("metroid"),{"formats",files[queryIndex],"--json"}); }
     void reset() {
-        active=false; deadline.stop(); closePipe(); wheel.hide(); source.clear();
+        active=false; deadline.stop(); closePipe(); wheel.dismiss(); source.clear();
         if (probe.state()!=QProcess::NotRunning) probe.kill();
     }
     void abort() {

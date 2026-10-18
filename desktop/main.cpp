@@ -59,7 +59,7 @@ public:
         auto *outer = new QHBoxLayout(root); outer->setContentsMargins(0,0,0,0); outer->setSpacing(0);
         auto *sidebar = new QFrame; sidebar->setObjectName("sidebar"); sidebar->setFixedWidth(190);
         auto *nav = new QVBoxLayout(sidebar); nav->setContentsMargins(22,30,20,24); nav->setSpacing(18);
-        nav->addWidget(label("M /", "brand")); nav->addWidget(label("METROID", "brandName"));
+        nav->addWidget(label("◉", "brand")); nav->addWidget(label("METROID", "brandName"));
         nav->addWidget(label("FILE CONVERTER", "eyebrow")); nav->addSpacing(32);
         auto *active = label("▸  Convert", "navActive"); nav->addWidget(active);
         auto *doctor = new QPushButton("Diagnostics"); nav->addWidget(doctor);
@@ -118,7 +118,7 @@ public:
             const bool ok = code == 0 && result["ok"].toBool();
             auto *item = table->item(current,2);
             item->setText(ok ? "Done" : cancelling ? "Cancelled" : "Failed");
-            item->setForeground(QColor(ok ? "#5fdda0" : "#ff9299"));
+            item->setForeground(QColor(ok ? "#9bd7bc" : "#ff9299"));
             const QString error = result["error"].toString(QString::fromUtf8(worker.readAllStandardError()));
             item->setToolTip(ok ? result["output"].toString() : error);
             if (ok) { ++succeeded; lastOutput = result["output"].toString(); } else { ++failed; if (!cancelling) status->setText(error.left(180)); }
@@ -204,16 +204,18 @@ public:
     }
     void showWheel() {
         if (format->count()==0 || current>=0) return;
-        QDialog dialog(this); dialog.setWindowTitle("Choose a format"); dialog.setFixedSize(440,440);
-        auto *center=label("METROID\nFORMAT", "brandName"); center->setParent(&dialog); center->setAlignment(Qt::AlignCenter); center->setGeometry(150,185,140,60);
-        for (int i=0;i<format->count();++i) {
-            const double angle=-1.57079632679+i*6.28318530718/format->count();
-            auto *button=new QPushButton(format->itemData(i).toString().toUpper(),&dialog);
-            button->setGeometry(int(220+155*std::cos(angle))-43,int(220+155*std::sin(angle))-22,86,44);
-            connect(button,&QPushButton::clicked,&dialog,[&,i]{ format->setCurrentIndex(i); dialog.accept(); });
-        }
-        dialog.exec();
+        auto *wheel = new RadialWheel;
+        wheel->setParent(this,wheel->windowFlags());
+        QStringList values; for (int i=0;i<format->count();++i) values << format->itemData(i).toString();
+        wheel->setFormats(values);
+        wheel->sourceName=QString("%1 files").arg(table->rowCount());
+        wheel->chosen=[this,wheel](const QString &target) {
+            if (!target.isEmpty()) format->setCurrentIndex(format->findData(target));
+            QTimer::singleShot(120,wheel,&QObject::deleteLater);
+        };
+        wheel->openAt(QCursor::pos());
     }
+
     void closeEvent(QCloseEvent *event) override {
         if (current>=0) { cancel(); event->ignore(); status->setText("Cancelling. Close the window once processing has stopped."); } else event->accept();
     }
@@ -223,36 +225,41 @@ int main(int argc,char **argv) {
     QApplication app(argc,argv); app.setApplicationName("Metroid"); app.setOrganizationName("Metroid");
     app.setStyle("Fusion"); app.setFont(QFont("DejaVu Sans",10));
     app.setStyleSheet(R"(
-        QWidget { color:#f2eeee; background:#080808; }
-        QFrame#sidebar { background:#030303; border-right:1px solid #413030; }
+        QWidget { color:#edf3f1; background:#171d23; }
+        QFrame#sidebar { background:#13191f; border-right:1px solid #2e3e44; }
         QLabel { background:transparent; }
-        QLabel#brand { color:#ff5454; font-size:48px; font-weight:800; }
-        QLabel#brandName { font-size:18px; font-weight:800; letter-spacing:3px; }
-        QLabel#hero { font-size:31px; font-weight:750; }
-        QLabel#eyebrow { color:#a39797; font-size:10px; letter-spacing:2px; }
-        QLabel#muted { color:#bdb3b3; font-size:12px; }
-        QLabel#local { color:#5fdda0; font-size:10px; }
-        QLabel#navActive { background:#2a1013; border-left:3px solid #ff5454; padding:12px; }
-        QFrame#dropZone { background:#101010; border:1px dashed #773034; }
-        QLabel#dropSymbol { color:#ff5454; font-size:34px; }
+        QLabel#brand { color:#b6e8d6; font-size:42px; font-weight:500; }
+        QLabel#brandName { font-size:17px; font-weight:600; letter-spacing:2px; }
+        QLabel#hero { font-size:30px; font-weight:600; }
+        QLabel#eyebrow { color:#8fa2ab; font-size:10px; letter-spacing:2px; }
+        QLabel#muted { color:#a9b9be; font-size:12px; }
+        QLabel#local { color:#9bd7bc; font-size:10px; }
+        QLabel#navActive { background:#293f3d; border-radius:9px; padding:12px; }
+        QFrame#dropZone { background:#1d262d; border:1px dashed #496f68; border-radius:18px; }
+        QLabel#dropSymbol { color:#b6e8d6; font-size:34px; }
         QLabel#dropTitle { font-size:17px; font-weight:600; }
-        QPushButton { background:#161414; border:1px solid #413b3b; padding:10px 12px; }
-        QPushButton:hover { background:#231719; border-color:#ff5454; }
-        QPushButton:focus, QComboBox:focus { border:1px solid #ff5454; }
-        QPushButton:disabled { color:#766969; border-color:#242020; }
-        QPushButton#primary { background:#b91624; border-color:#b91624; font-weight:700; padding:12px 25px; }
-        QPushButton#primary:disabled { background:#2a1013; border-color:#413030; }
-        QComboBox { background:#101010; border:1px solid #413b3b; padding:10px; }
-        QComboBox QAbstractItemView { background:#101010; selection-background-color:#773034; }
-        QTableWidget { background:#101010; border:1px solid #242020; selection-background-color:#2a1013; }
-        QHeaderView::section { background:#161414; color:#a39797; border:0; padding:10px; font-size:10px; }
-        QProgressBar { border:0; background:#242020; } QProgressBar::chunk { background:#ff5454; }
-        QToolTip { background:#231719; color:#f2eeee; border:1px solid #773034; }
-        QMenu { background:#101010; border:1px solid #413b3b; } QMenu::item { padding:10px; } QMenu::item:selected { background:#773034; }
+        QPushButton { background:#273139; border:1px solid #3b4c54; padding:10px 12px; border-radius:9px; }
+        QPushButton:hover { background:#33453f; border-color:#b6e8d6; }
+        QPushButton:focus, QComboBox:focus { border:1px solid #b6e8d6; }
+        QPushButton:disabled { color:#6b7c84; border-color:#2d3a42; }
+        QPushButton#primary { color:#183c32; background:#b6e8d6; border-color:#b6e8d6; font-weight:700; padding:12px 25px; }
+        QPushButton#primary:disabled { color:#6b7c84; background:#293f3d; border-color:#2e3e44; }
+        QComboBox { background:#1d262d; border:1px solid #3b4c54; padding:10px; border-radius:9px; }
+        QComboBox QAbstractItemView { background:#1d262d; selection-background-color:#496f68; }
+        QTableWidget { background:#1d262d; border:1px solid #2d3a42; selection-background-color:#293f3d; }
+        QHeaderView::section { background:#273139; color:#8fa2ab; border:0; padding:10px; font-size:10px; }
+        QProgressBar { border:0; background:#2d3a42; } QProgressBar::chunk { background:#b6e8d6; }
+        QToolTip { background:#33453f; color:#edf3f1; border:1px solid #496f68; }
+        QMenu { background:#1d262d; border:1px solid #3b4c54; } QMenu::item { padding:10px; } QMenu::item:selected { background:#496f68; }
     )");
     const auto args=app.arguments();
-    QPixmap mark(64,64); mark.fill(QColor("#101010"));
-    { QPainter p(&mark); p.setPen(QColor("#ff5454")); p.setFont(QFont("DejaVu Sans",32,QFont::Bold)); p.drawText(mark.rect(),Qt::AlignCenter,"M"); }
+    QPixmap mark(64,64); mark.fill(Qt::transparent);
+    { QPainter p(&mark); p.setRenderHint(QPainter::Antialiasing);
+      p.setBrush(QColor("#1d262d")); p.setPen(Qt::NoPen); p.drawRoundedRect(QRectF(2,2,60,60),16,16);
+      p.setPen(QPen(QColor("#b6e8d6"),6,Qt::SolidLine,Qt::RoundCap));
+      for (int i=0;i<3;++i) p.drawArc(QRectF(14,14,36,36),(20+i*120)*16,88*16);
+      p.setBrush(QColor("#edf3f1")); p.setPen(Qt::NoPen); p.drawEllipse(QPointF(32,32),5,5);
+    }
     QSystemTrayIcon tray{QIcon(mark)};
     tray.setToolTip("Metroid · Shift-drag conversion");
     auto notify=[&](const QString &title,const QString &message) {
@@ -301,8 +308,10 @@ int main(int argc,char **argv) {
             }
             if (i==0) common=formats; else common.intersect(formats);
         }
-        wheel.formats=common.values(); wheel.formats.sort(); wheel.message="No common format\nClick to close";
-        wheel.chosen=[&](const QString &target){ if (!target.isEmpty()) { QStringList command{"--convert-to",target}; command.append(files); QProcess::startDetached(app.applicationFilePath(),command); } app.quit(); };
+        auto values=common.values(); values.sort(); wheel.setFormats(values); wheel.message="No common format";
+        wheel.sourceName=files.size()==1?QFileInfo(files.first()).fileName():QString("%1 files").arg(files.size());
+        wheel.sourceType=QFileInfo(files.first()).suffix().toLower();
+        wheel.chosen=[&](const QString &target){ if (!target.isEmpty()) { QStringList command{"--convert-to",target}; command.append(files); QProcess::startDetached(app.applicationFilePath(),command); } QTimer::singleShot(120,&app,&QApplication::quit); };
         wheel.openAt(QCursor::pos());
         return app.exec();
     }

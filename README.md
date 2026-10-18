@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/banner.svg" alt="Metroid — Change the format. Keep control." width="100%">
+  <img src="docs/media/banner.svg" alt="Metroid — A lighter way to convert." width="100%">
 </p>
 
 <p align="center">
@@ -42,6 +42,17 @@ Native widget frames show the opening and hover transitions. The still image abo
 shows the highlighted sector without motion.
 
 </details>
+
+## Designed around the gesture
+
+A graphite palette, rounded format petals, and a pale mint selection keep the wheel
+readable without a large window. The center shows the source filename and the selected
+format. Image, audio, video, and document glyphs distinguish the available choices.
+
+Opening takes 220 ms; hover transitions follow the pointer, and dismissal takes 110 ms.
+Selection targets stay fixed during animation. A reading indicator covers discovery,
+and an explicit unavailable state handles files without a common conversion route.
+The context wheel, tray icon, and secondary batch manager share the same visual identity.
 
 ## Convert without opening a window
 

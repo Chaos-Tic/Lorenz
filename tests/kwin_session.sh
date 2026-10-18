@@ -21,7 +21,7 @@ for attempt in $(seq 1 100); do
  done
 sleep 2
 [[ "$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.BuildId)" == "$METROID_PLUGIN_ID" ]]
-[[ "$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.WheelSize)" == 360 ]]
+[[ "$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.WheelSize)" == 384 ]]
 original=$(sha256sum "$METROID_TEST_RUN/sample.png")
 # Shift without a drag must not activate anything.
 call Key 42 true

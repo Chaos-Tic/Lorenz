@@ -60,3 +60,14 @@ stops. Close it again afterward. The queue is not persisted between launches.
 The global gesture currently requires KWin 6.8 on Wayland. Other environments can
 use the context-menu wheel, CLI, or batch manager. The converter building on Windows
 does not imply native Windows Shift-drag support. See [Troubleshooting](TROUBLESHOOTING.md).
+
+## Visual feedback
+
+The center shows the source filename (or the selection count), then the target format
+under the pointer. Long filenames are shortened in the middle only for display; output
+names remain intact. A spinner indicates format discovery. An unavailable message means
+there is no usable common route. The pale mint petal is the active conversion target.
+
+The overlay fades away on completion or cancellation. Input is released immediately;
+animations never defer the conversion or change the hit targets. The batch manager's
+format button opens the same wheel as the file context action.

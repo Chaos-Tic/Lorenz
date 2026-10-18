@@ -86,4 +86,4 @@ for future logins. It never restarts the compositor or closes desktop applicatio
 Old libraries may remain mapped until logout; they no longer have active input filters.
 
 Inspect the running version with `qdbus6 org.kde.KWin /Metroid org.metroid.KWin.BuildId`.
-`org.metroid.KWin.WheelSize` reports the actual loaded wheel size (360 pixels).
+`org.metroid.KWin.WheelSize` reports the actual loaded wheel size (384 pixels, including transparent margins and the cancellation hint).
