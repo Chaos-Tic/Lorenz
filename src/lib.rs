@@ -61,15 +61,95 @@ pub fn executable(name: &str) -> Option<PathBuf> {
         })
 }
 /// Resolves a registry engine, accepting the names distributions really ship:
-/// ImageMagick 6 provides only `convert`, Windows Ghostscript is `gswin64c`.
+/// ImageMagick 6 provides only `convert`, Windows Ghostscript is `gswin64c`,
+/// and the `tar` included with Windows 10 and later is bsdtar.
 pub fn engine(name: &str) -> Option<PathBuf> {
     let aliases: &[&str] = match name {
         "magick" if cfg!(unix) => &["magick", "convert"],
         "gs" if cfg!(windows) => &["gswin64c", "gswin32c", "gs"],
+        "bsdtar" if cfg!(windows) => &["bsdtar", "tar"],
         "soffice" => &["soffice", "libreoffice"],
-        other => return executable(other),
+        _ => &[name],
     };
-    aliases.iter().find_map(|alias| executable(alias))
+    aliases
+        .iter()
+        .find_map(|alias| executable(alias))
+        .or_else(|| windows_install(name))
+        .map(|path| real_path(&path))
+}
+/// Windows installers often leave engines off `PATH`, and winget's links are
+/// only added to `PATH` for processes started after the installation.
+fn windows_install(name: &str) -> Option<PathBuf> {
+    if !cfg!(windows) {
+        return None;
+    }
+    let var = |key: &str| env::var_os(key).map(PathBuf::from);
+    let program_files = [var("ProgramFiles"), var("ProgramFiles(x86)")];
+    // (base, folder prefix, path inside the newest matching folder)
+    let places: &[(Option<PathBuf>, &str, &str)] = &match name {
+        "soffice" => [(
+            program_files[0].clone(),
+            "LibreOffice",
+            "program/soffice.exe",
+        )]
+        .to_vec(),
+        "magick" => [(program_files[0].clone(), "ImageMagick", "magick.exe")].to_vec(),
+        "qpdf" => [(program_files[0].clone(), "qpdf", "bin/qpdf.exe")].to_vec(),
+        "gs" => [(
+            program_files[0].clone().map(|p| p.join("gs")),
+            "gs",
+            "bin/gswin64c.exe",
+        )]
+        .to_vec(),
+        "pandoc" => [
+            (var("LOCALAPPDATA"), "Pandoc", "pandoc.exe"),
+            (program_files[0].clone(), "Pandoc", "pandoc.exe"),
+        ]
+        .to_vec(),
+        _ => Vec::new(),
+    };
+    let links = var("LOCALAPPDATA")
+        .map(|p| p.join("Microsoft/WinGet/Links").join(format!("{name}.exe")))
+        .filter(|p| p.is_file());
+    places
+        .iter()
+        .filter_map(|(base, prefix, inner)| {
+            let mut folders: Vec<_> = fs::read_dir(base.as_ref()?)
+                .ok()?
+                .filter_map(|e| e.ok().map(|e| e.path()))
+                .filter(|p| {
+                    p.file_name().and_then(|n| n.to_str()).is_some_and(|n| {
+                        n.to_ascii_lowercase()
+                            .starts_with(&prefix.to_ascii_lowercase())
+                    })
+                })
+                .collect();
+            folders.sort();
+            folders
+                .into_iter()
+                .rev()
+                .map(|f| f.join(inner))
+                .find(|p| p.is_file())
+        })
+        .next()
+        .or(links)
+}
+/// winget installs portable engines as links; running the real file lets
+/// Windows find the libraries stored beside it.
+fn real_path(path: &Path) -> PathBuf {
+    if !cfg!(windows) {
+        return path.to_path_buf();
+    }
+    match fs::canonicalize(path) {
+        Ok(real) => {
+            let text = real.to_string_lossy();
+            match text.strip_prefix(r"\\?\") {
+                Some(rest) if !rest.starts_with("UNC") => PathBuf::from(rest),
+                _ => real,
+            }
+        }
+        Err(_) => path.to_path_buf(),
+    }
 }
 pub fn extension(path: &Path) -> String {
     path.extension()
@@ -393,18 +473,20 @@ local media = os.getenv("METROID_MEDIA") or "\0"
 local embeds = FORMAT:match("docx") or FORMAT:match("odt") or FORMAT:match("epub") or FORMAT:match("pptx")
 -- Exact paths of the files the sandboxed reader extracted. Escapes are refused
 -- outright: the writer could decode them into another path.
+-- Windows paths may mix both separators, so paths are compared with "/".
+local function slashes(path) return (path:gsub("\\", "/")) end
 local extracted = {}
 local function collect(dir)
   local ok, names = pcall(pandoc.system.list_directory, dir)
   if not ok then return end
   for _, name in ipairs(names) do
     local path = dir .. "/" .. name
-    if pcall(pandoc.system.list_directory, path) then collect(path) else extracted[path] = true end
+    if pcall(pandoc.system.list_directory, path) then collect(path) else extracted[slashes(path)] = true end
   end
 end
 collect(media)
 local function allowed(src)
-  return extracted[src] and not src:find("[%%\\]") and not src:find("..", 1, true)
+  return extracted[slashes(src)] and not src:find("%", 1, true) and not src:find("..", 1, true)
 end
 local keep = { title = true, subtitle = true, author = true, date = true, lang = true,
   dir = true, abstract = true, keywords = true, subject = true, description = true }

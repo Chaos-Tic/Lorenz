@@ -1,9 +1,9 @@
 //! Real tool, office and archive tests. Optional engines are skipped when absent.
-use metroid::{convert, executable, menu, tools};
+use metroid::{convert, engine, menu, tools};
 use std::{fs, path::Path, path::PathBuf, process::Command};
 
 fn have(names: &[&str]) -> bool {
-    let missing: Vec<_> = names.iter().filter(|n| executable(n).is_none()).collect();
+    let missing: Vec<_> = names.iter().filter(|n| engine(n).is_none()).collect();
     if !missing.is_empty() {
         eprintln!("SKIP: {missing:?} absent");
     }
@@ -21,7 +21,7 @@ fn one(results: Vec<(PathBuf, anyhow::Result<PathBuf>)>) -> PathBuf {
     results.into_iter().next().unwrap().1.unwrap()
 }
 fn magick(args: &[&str], output: &Path) {
-    let status = Command::new(executable("magick").unwrap())
+    let status = Command::new(engine("magick").unwrap())
         .args(args)
         .arg(output)
         .status()
@@ -29,7 +29,7 @@ fn magick(args: &[&str], output: &Path) {
     assert!(status.success());
 }
 fn image_size(path: &Path) -> String {
-    let out = Command::new(executable("magick").unwrap())
+    let out = Command::new(engine("magick").unwrap())
         .args(["identify", "-format", "%wx%h"])
         .arg(path)
         .output()
@@ -89,7 +89,7 @@ fn pdf_tools_merge_split_and_render() {
     assert!(!ids("tools", std::slice::from_ref(&a)).contains(&"merge".into()));
     let merged = one(tools::run("merge", &[a.clone(), b.clone()], None, None, 60).unwrap());
     assert_eq!(merged.file_name().unwrap(), "Merged.pdf");
-    let pages = Command::new(executable("qpdf").unwrap())
+    let pages = Command::new(engine("qpdf").unwrap())
         .arg("--show-npages")
         .arg(&merged)
         .output()
@@ -109,7 +109,7 @@ fn media_tools() {
     if !have(&["ffmpeg"]) {
         return;
     }
-    let ffmpeg = executable("ffmpeg").unwrap();
+    let ffmpeg = engine("ffmpeg").unwrap();
     let d = tempfile::tempdir().unwrap();
     let clip = d.path().join("clip.mkv");
     let status = Command::new(&ffmpeg)
@@ -186,7 +186,7 @@ fn archives_round_trip_without_extraction_escape() {
     let staging = d.path().join("staging/a/b");
     fs::create_dir_all(&staging).unwrap();
     fs::write(d.path().join("staging/escape.txt"), "x").unwrap();
-    let status = Command::new(executable("bsdtar").unwrap())
+    let status = Command::new(engine("bsdtar").unwrap())
         .current_dir(&staging)
         .args(["-P", "-cf"])
         .arg(&evil)
@@ -236,7 +236,7 @@ fn office_documents_slides_and_sheets() {
         r#"</office:presentation></office:body></office:document>"#,
     ))
     .unwrap();
-    let status = Command::new(executable("soffice").unwrap())
+    let status = Command::new(engine("soffice").unwrap())
         .arg(format!(
             "-env:UserInstallation=file://{}/profile",
             d.path().display()

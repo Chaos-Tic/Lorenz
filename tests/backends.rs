@@ -1,9 +1,9 @@
 //! Real backend tests. Optional engines are tested when installed; CI installs them.
-use metroid::{convert, executable};
+use metroid::{convert, engine, executable};
 use std::{fs, path::Path, process::Command};
 #[test]
 fn image_roundtrip_with_unusual_filename() {
-    let Some(magick) = executable("magick") else {
+    let Some(magick) = engine("magick") else {
         eprintln!("SKIP: magick absent");
         return;
     };
@@ -24,7 +24,7 @@ fn image_roundtrip_with_unusual_filename() {
 }
 #[test]
 fn subtitle_conversion_and_failed_cleanup() {
-    if executable("ffmpeg").is_none() {
+    if engine("ffmpeg").is_none() {
         eprintln!("SKIP: ffmpeg absent");
         return;
     }
@@ -41,7 +41,7 @@ fn subtitle_conversion_and_failed_cleanup() {
 }
 #[test]
 fn document_roundtrip() {
-    if executable("pandoc").is_none() {
+    if engine("pandoc").is_none() {
         eprintln!("SKIP: pandoc absent");
         return;
     }
@@ -118,7 +118,7 @@ fn backend_cancellation_and_timeout_reap_process() {
 fn pdf_text_render_and_merge() {
     if ["pdftotext", "pdftoppm", "qpdf"]
         .iter()
-        .any(|name| executable(name).is_none())
+        .any(|name| engine(name).is_none())
     {
         eprintln!("SKIP: PDF tools absent");
         return;
@@ -157,7 +157,7 @@ fn pdf_text_render_and_merge() {
     let image = convert(&input, "png", None, None, 30).unwrap();
     assert!(fs::read(image).unwrap().starts_with(b"\x89PNG"));
     let merged = metroid::merge_pdf(&[input.clone(), input], d.path()).unwrap();
-    let pages = Command::new(executable("qpdf").unwrap())
+    let pages = Command::new(engine("qpdf").unwrap())
         .arg("--show-npages")
         .arg(merged)
         .output()
@@ -167,7 +167,7 @@ fn pdf_text_render_and_merge() {
 
 #[test]
 fn audio_and_video_conversion() {
-    let Some(ffmpeg) = executable("ffmpeg") else {
+    let Some(ffmpeg) = engine("ffmpeg") else {
         eprintln!("SKIP: ffmpeg absent");
         return;
     };
@@ -213,7 +213,7 @@ fn audio_and_video_conversion() {
 }
 #[test]
 fn documents_embed_only_their_own_media() {
-    let (Some(_), Some(magick)) = (executable("pandoc"), executable("magick")) else {
+    let (Some(_), Some(magick)) = (engine("pandoc"), engine("magick")) else {
         eprintln!("SKIP: pandoc or magick absent");
         return;
     };
@@ -242,7 +242,7 @@ fn documents_embed_only_their_own_media() {
     let size = |path: &Path| fs::metadata(path).unwrap().len();
     for target in ["docx", "odt", "epub"] {
         let out = convert(&input, target, None, None, 60).unwrap();
-        let listing = Command::new("bsdtar")
+        let listing = Command::new(engine("bsdtar").unwrap())
             .arg("-tf")
             .arg(&out)
             .output()
@@ -260,7 +260,7 @@ fn documents_embed_only_their_own_media() {
     let own = dir.join("own.md");
     fs::write(&own, "![own](own.png)\n").unwrap();
     assert!(
-        Command::new(executable("pandoc").unwrap())
+        Command::new(engine("pandoc").unwrap())
             .current_dir(&dir)
             .args(["own.md", "-o", "own.docx"])
             .status()
@@ -268,7 +268,7 @@ fn documents_embed_only_their_own_media() {
             .success()
     );
     let odt = convert(&dir.join("own.docx"), "odt", None, None, 60).unwrap();
-    let listing = Command::new("bsdtar")
+    let listing = Command::new(engine("bsdtar").unwrap())
         .arg("-tf")
         .arg(&odt)
         .output()

@@ -155,17 +155,40 @@ Uninstalling never touches your files.
 
 ## Install on Windows
 
-Install Rust, the MSVC C++ build tools, CMake and Qt 6 for MSVC. Set `CMAKE_PREFIX_PATH`
-to Qt and put its tools on `PATH`, then run:
+Windows 10 (1809 or later) or Windows 11, no build tools needed:
+
+1. Download **Metroid-windows-x64.zip**: from the repository's **Releases** page, or
+   from the latest successful **Build and test** run under **Actions** (artifact
+   *Metroid-windows-x64*).
+2. Extract it, open the `Metroid` folder and double-click **Install.cmd**. The
+   package is not signed yet: if Windows SmartScreen warns, choose
+   *More info → Run anyway*.
+3. Answer the questions:
+   - install the conversion engines with winget (ImageMagick, FFmpeg, Pandoc,
+     Poppler, qpdf); recommended;
+   - install LibreOffice for Word, PowerPoint and spreadsheet files (large, optional);
+   - start Metroid when you sign in.
+
+Metroid is installed for your account only, in `%LOCALAPPDATA%\Programs\Metroid`, and
+added to **Start** and **Send to**. Right-click files → **Send to → Metroid** opens
+the wheels. Archives use the `tar` included with Windows; *Compress PDF* needs
+Ghostscript, which is not on winget (install it from ghostscript.com if needed).
+Engine installers may ask for administrator rights; Metroid itself does not.
+
+To uninstall, double-click **Uninstall.cmd** in the same folder; engines stay
+installed (`winget uninstall` removes them). Options for unattended installs:
 
 ```powershell
-./scripts/install-windows.ps1              # asks whether to start at sign-in
-./scripts/install-windows.ps1 -Autostart   # or -NoAutostart
+powershell -ExecutionPolicy Bypass -File install.ps1 -Engines -NoOffice -Autostart
 ```
 
-Metroid is added to **Start** and **Send to**; *Send to → Metroid* opens the wheels.
-Install the conversion engines separately and put them on `PATH`. Windows builds in
-CI; interactive Windows 10/11 validation and a native Windows drag gesture are pending.
+**From source** (developers): with Rust, MSVC C++ build tools, CMake and Qt 6
+(`CMAKE_PREFIX_PATH` set, `windeployqt` on `PATH`), run
+`./scripts/install-windows.ps1` from the checkout; it asks the same questions.
+
+There is no drag gesture on Windows yet. CI builds the package, installs and
+uninstalls it on Windows and runs real conversions there; interactive validation
+on Windows 10/11 is still pending.
 
 ## What Metroid can do
 
