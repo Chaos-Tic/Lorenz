@@ -25,6 +25,11 @@ public Q_SLOTS:
     void Button(bool down) { KWin::input()->pointer()->processButton(272,down?KWin::PointerButtonState::Pressed:KWin::PointerButtonState::Released,std::chrono::microseconds(time.nsecsElapsed()/1000)); KWin::waylandServer()->seat()->notifyPointerFrame(); }
     void Key(int key,bool down) { KWin::input()->keyboard()->processKey(key,down?KWin::KeyboardKeyState::Pressed:KWin::KeyboardKeyState::Released,std::chrono::microseconds(time.nsecsElapsed()/1000)); }
     bool Dragging() { return KWin::waylandServer()->seat()->isDragPointer(); }
+    bool WheelCenteredAt(int x,int y) {
+        for (auto *w:QApplication::topLevelWidgets()) if (w->objectName()=="metroid-wheel")
+            return w->mapToGlobal(QPoint(w->width()/2,w->height()/2))==QPoint(x,y);
+        return false;
+    }
     bool Snapshot(QString path) { for (auto *w:QApplication::topLevelWidgets()) if (w->objectName()=="metroid-wheel") return w->grab().save(path); return false; }
 };
 class TestFactory : public KWin::PluginFactory {

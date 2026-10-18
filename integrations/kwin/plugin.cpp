@@ -88,7 +88,9 @@ public:
     }
     bool keyboardKey(KWin::KeyboardKeyEvent *event) override {
         if (event->key==Qt::Key_Shift && event->state==KWin::KeyboardKeyState::Pressed)
-            maybeActivate(Qt::ShiftModifier,KWin::waylandServer()->seat()->pointerPos());
+            // The Wayland seat position can stop updating during drag-and-drop.
+            // Read the compositor pointer at key press, not the drag's origin.
+            maybeActivate(Qt::ShiftModifier,KWin::input()->pointer()->pos());
         if (active && event->key==Qt::Key_Escape && event->state==KWin::KeyboardKeyState::Pressed) { abort(); return true; }
         return false;
     }

@@ -48,7 +48,9 @@ source is not copied into this repository.
 The input filter runs after screen-lock handling and before normal drag-and-drop.
 It activates only when Shift accompanies an active pointer drag offering file URIs.
 It reads the URI payload asynchronously, asks the Rust registry for common formats,
-and paints a small internal Qt wheel near the pointer. It never records typed text.
+and anchors the internal Qt wheel to the compositor pointer position at the Shift
+press. The anchor stays fixed while selecting; screen-edge placement keeps the wheel
+visible. It does not use the Wayland seat position, which can be stale during a drag. It never records typed text.
 
 Releasing over a sector cancels the original drag, then launches a separate conversion
 process. Cancellation is deliberate: Shift's usual move action must not remove the

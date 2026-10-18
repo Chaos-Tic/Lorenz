@@ -34,14 +34,18 @@ call Move 300 300
 sleep 0.3
 [[ "$(call Dragging)" == true ]]
 [[ "$(active)" == false ]]
+# Continue moving after the drag starts: the seat pointer may now be stale.
+call Move 650 420
 call Key 42 true
+[[ "$(call WheelCenteredAt 650 420)" == true ]] || { echo "Wheel is not centered at the Shift press position" >&2; exit 1; }
 sleep 0.4
 call Key 42 false
 [[ "$(active)" == true ]]
 formats=$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Formats)
 [[ "$formats" == $'avif\nbmp\njpg\npdf\ntiff\nwebp' ]]
 # WebP is the upper-left sector for this registry and sample.
-call Move 240 197
+call Move 590 317
+[[ "$(call WheelCenteredAt 650 420)" == true ]] || { echo "Wheel is not centered at the Shift press position" >&2; exit 1; }
 sleep 0.3
 call Snapshot "$METROID_TEST_RUN/wheel.png"
 call Button false

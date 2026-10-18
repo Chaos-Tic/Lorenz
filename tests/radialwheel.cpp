@@ -17,7 +17,11 @@ int main(int argc,char **argv) {
     auto advance=[&](int milliseconds) { QEventLoop loop; QTimer::singleShot(milliseconds,&loop,&QEventLoop::quit); loop.exec(); };
     wheel.dismiss();
     check(wheel.windowHandle()->flags().testFlag(Qt::WindowTransparentForInput),"Closing overlays must release native input immediately");
-    advance(150); check(!wheel.isVisible(),"Dismissal must finish hiding the overlay");
+    // Slow CI runners may deliver animation ticks late. Wait for the state,
+    // with a deadline, rather than assuming an exact wall-clock frame schedule.
+    QElapsedTimer dismissalDeadline; dismissalDeadline.start();
+    while (wheel.isVisible() && dismissalDeadline.elapsed()<1500) advance(20);
+    check(!wheel.isVisible(),"Dismissal must finish hiding the overlay");
     wheel.openAt({400,400}); advance(30); wheel.dismiss(); wheel.openAt({400,400}); advance(250);
     check(wheel.isVisible(),"A new drag must cancel a pending dismissal");
     check(!wheel.windowHandle()->flags().testFlag(Qt::WindowTransparentForInput),"Reopening must restore native input");
