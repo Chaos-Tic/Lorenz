@@ -81,5 +81,5 @@ as a separate job. Conversion processes do not run inside KWin. The default appl
 entry point is a tray companion; `--manager` opens the secondary batch window.
 
 `tests/kwin_input.cpp` is an isolated-test-only input module, excluded by default and
-never installed. Production installation copies only `metroid.so`. See the
+never installed. Production installation copies only the production module as `metroid-<revision>.so`. See the
 [KWin guide](../integrations/kwin/README.md) for ABI constraints and test isolation.

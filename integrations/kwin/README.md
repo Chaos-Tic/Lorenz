@@ -28,7 +28,7 @@ headers and build dependencies through your distribution. On Arch these include
 
 The production module is installed in Qt's `kwin/plugins` directory using `sudo`.
 The installer loads it through KWin's plugin interface and enables
-`metroidEnabled` in the user's `kwinrc`. No compositor restart is required.
+`metroid-<revision>Enabled` in the user's `kwinrc`. No compositor restart is required.
 
 ```sh
 ./scripts/uninstall-kwin.sh
@@ -76,3 +76,14 @@ The test driver is **not installed** by any installation script. Its factory ref
 to load without the isolated-test environment flag. The test requires a working
 virtual KWin rendering backend and installed Metroid executables; it is separate from
 the CI build check. The Qt wheel's geometry and segment hit testing also run through CTest.
+
+### Live updates
+
+Qt can retain a plugin library after KWin reports it unloaded. Builds therefore
+use a source-derived plugin identity and installed filename. The installer loads
+the new identity, verifies its `BuildId` over D-Bus, and disables older revisions
+for future logins. It never restarts the compositor or closes desktop applications.
+Old libraries may remain mapped until logout; they no longer have active input filters.
+
+Inspect the running version with `qdbus6 org.kde.KWin /Metroid org.metroid.KWin.BuildId`.
+`org.metroid.KWin.WheelSize` reports the actual loaded wheel size (360 pixels).

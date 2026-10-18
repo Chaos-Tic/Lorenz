@@ -10,10 +10,12 @@ cmake --build build/kwin --parallel 2
 c++ -std=c++17 tests/drag_source.cpp -o build/metroid-drag-source $(pkg-config --cflags --libs Qt6Widgets)
 run_dir=$(mktemp -d "$PWD/build/interaction-XXXXXX")
 export METROID_TEST_RUN="$run_dir"
+export METROID_PLUGIN_ID=$(cat build/kwin/plugin-id)
 mkdir -p "$run_dir/plugins/kwin/plugins" "$run_dir/config" "$run_dir/runtime"
 chmod 700 "$run_dir/runtime"
-cp build/kwin/metroid.so build/kwin/metroid-testinput.so "$run_dir/plugins/kwin/plugins/"
-printf '[Plugins]\nmetroidEnabled=true\nmetroid-testinputEnabled=true\n' > "$run_dir/config/kwinrc"
+cp build/kwin/metroid.so "$run_dir/plugins/kwin/plugins/$METROID_PLUGIN_ID.so"
+cp build/kwin/metroid-testinput.so "$run_dir/plugins/kwin/plugins/"
+printf '[Plugins]\n%sEnabled=true\nmetroid-testinputEnabled=true\n' "$METROID_PLUGIN_ID" > "$run_dir/config/kwinrc"
 magick -size 32x24 xc:red "$run_dir/sample.png"
 dbus-run-session -- bash "$METROID_TEST_ROOT/tests/kwin_session.sh"
 printf 'Isolated interaction checks passed. Evidence: %s\n' "$run_dir"

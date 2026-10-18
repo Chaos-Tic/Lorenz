@@ -71,6 +71,10 @@ public:
         QDBusConnection::sessionBus().unregisterObject("/Metroid");
         abort();
     }
+    Q_PROPERTY(QString BuildId READ buildId)
+    Q_PROPERTY(int WheelSize READ wheelSize)
+    QString buildId() const { return QStringLiteral(METROID_PLUGIN_ID); }
+    int wheelSize() const { return wheel.width(); }
     Q_PROPERTY(bool Active READ isActive)
     Q_PROPERTY(QStringList Formats READ formatList)
     Q_PROPERTY(QPoint WheelPosition READ wheelPosition)
@@ -167,7 +171,7 @@ private:
 
 class MetroidFactory : public KWin::PluginFactory {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID PluginFactory_iid FILE "metadata.json")
+    Q_PLUGIN_METADATA(IID PluginFactory_iid FILE "metroid-metadata.json")
     Q_INTERFACES(KWin::PluginFactory)
 public:
     std::unique_ptr<KWin::Plugin> create() const override { return std::make_unique<MetroidPlugin>(); }

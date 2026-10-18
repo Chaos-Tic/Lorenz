@@ -7,7 +7,21 @@ find_package(KWin CONFIG REQUIRED)
 # Some distributions omit this private header from the KWin development package.
 # Supply the matching KWin source directory; never mix compositor versions.
 set(KWIN_SOURCE_INCLUDE "" CACHE PATH "Directory containing the matching abstract_data_source.h")
+# Qt may retain unloaded plugin libraries until the compositor exits. Give each
+# source revision a distinct identity and installed path for live upgrades.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS plugin.cpp ../../desktop/radialwheel.h metadata.json)
+file(SHA256 "${CMAKE_CURRENT_SOURCE_DIR}/plugin.cpp" plugin_hash)
+file(SHA256 "${CMAKE_CURRENT_SOURCE_DIR}/../../desktop/radialwheel.h" wheel_hash)
+file(SHA256 "${CMAKE_CURRENT_SOURCE_DIR}/metadata.json" metadata_hash)
+file(SHA256 "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt" build_hash)
+string(SHA256 revision "${plugin_hash}${wheel_hash}${metadata_hash}${build_hash}${KWin_VERSION}${Qt6_VERSION}${CMAKE_CXX_COMPILER_VERSION}")
+string(SUBSTRING "${revision}" 0 12 revision)
+set(METROID_PLUGIN_ID "metroid-${revision}")
+configure_file(metadata.json metroid-metadata.json @ONLY)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/plugin-id" "${METROID_PLUGIN_ID}\n")
 add_library(metroid MODULE plugin.cpp)
+target_include_directories(metroid PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+target_compile_definitions(metroid PRIVATE METROID_PLUGIN_ID="${METROID_PLUGIN_ID}")
 target_include_directories(metroid PRIVATE ${KWIN_SOURCE_INCLUDE} /usr/include/kwin/wayland)
 target_link_libraries(metroid PRIVATE KWin::kwin Qt6::Widgets Qt6::DBus)
 set_target_properties(metroid PROPERTIES PREFIX "")

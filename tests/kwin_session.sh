@@ -20,6 +20,8 @@ for attempt in $(seq 1 100); do
     sleep 0.1
  done
 sleep 2
+[[ "$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.BuildId)" == "$METROID_PLUGIN_ID" ]]
+[[ "$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.WheelSize)" == 360 ]]
 original=$(sha256sum "$METROID_TEST_RUN/sample.png")
 # Shift without a drag must not activate anything.
 call Key 42 true
@@ -88,6 +90,6 @@ sleep 0.2
 call Button false
 [[ "$(call Dragging)" == false ]]
 # Unloading and reloading must leave no dangling input filter.
-qdbus6 org.kde.KWin /Plugins org.kde.KWin.Plugins.UnloadPlugin metroid
-[[ "$(qdbus6 org.kde.KWin /Plugins org.kde.KWin.Plugins.LoadPlugin metroid)" == true ]]
+qdbus6 org.kde.KWin /Plugins org.kde.KWin.Plugins.UnloadPlugin "$METROID_PLUGIN_ID"
+[[ "$(qdbus6 org.kde.KWin /Plugins org.kde.KWin.Plugins.LoadPlugin "$METROID_PLUGIN_ID")" == true ]]
 [[ "$(active)" == false ]]
