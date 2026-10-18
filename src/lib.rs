@@ -10,9 +10,14 @@ use std::{
     time::{Duration, Instant},
 };
 
+pub mod actions;
+pub mod tools;
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Conversion {
     pub category: String,
+    #[serde(default)]
+    pub glyph: String,
     pub inputs: Vec<String>,
     pub outputs: Vec<String>,
     pub backend: String,
@@ -52,11 +57,30 @@ pub fn executable(name: &str) -> Option<PathBuf> {
             }
         })
 }
+/// Resolves a registry engine, accepting the names distributions really ship:
+/// ImageMagick 6 provides only `convert`, Windows Ghostscript is `gswin64c`.
+pub fn engine(name: &str) -> Option<PathBuf> {
+    let aliases: &[&str] = match name {
+        "magick" if cfg!(unix) => &["magick", "convert"],
+        "gs" if cfg!(windows) => &["gswin64c", "gswin32c", "gs"],
+        "soffice" => &["soffice", "libreoffice"],
+        other => return executable(other),
+    };
+    aliases.iter().find_map(|alias| executable(alias))
+}
 pub fn extension(path: &Path) -> String {
     path.extension()
         .unwrap_or_default()
         .to_string_lossy()
         .to_ascii_lowercase()
+}
+/// The source name without its extension; `notes.tar.gz` gives `notes`.
+pub fn base_stem(path: &Path) -> std::ffi::OsString {
+    let stem = Path::new(path.file_stem().unwrap_or(path.as_os_str()));
+    if ["gz", "bz2", "xz", "zst"].contains(&extension(path).as_str()) && extension(stem) == "tar" {
+        return stem.file_stem().unwrap_or_default().to_os_string();
+    }
+    stem.as_os_str().to_os_string()
 }
 #[derive(Serialize)]
 pub struct Format {
@@ -71,7 +95,7 @@ pub fn formats(input: &Path) -> Vec<Format> {
         .into_iter()
         .filter(|r| r.inputs.contains(&ext))
         .flat_map(|r| {
-            let available = executable(&r.backend).is_some();
+            let available = engine(&r.backend).is_some();
             r.outputs
                 .into_iter()
                 .filter(|o| o != &ext)
@@ -83,6 +107,73 @@ pub fn formats(input: &Path) -> Vec<Format> {
                 })
         })
         .collect()
+}
+/// One wheel sector: a format, a tool or a file action.
+#[derive(Serialize)]
+pub struct MenuItem {
+    pub id: String,
+    pub label: String,
+    pub category: String,
+    pub glyph: String,
+}
+fn family(category: &str) -> &str {
+    category.split(" · ").next().unwrap_or(category)
+}
+/// Items shared by every selected path, in registry order.
+pub fn menu(kind: &str, paths: &[PathBuf]) -> Result<Vec<MenuItem>> {
+    Ok(match kind {
+        "convert" => {
+            let mut common: Option<Vec<MenuItem>> = None;
+            for path in paths {
+                let mut items = Vec::<MenuItem>::new();
+                if path.is_file() {
+                    let ext = extension(path);
+                    for rule in registry().into_iter().filter(|r| r.inputs.contains(&ext)) {
+                        if engine(&rule.backend).is_none() {
+                            continue;
+                        }
+                        for target in rule.outputs.iter().filter(|o| **o != ext) {
+                            if !items.iter().any(|i| &i.id == target) {
+                                items.push(MenuItem {
+                                    id: target.clone(),
+                                    label: target.to_uppercase(),
+                                    category: family(&rule.category).into(),
+                                    glyph: rule.glyph.clone(),
+                                });
+                            }
+                        }
+                    }
+                }
+                common = Some(match common {
+                    None => items,
+                    Some(previous) => previous
+                        .into_iter()
+                        .filter(|p| items.iter().any(|i| i.id == p.id))
+                        .collect(),
+                });
+            }
+            common.unwrap_or_default()
+        }
+        "tools" => tools::available(paths)
+            .into_iter()
+            .map(|t| MenuItem {
+                id: t.id,
+                label: t.label,
+                category: t.category,
+                glyph: t.glyph,
+            })
+            .collect(),
+        "actions" => actions::available(paths)
+            .into_iter()
+            .map(|a| MenuItem {
+                id: a.id.into(),
+                label: a.label.into(),
+                category: "Actions".into(),
+                glyph: a.glyph.into(),
+            })
+            .collect(),
+        _ => bail!("Unknown wheel: use convert, tools or actions"),
+    })
 }
 #[derive(Serialize)]
 pub struct Backend {
@@ -108,13 +199,16 @@ pub fn doctor() -> Doctor {
             "magick",
             "ffmpeg",
             "pandoc",
+            "soffice",
             "pdftotext",
             "pdftoppm",
             "qpdf",
+            "gs",
+            "bsdtar",
         ]
         .into_iter()
         .map(|name| {
-            let path = executable(name);
+            let path = engine(name);
             Backend {
                 name: name.into(),
                 available: path.is_some(),
@@ -128,16 +222,27 @@ pub fn doctor() -> Doctor {
 // Publishing uses a hard link on the same filesystem: atomic, and refuses any
 // existing destination (including dangling symlinks). Sources are never opened writable.
 pub fn publish(source: &Path, input: &Path, directory: &Path, target: &str) -> Result<PathBuf> {
-    let stem = input.file_stem().context("Missing file name")?;
+    publish_as(source, &base_stem(input), directory, target)
+}
+fn candidate(stem: &std::ffi::OsStr, index: usize, extension: &str) -> std::ffi::OsString {
+    let mut name = stem.to_os_string();
+    if index > 1 {
+        name.push(format!("-{index}"));
+    }
+    if !extension.is_empty() {
+        name.push(format!(".{extension}"));
+    }
+    name
+}
+pub fn publish_as(
+    source: &Path,
+    stem: &std::ffi::OsStr,
+    directory: &Path,
+    extension: &str,
+) -> Result<PathBuf> {
+    ensure!(!stem.is_empty(), "Missing file name");
     for index in 1..10000 {
-        let suffix = if index == 1 {
-            String::new()
-        } else {
-            format!("-{index}")
-        };
-        let mut name = stem.to_os_string();
-        name.push(format!("{suffix}.{target}"));
-        let output = directory.join(name);
+        let output = directory.join(candidate(stem, index, extension));
         match fs::hard_link(source, &output) {
             Ok(()) => return Ok(output),
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -148,6 +253,146 @@ pub fn publish(source: &Path, input: &Path, directory: &Path, target: &str) -> R
         }
     }
     bail!("Too many output files with this name")
+}
+/// Publishes a completed folder: a new directory is created exclusively, then
+/// the finished entries are moved into it on the same filesystem.
+pub fn publish_dir(source: &Path, stem: &std::ffi::OsStr, directory: &Path) -> Result<PathBuf> {
+    ensure!(!stem.is_empty(), "Missing folder name");
+    let entries: Vec<_> = fs::read_dir(source)?.collect::<std::io::Result<_>>()?;
+    ensure!(!entries.is_empty(), "The engine did not produce any file");
+    for index in 1..10000 {
+        let output = directory.join(candidate(stem, index, ""));
+        match fs::create_dir(&output) {
+            Ok(()) => {
+                for entry in entries {
+                    fs::rename(entry.path(), output.join(entry.file_name()))?;
+                }
+                return Ok(output);
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(e) => return Err(e).context("Cannot create the output folder"),
+        }
+    }
+    bail!("Too many output folders with this name")
+}
+
+/// Values available to argument templates. Only registry tokens are matched,
+/// so placeholders inside file names always remain literal.
+#[derive(Default)]
+pub struct Expansion<'a> {
+    pub inputs: &'a [PathBuf],
+    pub output: Option<&'a Path>,
+    pub output_dir: Option<&'a Path>,
+    pub target: &'a str,
+    pub profile: Option<&'a Path>,
+}
+fn file_url(path: &Path) -> String {
+    let text = path.to_string_lossy().replace('\\', "/");
+    let mut url = String::from(if text.starts_with('/') {
+        "file://"
+    } else {
+        "file:///"
+    });
+    for byte in text.bytes() {
+        if byte.is_ascii_alphanumeric() || b"/-._~:".contains(&byte) {
+            url.push(byte as char);
+        } else {
+            url.push_str(&format!("%{byte:02X}"));
+        }
+    }
+    url
+}
+pub fn expand(args: &[String], values: &Expansion) -> Vec<String> {
+    let lossy = |p: &Path| p.to_string_lossy().into_owned();
+    let input = values.inputs.first().map(|p| lossy(p)).unwrap_or_default();
+    let mut expanded = Vec::new();
+    for arg in args {
+        match arg.as_str() {
+            "{input}" => expanded.push(input.clone()),
+            "{inputs}" => expanded.extend(values.inputs.iter().map(|p| lossy(p))),
+            "{archive_input}" => expanded.push(format!("@{input}")),
+            // bsdtar reads "-C dir name" pairs; names that bsdtar would treat
+            // as options or nested archives are made explicitly relative.
+            "{relative_inputs}" => {
+                for path in values.inputs {
+                    let name = path.file_name().unwrap_or_default().to_string_lossy();
+                    expanded.push("-C".into());
+                    expanded.push(lossy(path.parent().unwrap_or(Path::new("."))));
+                    expanded.push(if name.starts_with(['-', '@']) {
+                        format!("./{name}")
+                    } else {
+                        name.into_owned()
+                    });
+                }
+            }
+            "{output}" => expanded.push(values.output.map(lossy).unwrap_or_default()),
+            "{output_stem}" => expanded.push(
+                values
+                    .output
+                    .map(|p| lossy(&p.with_extension("")))
+                    .unwrap_or_default(),
+            ),
+            "{output_dir}" => expanded.push(values.output_dir.map(lossy).unwrap_or_default()),
+            "{target}" => expanded.push(values.target.to_owned()),
+            "{writer}" => expanded.push(
+                match values.target {
+                    "txt" => "plain",
+                    "md" => "markdown",
+                    other => other,
+                }
+                .to_owned(),
+            ),
+            "{office_profile}" => expanded.push(format!(
+                "-env:UserInstallation={}",
+                file_url(values.profile.unwrap_or(Path::new("profile")))
+            )),
+            other => match (other.strip_prefix("{output_dir}/"), values.output_dir) {
+                (Some(name), Some(dir)) => expanded.push(lossy(&dir.join(name))),
+                _ => expanded.push(other.to_owned()),
+            },
+        }
+    }
+    expanded
+}
+/// Private destinations inside a workspace for one engine run.
+pub struct Staging {
+    pub output: PathBuf,
+    pub output_dir: PathBuf,
+    pub profile: PathBuf,
+}
+impl Staging {
+    pub fn new(workspace: &Path, extension: &str) -> Result<Self> {
+        let output_dir = workspace.join("result");
+        fs::create_dir(&output_dir)?;
+        Ok(Self {
+            output: workspace.join(format!("converted.{extension}")),
+            output_dir,
+            profile: workspace.join("profile"),
+        })
+    }
+    /// The file produced by the engine: `{output}`, or the single file an
+    /// engine wrote into `{output_dir}` under a name of its own choosing.
+    pub fn single_output(&self) -> Result<PathBuf> {
+        if self.output.is_file() {
+            return Ok(self.output.clone());
+        }
+        let mut files = fs::read_dir(&self.output_dir)?
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.is_file());
+        match (files.next(), files.next()) {
+            (Some(file), None) => Ok(file),
+            (None, _) => bail!("The engine did not produce an output file"),
+            _ => bail!("The engine produced several files"),
+        }
+    }
+}
+pub fn output_directory(input: &Path, directory: Option<&Path>) -> Result<PathBuf> {
+    let directory = directory
+        .unwrap_or(input.parent().context("Missing parent folder")?)
+        .canonicalize()
+        .context("Output directory not found")?;
+    ensure!(directory.is_dir(), "Destination must be a directory");
+    Ok(directory)
 }
 
 pub fn run_backend(
@@ -215,40 +460,26 @@ pub fn convert(
         extension(&input) != target,
         "The file is already in this format"
     );
-    let backend = executable(&rule.backend)
+    let backend = engine(&rule.backend)
         .with_context(|| format!("Missing engine: {}. Run metroid doctor.", rule.backend))?;
-    let directory = directory
-        .unwrap_or(input.parent().unwrap())
-        .canonicalize()
-        .context("Output directory not found")?;
-    ensure!(directory.is_dir(), "Destination must be a directory");
+    let directory = output_directory(&input, directory)?;
     let workspace = tempfile::Builder::new()
         .prefix(".metroid-")
         .tempdir_in(&directory)?;
-    let output = workspace.path().join(format!("converted.{target}"));
-    let stem = workspace.path().join("converted");
-    let writer = match target.as_str() {
-        "txt" => "plain",
-        "md" => "markdown",
-        other => other,
-    };
-    // Expand whole tokens only: file names containing placeholders stay literal.
-    let args: Vec<String> = rule
-        .args
-        .iter()
-        .map(|a| match a.as_str() {
-            "{input}" => input.to_string_lossy().into_owned(),
-            "{output}" => output.to_string_lossy().into_owned(),
-            "{output_stem}" => stem.to_string_lossy().into_owned(),
-            "{writer}" => writer.to_owned(),
-            _ => a.clone(),
-        })
-        .collect();
-    run_backend(&backend, &args, workspace.path(), cancel, timeout)?;
-    ensure!(
-        output.is_file(),
-        "The engine did not produce an output file"
+    let staging = Staging::new(workspace.path(), &target)?;
+    let inputs = [input.clone()];
+    let args = expand(
+        &rule.args,
+        &Expansion {
+            inputs: &inputs,
+            output: Some(&staging.output),
+            output_dir: Some(&staging.output_dir),
+            target: &target,
+            profile: Some(&staging.profile),
+        },
     );
+    run_backend(&backend, &args, workspace.path(), cancel, timeout)?;
+    let output = staging.single_output()?;
     ensure!(!cancel.is_some_and(Path::exists), "Conversion cancelled");
     publish(&output, &input, &directory, &target)
 }
@@ -287,7 +518,12 @@ mod tests {
     #[test]
     fn registry_is_consistent() {
         for r in registry() {
-            assert!(r.args.iter().any(|a| a == "{input}"));
+            assert!(
+                r.args
+                    .iter()
+                    .any(|a| a == "{input}" || a == "{archive_input}")
+            );
+            assert!(!r.glyph.is_empty());
             assert!(!r.inputs.is_empty());
             assert!(!r.outputs.is_empty());
             for out in r.outputs {

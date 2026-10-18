@@ -1,34 +1,75 @@
 # Arguments are passed directly to processes, never to a shell.
+# Placeholders are whole tokens; "{output_dir}/name" joins a name inside the
+# private output directory. Rules appear in the wheel in this order.
 [[conversion]]
 category = "Images"
-inputs = ["png", "jpg", "jpeg", "webp", "tif", "tiff", "bmp", "heic", "avif"]
+glyph = "image"
+inputs = ["png", "jpg", "jpeg", "webp", "tif", "tiff", "bmp", "heic", "avif", "gif", "svg"]
 outputs = ["png", "jpg", "webp", "tiff", "bmp", "avif", "pdf"]
 backend = "magick"
 args = ["{input}", "-auto-orient", "{output}"]
 
 [[conversion]]
-category = "Audio"
-inputs = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "wma", "mp4", "mov", "mkv", "webm", "avi", "wmv"]
-outputs = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff"]
-backend = "ffmpeg"
-args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-vn", "{output}"]
-
-[[conversion]]
 category = "Video"
+glyph = "video"
 inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv"]
-outputs = ["mp4", "mov", "mkv", "webm", "avi", "gif"]
+outputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv", "gif"]
 backend = "ffmpeg"
 args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "{output}"]
 
 [[conversion]]
+category = "Audio"
+glyph = "audio"
+inputs = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "wma", "mp4", "mov", "mkv", "webm", "avi", "wmv"]
+outputs = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff", "wma"]
+backend = "ffmpeg"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-vn", "{output}"]
+
+[[conversion]]
 category = "Documents"
+glyph = "document"
 inputs = ["md", "docx", "epub", "html", "rtf", "odt"]
 outputs = ["md", "docx", "epub", "html", "odt", "txt"]
 backend = "pandoc"
 args = ["--sandbox", "{input}", "-t", "{writer}", "-o", "{output}"]
 
+# LibreOffice writes into a private directory with a private profile, so a
+# running office instance is neither reused nor modified.
+[[conversion]]
+category = "Documents"
+glyph = "document"
+inputs = ["docx", "doc", "odt", "rtf"]
+outputs = ["pdf"]
+backend = "soffice"
+args = ["{office_profile}", "--headless", "--norestore", "--convert-to", "{target}", "--outdir", "{output_dir}", "{input}"]
+
+[[conversion]]
+category = "Slides"
+glyph = "slides"
+inputs = ["ppt", "pptx", "odp"]
+outputs = ["pdf", "pptx", "odp"]
+backend = "soffice"
+args = ["{office_profile}", "--headless", "--norestore", "--convert-to", "{target}", "--outdir", "{output_dir}", "{input}"]
+
+[[conversion]]
+category = "Slides · first slide"
+glyph = "slides"
+inputs = ["ppt", "pptx", "odp"]
+outputs = ["png", "jpg"]
+backend = "soffice"
+args = ["{office_profile}", "--headless", "--norestore", "--convert-to", "{target}", "--outdir", "{output_dir}", "{input}"]
+
+[[conversion]]
+category = "Spreadsheets"
+glyph = "sheet"
+inputs = ["xlsx", "xls", "ods", "csv"]
+outputs = ["xlsx", "ods", "csv", "pdf"]
+backend = "soffice"
+args = ["{office_profile}", "--headless", "--norestore", "--convert-to", "{target}", "--outdir", "{output_dir}", "{input}"]
+
 [[conversion]]
 category = "PDF · text"
+glyph = "document"
 inputs = ["pdf"]
 outputs = ["txt"]
 backend = "pdftotext"
@@ -36,14 +77,33 @@ args = ["-layout", "{input}", "{output}"]
 
 [[conversion]]
 category = "PDF · first page"
+glyph = "image"
 inputs = ["pdf"]
 outputs = ["png"]
 backend = "pdftoppm"
-args = ["-f", "1", "-singlefile", "-r", "150", "-png", "{input}", "{output_stem}"]
+args = ["-f", "1", "-singlefile", "-r", "300", "-png", "{input}", "{output_stem}"]
+
+[[conversion]]
+category = "PDF · first page"
+glyph = "image"
+inputs = ["pdf"]
+outputs = ["jpg"]
+backend = "pdftoppm"
+args = ["-f", "1", "-singlefile", "-r", "300", "-jpeg", "{input}", "{output_stem}"]
 
 [[conversion]]
 category = "Subtitles"
+glyph = "subtitle"
 inputs = ["srt", "vtt"]
 outputs = ["srt", "vtt"]
 backend = "ffmpeg"
 args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "{output}"]
+
+# Archive entries are streamed into the new archive; nothing is extracted.
+[[conversion]]
+category = "Archives"
+glyph = "archive"
+inputs = ["zip", "tar", "tgz", "gz", "bz2", "xz", "7z", "rar"]
+outputs = ["zip", "tar", "tgz"]
+backend = "bsdtar"
+args = ["-a", "-cf", "{output}", "{archive_input}"]

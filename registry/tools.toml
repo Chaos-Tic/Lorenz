@@ -1,0 +1,258 @@
+# Tools shown by the second wheel (Ctrl by default). Arguments are passed
+# directly to processes, never to a shell. Outputs never replace a source.
+#   output   "same" keeps the input extension, "dir" publishes a folder,
+#            any other value is the output extension.
+#   suffix   appended to the source name: photo.jpg -> photo-compressed.jpg.
+#   combine  one job for the whole selection, named after `name` when several
+#            sources are selected. min_files is the smallest accepted selection.
+# Several rules may share an id; the first rule matching a source is used.
+
+[[tool]]
+id = "compress"
+label = "Compress"
+category = "Images"
+glyph = "compress"
+inputs = ["jpg", "jpeg", "webp", "avif"]
+backend = "magick"
+suffix = "compressed"
+args = ["{input}", "-auto-orient", "-strip", "-quality", "72", "{output}"]
+
+[[tool]]
+id = "compress"
+label = "Compress"
+category = "Images"
+glyph = "compress"
+inputs = ["png"]
+backend = "magick"
+suffix = "compressed"
+args = ["{input}", "-strip", "-define", "png:compression-level=9", "-define", "png:compression-filter=5", "{output}"]
+
+[[tool]]
+id = "resize-half"
+label = "Resize 50%"
+category = "Images"
+glyph = "resize"
+inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
+backend = "magick"
+suffix = "half"
+args = ["{input}", "-auto-orient", "-resize", "50%", "{output}"]
+
+[[tool]]
+id = "rotate-right"
+label = "Rotate right"
+category = "Images"
+glyph = "rotate"
+inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
+backend = "magick"
+suffix = "rotated"
+args = ["{input}", "-auto-orient", "-rotate", "90", "{output}"]
+
+[[tool]]
+id = "rotate-left"
+label = "Rotate left"
+category = "Images"
+glyph = "rotate-left"
+inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
+backend = "magick"
+suffix = "rotated"
+args = ["{input}", "-auto-orient", "-rotate", "-90", "{output}"]
+
+[[tool]]
+id = "flip"
+label = "Mirror"
+category = "Images"
+glyph = "flip"
+inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
+backend = "magick"
+suffix = "mirrored"
+args = ["{input}", "-auto-orient", "-flop", "{output}"]
+
+[[tool]]
+id = "grayscale"
+label = "Black & white"
+category = "Images"
+glyph = "grayscale"
+inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
+backend = "magick"
+suffix = "bw"
+args = ["{input}", "-auto-orient", "-colorspace", "Gray", "{output}"]
+
+[[tool]]
+id = "strip"
+label = "Remove metadata"
+category = "Images"
+glyph = "strip"
+inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff"]
+backend = "magick"
+suffix = "clean"
+args = ["{input}", "-auto-orient", "-strip", "{output}"]
+
+[[tool]]
+id = "compress"
+label = "Compress"
+category = "Video"
+glyph = "compress"
+inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv"]
+backend = "ffmpeg"
+output = "mp4"
+suffix = "compressed"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-c:v", "libx264", "-preset", "medium", "-crf", "28", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", "{output}"]
+
+[[tool]]
+id = "mute"
+label = "Remove audio"
+category = "Video"
+glyph = "mute"
+inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv"]
+backend = "ffmpeg"
+suffix = "muted"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-map", "0:v", "-c", "copy", "-an", "{output}"]
+
+[[tool]]
+id = "resize-half"
+label = "Half size"
+category = "Video"
+glyph = "resize"
+inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv"]
+backend = "ffmpeg"
+suffix = "half"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-vf", "scale=trunc(iw/4)*2:trunc(ih/4)*2", "{output}"]
+
+[[tool]]
+id = "rotate-right"
+label = "Rotate right"
+category = "Video"
+glyph = "rotate"
+inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv"]
+backend = "ffmpeg"
+suffix = "rotated"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-vf", "transpose=1", "{output}"]
+
+[[tool]]
+id = "speed"
+label = "Speed ×2"
+category = "Video"
+glyph = "speed"
+inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv"]
+backend = "ffmpeg"
+suffix = "2x"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-filter:v", "setpts=0.5*PTS", "-filter:a", "atempo=2.0", "{output}"]
+
+[[tool]]
+id = "frame"
+label = "First frame"
+category = "Video"
+glyph = "image"
+inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv", "gif"]
+backend = "ffmpeg"
+output = "png"
+suffix = "frame"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-frames:v", "1", "{output}"]
+
+[[tool]]
+id = "normalize"
+label = "Normalize volume"
+category = "Audio"
+glyph = "normalize"
+inputs = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff"]
+backend = "ffmpeg"
+suffix = "normalized"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-map", "0:a", "-af", "loudnorm", "{output}"]
+
+[[tool]]
+id = "mono"
+label = "Mono"
+category = "Audio"
+glyph = "audio"
+inputs = ["mp3", "m4a", "wav", "flac", "ogg", "opus", "aiff"]
+backend = "ffmpeg"
+suffix = "mono"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-map", "0:a", "-ac", "1", "{output}"]
+
+[[tool]]
+id = "compress"
+label = "Compress"
+category = "Audio"
+glyph = "compress"
+inputs = ["mp3", "m4a", "ogg", "opus"]
+backend = "ffmpeg"
+suffix = "compressed"
+args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-map", "0:a", "-b:a", "96k", "{output}"]
+
+[[tool]]
+id = "compress"
+label = "Compress"
+category = "PDF"
+glyph = "compress"
+inputs = ["pdf"]
+backend = "gs"
+suffix = "compressed"
+args = ["-q", "-dSAFER", "-dNOPAUSE", "-dBATCH", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.5", "-dPDFSETTINGS=/ebook", "-o", "{output}", "{input}"]
+
+[[tool]]
+id = "merge"
+label = "Merge"
+category = "PDF"
+glyph = "merge"
+inputs = ["pdf"]
+backend = "qpdf"
+combine = true
+min_files = 2
+name = "Merged"
+args = ["--empty", "--pages", "{inputs}", "--", "{output}"]
+
+[[tool]]
+id = "split"
+label = "Split pages"
+category = "PDF"
+glyph = "split"
+inputs = ["pdf"]
+backend = "qpdf"
+output = "dir"
+suffix = "pages"
+args = ["--split-pages", "{input}", "{output_dir}/page.pdf"]
+
+[[tool]]
+id = "pages-png"
+label = "Pages to PNG"
+category = "PDF"
+glyph = "image"
+inputs = ["pdf"]
+backend = "pdftoppm"
+output = "dir"
+suffix = "images"
+args = ["-r", "300", "-png", "{input}", "{output_dir}/page"]
+
+[[tool]]
+id = "rotate-right"
+label = "Rotate right"
+category = "PDF"
+glyph = "rotate"
+inputs = ["pdf"]
+backend = "qpdf"
+suffix = "rotated"
+args = ["--rotate=+90", "{input}", "{output}"]
+
+[[tool]]
+id = "extract"
+label = "Extract"
+category = "Archives"
+glyph = "extract"
+inputs = ["zip", "tar", "tgz", "gz", "bz2", "xz", "7z", "rar"]
+backend = "bsdtar"
+output = "dir"
+# bsdtar refuses absolute paths, ".." components and writes through links
+# unless -P is given; the folder is published only after a full extraction.
+args = ["-x", "-f", "{input}", "-C", "{output_dir}"]
+
+[[tool]]
+id = "zip"
+label = "Compress to ZIP"
+category = "Files"
+glyph = "archive"
+inputs = ["*"]
+backend = "bsdtar"
+combine = true
+output = "zip"
+name = "Archive"
+args = ["-a", "-c", "-f", "{output}", "{relative_inputs}"]

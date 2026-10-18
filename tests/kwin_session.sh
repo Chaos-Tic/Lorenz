@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+[[ -n "${METROID_TEST_TRACE:-}" ]] && set -x
 : "${METROID_TEST_ROOT:?Run scripts/test-kwin-isolated.sh}"
 : "${METROID_TEST_RUN:?Run scripts/test-kwin-isolated.sh}"
 export METROID_ISOLATED_TEST=1
@@ -15,6 +16,21 @@ compositor_pid=$!
 trap 'kill "$compositor_pid" 2>/dev/null || true; wait "$compositor_pid" 2>/dev/null || true' EXIT
 call() { qdbus6 org.kde.KWin /MetroidTestInput "org.metroid.TestInput.$@"; }
 active() { qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Active; }
+# Starts a real drag from the sample. The Qt test source needs a moment to close
+# a cancelled drag before it accepts a new one; retries are logged, never hidden.
+start_drag() {
+    sleep 0.5
+    for try in 1 2 3; do
+        call Move 210 210
+        call Button true
+        call Move 300 300
+        for _ in $(seq 1 20); do [[ "$(call Dragging)" == true ]] && return 0; sleep 0.1; done
+        echo "Drag did not start (attempt $try); retrying" >&2
+        call Button false
+        sleep 0.5
+    done
+    return 1
+}
 for attempt in $(seq 1 100); do
     if qdbus6 org.kde.KWin /MetroidTestInput org.metroid.TestInput.Dragging >/dev/null 2>&1; then break; fi
     sleep 0.1
@@ -28,11 +44,7 @@ call Key 42 true
 [[ "$(active)" == false ]]
 call Key 42 false
 # Start a genuine Wayland file drag, then tap Shift.
-call Move 210 210
-call Button true
-call Move 300 300
-sleep 0.3
-[[ "$(call Dragging)" == true ]]
+start_drag
 [[ "$(active)" == false ]]
 # Continue moving after the drag starts: the seat pointer may now be stale.
 call Move 650 420
@@ -42,9 +54,10 @@ sleep 0.4
 call Key 42 false
 [[ "$(active)" == true ]]
 formats=$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Formats)
-[[ "$formats" == $'avif\nbmp\njpg\npdf\ntiff\nwebp' ]]
-# WebP is the upper-left sector for this registry and sample.
-call Move 590 317
+[[ "$formats" == $'jpg\nwebp\ntiff\nbmp\navif\npdf' ]]
+[[ "$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Mode)" == convert ]]
+# WebP is the right-hand sector for this registry and sample.
+call Move 772 420
 [[ "$(call WheelCenteredAt 650 420)" == true ]] || { echo "Wheel is not centered at the Shift press position" >&2; exit 1; }
 sleep 0.3
 call Snapshot "$METROID_TEST_RUN/wheel.png"
@@ -57,11 +70,72 @@ for attempt in $(seq 1 100); do
  done
 [[ -s "$METROID_TEST_RUN/sample.webp" ]]
 [[ "$(sha256sum "$METROID_TEST_RUN/sample.png")" == "$original" ]]
+# Ctrl opens the tools wheel; Alt and Shift switch wheels while it stays open.
+mode() { qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Mode; }
+start_drag
+call Key 29 true
+call Key 29 false
+sleep 0.4
+[[ "$(active)" == true && "$(mode)" == tools ]]
+qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Formats | grep -qx compress
+call Snapshot "$METROID_TEST_RUN/tools.png"
+call Key 56 true
+call Key 56 false
+sleep 0.4
+[[ "$(active)" == true && "$(mode)" == actions ]]
+qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Formats | grep -qx copy-to
+call Snapshot "$METROID_TEST_RUN/actions.png"
+call Key 42 true
+call Key 42 false
+sleep 0.4
+[[ "$(mode)" == convert ]]
+qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Formats | grep -qx webp
+call Key 29 true
+call Key 29 false
+sleep 0.4
+# Keyboard selection: Right selects the first tool (Compress), Enter applies it.
+call Key 106 true
+call Key 106 false
+call Key 28 true
+call Key 28 false
+[[ "$(active)" == false ]]
+[[ "$(call Dragging)" == false ]]
+call Button false
+for attempt in $(seq 1 100); do
+    [[ -f "$METROID_TEST_RUN/sample-compressed.png" ]] && break
+    sleep 0.1
+ done
+[[ -s "$METROID_TEST_RUN/sample-compressed.png" ]]
+[[ "$(sha256sum "$METROID_TEST_RUN/sample.png")" == "$original" ]]
+# Alt opens the actions wheel; Copy path (fourth item) runs from the keyboard and
+# reaches the session clipboard through the environment KWin gives its children.
+start_drag
+call Key 56 true
+call Key 56 false
+sleep 0.4
+[[ "$(mode)" == actions ]]
+[[ "$(qdbus6 org.kde.KWin /Metroid org.metroid.KWin.Formats | sed -n 4p)" == path ]]
+for _ in 1 2 3 4; do call Key 106 true; call Key 106 false; done
+call Key 28 true
+call Key 28 false
+call Button false
+[[ "$(active)" == false ]]
+clipboard=''
+for attempt in $(seq 1 50); do
+    clipboard=$(WAYLAND_DISPLAY=metroid-test timeout 2 wl-paste --no-newline 2>/dev/null || true)
+    [[ -n "$clipboard" ]] && break
+    sleep 0.1
+done
+[[ "$clipboard" == "$(realpath "$METROID_TEST_RUN/sample.png")" ]] || { echo "Clipboard: '$clipboard'" >&2; exit 1; }
+# Holding Ctrl before the drag keeps the normal copy drag: no wheel opens.
+call Key 29 true
+start_drag
+[[ "$(active)" == false ]]
+call Button false
+call Key 29 false
+[[ "$(call Dragging)" == false ]]
 # Escape must cancel without producing a second output.
-call Move 210 210
-call Button true
-call Move 300 300
-sleep 0.2
+start_drag
 call Key 42 true
 sleep 0.2
 [[ "$(active)" == true ]]
@@ -73,10 +147,7 @@ call Button false
 [[ "$(call Dragging)" == false ]]
 [[ ! -e "$METROID_TEST_RUN/sample-2.webp" ]]
 # The center is another explicit cancellation target.
-call Move 210 210
-call Button true
-call Move 300 300
-sleep 0.2
+start_drag
 call Key 42 true
 sleep 0.2
 call Key 42 false
@@ -85,11 +156,7 @@ call Button false
 [[ "$(active)" == false ]]
 [[ ! -e "$METROID_TEST_RUN/sample-2.webp" ]]
 # A normal drag still works without activating the conversion wheel.
-call Move 210 210
-call Button true
-call Move 300 300
-sleep 0.2
-[[ "$(call Dragging)" == true ]]
+start_drag
 [[ "$(active)" == false ]]
 call Button false
 [[ "$(call Dragging)" == false ]]

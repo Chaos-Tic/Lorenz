@@ -15,16 +15,36 @@
 #include <QPointer>
 #include <QStandardPaths>
 #include <QDBusConnection>
+#include <QSettings>
 #include <fcntl.h>
 #include <unistd.h>
 #include "../../desktop/radialwheel.h"
 
 namespace {
 QString executable(const QString &name) {
+    // Isolated tests point at freshly built binaries; desktop sessions leave it unset.
+    if (const auto dir=qEnvironmentVariable("METROID_BIN_DIR"); !dir.isEmpty()) return dir+"/"+name;
     const auto local=QDir::homePath()+"/.local/bin/"+name;
     if (QFileInfo(local).isExecutable()) return local;
     return QStandardPaths::findExecutable(name);
 }
+// Wheel keys, shared with the companion's settings. Read at each gesture so a
+// change applies to the next drag without reloading the extension.
+struct WheelKey { Qt::Key key; Qt::KeyboardModifier modifier; QString label; };
+QVector<WheelKey> wheelKeys() {
+    QSettings settings(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)+"/metroid/metroid.conf",QSettings::IniFormat);
+    const QStringList names{"Convert","Tools","Actions"}, defaults{"Shift","Control","Alt"};
+    QVector<WheelKey> keys;
+    for (int i=0;i<3;++i) {
+        const auto name=settings.value("Wheels/"+names[i],defaults[i]).toString();
+        if (name=="Shift") keys.append({Qt::Key_Shift,Qt::ShiftModifier,"Shift"});
+        else if (name=="Control") keys.append({Qt::Key_Control,Qt::ControlModifier,"Ctrl"});
+        else if (name=="Alt") keys.append({Qt::Key_Alt,Qt::AltModifier,"Alt"});
+        else keys.append({Qt::Key_unknown,Qt::NoModifier,"—"});
+    }
+    return keys;
+}
+const QStringList kinds{"convert","tools","actions"};
 }
 
 class MetroidPlugin : public KWin::Plugin, public KWin::InputEventFilter {
@@ -40,8 +60,8 @@ class MetroidPlugin : public KWin::Plugin, public KWin::InputEventFilter {
     bool ending=false;
     QByteArray payload;
     QStringList files;
-    QSet<QString> common;
-    int queryIndex=0;
+    QVector<WheelKey> keys=wheelKeys();
+    RadialWheel::Mode mode=RadialWheel::Convert;
 public:
     MetroidPlugin() : InputEventFilter(KWin::InputFilterOrder::ScreenEdge) {
         // Runs after the lock-screen filter but before normal drag-and-drop.
@@ -51,18 +71,15 @@ public:
         connect(KWin::waylandServer()->seat(),&KWin::SeatInterface::dragEnded,this,[this]{ if (!ending) reset(); });
         connect(&probe,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),this,[this](int code,QProcess::ExitStatus) {
             if (!active) return;
-            if (code!=0) { wheel.message="Engine unavailable"; wheel.setFormats({}); return; }
-            QSet<QString> supported;
+            deadline.stop();
+            if (code!=0) { wheel.message="Engine unavailable"; wheel.setItems({}); return; }
+            QVector<RadialWheel::Item> items;
             for (const auto entry:QJsonDocument::fromJson(probe.readAllStandardOutput()).array()) {
-                const auto f=entry.toObject(); if (f["available"].toBool()) supported.insert(f["target"].toString());
+                const auto item=entry.toObject();
+                items.append({item["id"].toString(),item["label"].toString(),item["glyph"].toString()});
             }
-            if (queryIndex==0) common=supported; else common.intersect(supported);
-            ++queryIndex;
-            if (queryIndex<files.size()) query();
-            else {
-                deadline.stop(); auto values=common.values(); values.sort();
-                wheel.message="No common format"; wheel.setFormats(values);
-            }
+            wheel.message=mode==RadialWheel::Convert?"No common format":"Nothing available";
+            wheel.setItems(items);
         });
         connect(&probe,&QProcess::errorOccurred,this,[this](QProcess::ProcessError e){ if (e==QProcess::FailedToStart) abort(); });
         QDBusConnection::sessionBus().registerObject("/Metroid",this,QDBusConnection::ExportAllSlots|QDBusConnection::ExportAllProperties);
@@ -78,57 +95,86 @@ public:
     Q_PROPERTY(bool Active READ isActive)
     Q_PROPERTY(QStringList Formats READ formatList)
     Q_PROPERTY(QPoint WheelPosition READ wheelPosition)
+    Q_PROPERTY(QString Mode READ modeName)
+    QString modeName() const { return kinds[mode]; }
     bool isActive() const { return active; }
     QStringList formatList() const { return wheel.formats; }
     QPoint wheelPosition() const { return wheel.pos(); }
     bool pointerMotion(KWin::PointerMotionEvent *event) override {
-        maybeActivate(event->modifiers,event->position);
         if (!active) return false;
         wheel.trackGlobal(event->position); return true;
     }
+    // Wheels open on a key *press* during a drag, never because a modifier was
+    // already held: Ctrl-drag and Shift-drag keep their usual copy/move meaning.
     bool keyboardKey(KWin::KeyboardKeyEvent *event) override {
-        if (event->key==Qt::Key_Shift && event->state==KWin::KeyboardKeyState::Pressed)
-            // The Wayland seat position can stop updating during drag-and-drop.
-            // Read the compositor pointer at key press, not the drag's origin.
-            maybeActivate(Qt::ShiftModifier,KWin::input()->pointer()->pos());
-        if (active && event->key==Qt::Key_Escape && event->state==KWin::KeyboardKeyState::Pressed) { abort(); return true; }
-        return false;
+        const bool pressed=event->state==KWin::KeyboardKeyState::Pressed;
+        if (event->key==Qt::Key_Shift || event->key==Qt::Key_Control || event->key==Qt::Key_Alt) {
+            if (!pressed) return false;
+            if (!active && KWin::waylandServer()->seat()->isDragPointer()) keys=wheelKeys();
+            for (int i=0;i<3;++i) if (event->key==keys[i].key) {
+                // The Wayland seat position can stop updating during drag-and-drop.
+                // Read the compositor pointer at key press, not the drag's origin.
+                if (!active) maybeActivate(RadialWheel::Mode(i),KWin::input()->pointer()->pos());
+                else if (mode!=i) switchTo(RadialWheel::Mode(i));
+            }
+            return false;
+        }
+        if (!active) return false;
+        if (pressed) switch (event->key) {
+        case Qt::Key_Escape: abort(); break;
+        case Qt::Key_Left: case Qt::Key_Up: wheel.step(-1); break;
+        case Qt::Key_Right: case Qt::Key_Down: case Qt::Key_Tab: wheel.step(1); break;
+        case Qt::Key_Return: case Qt::Key_Enter: launch(); break;
+        default: break;
+        }
+        // While the wheel is open, other keys belong to it, not to a drop target.
+        return true;
     }
     bool pointerButton(KWin::PointerButtonEvent *event) override {
         if (!active) return false;
         if (event->button==Qt::LeftButton && event->state==KWin::PointerButtonState::Released) {
             wheel.trackGlobal(event->position);
-            const QString target=wheel.selected(); const QStringList paths=files;
-            // Cancel the source drag, rather than completing Shift's move action.
-            // It therefore cannot delete or move the original files.
-            abort();
+            launch();
             auto *seat=KWin::waylandServer()->seat();
             seat->notifyPointerButton(event->nativeButton,event->state); seat->notifyPointerFrame();
-            if (!target.isEmpty() && !paths.isEmpty()) {
-                QStringList args{"--convert-to",target}; args.append(paths);
-                QProcess::startDetached(executable("metroid-desktop"),args);
-            }
         }
         return true;
     }
 private:
-    void maybeActivate(Qt::KeyboardModifiers modifiers,QPointF pos) {
+    void maybeActivate(RadialWheel::Mode wanted,QPointF pos) {
         auto *seat=KWin::waylandServer()->seat();
-        if (active || probe.state()!=QProcess::NotRunning || !modifiers.testFlag(Qt::ShiftModifier) || !seat->isDragPointer()) return;
+        if (active || probe.state()!=QProcess::NotRunning || !seat->isDragPointer()) return;
         if (!KWin::input()->pointer()->buttons().testFlag(Qt::LeftButton)) return;
         auto *candidate=seat->dragSource();
         if (!candidate || !candidate->mimeTypes().contains("text/uri-list")) return;
         if (executable("metroid").isEmpty() || executable("metroid-desktop").isEmpty()) return;
         int pipeFd[2]; if (pipe2(pipeFd,O_CLOEXEC)!=0) return;
         fcntl(pipeFd[0],F_SETFL,O_NONBLOCK);
-        source=candidate; active=true; payload.clear(); files.clear(); common.clear(); queryIndex=0;
-        wheel.setFormats({}); wheel.setLoading(true); wheel.sourceName.clear(); wheel.sourceType.clear();
+        source=candidate; active=true; payload.clear(); files.clear(); mode=wanted;
+        QStringList labels; for (const auto &k:keys) labels << k.label; wheel.tabKeys=labels;
+        wheel.mode=mode; wheel.setItems({}); wheel.setLoading(true); wheel.sourceName.clear(); wheel.sourceType.clear();
         wheel.message="Reading files…"; wheel.openAt(pos.toPoint());
         seat->setDragTarget(nullptr,nullptr,pos,QMatrix4x4());
         readFd=pipeFd[0]; reader=new QSocketNotifier(readFd,QSocketNotifier::Read,this);
         connect(reader,&QSocketNotifier::activated,this,[this]{ readUris(); });
         candidate->requestData("text/uri-list",KWin::FileDescriptor(pipeFd[1]));
         deadline.start();
+    }
+    // Another wheel key while open: same files, new items, same position.
+    void switchTo(RadialWheel::Mode wanted) {
+        mode=wanted; wheel.setMode(mode);
+        if (files.isEmpty()) return; // Still reading; the query will use the new mode.
+        if (probe.state()!=QProcess::NotRunning) { probe.kill(); probe.waitForFinished(500); }
+        wheel.setItems({}); wheel.setLoading(true); query();
+    }
+    // Cancel the source drag, rather than completing Shift's move action. It
+    // therefore cannot delete or move the original files.
+    void launch() {
+        const QString id=wheel.selected(); const QStringList paths=files; const auto chosen=mode;
+        abort();
+        if (id.isEmpty() || paths.isEmpty()) return;
+        static const QStringList flags{"--convert-to","--tool","--action"};
+        QProcess::startDetached(executable("metroid-desktop"),QStringList{flags[chosen],id,"--"}+paths);
     }
     void closePipe() {
         if (reader) { reader->setEnabled(false); reader->deleteLater(); reader=nullptr; }
@@ -148,13 +194,14 @@ private:
                     const auto url=QUrl::fromEncoded(trimmed);
                     if (!url.isLocalFile() || (!url.host().isEmpty() && url.host()!="localhost")) { abort(); return; }
                     const QFileInfo info(url.toLocalFile());
-                    if (!info.isFile()) { abort(); return; }
+                    if (!info.exists()) { abort(); return; }
                     const auto path=info.canonicalFilePath(); if (!files.contains(path)) files << path;
                     if (files.size()>128) { abort(); return; }
                 }
                 if (files.isEmpty()) { abort(); return; }
-                wheel.sourceName=files.size()==1?QFileInfo(files.first()).fileName():QString("%1 files").arg(files.size());
-                wheel.sourceType=QFileInfo(files.first()).suffix().toLower();
+                const QFileInfo first(files.first());
+                wheel.sourceName=files.size()==1?first.fileName():QString("%1 items").arg(files.size());
+                wheel.sourceType=first.isDir()?"folder":first.suffix().toLower();
                 query(); return;
             } else {
                 if (errno!=EAGAIN && errno!=EINTR) abort();
@@ -162,7 +209,7 @@ private:
             }
         }
     }
-    void query() { probe.start(executable("metroid"),{"formats",files[queryIndex],"--json"}); }
+    void query() { deadline.start(); probe.start(executable("metroid"),QStringList{"menu",kinds[mode],"--json","--"}+files); }
     void reset() {
         active=false; deadline.stop(); closePipe(); wheel.dismiss(); source.clear();
         if (probe.state()!=QProcess::NotRunning) probe.kill();

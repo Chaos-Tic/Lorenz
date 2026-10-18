@@ -34,6 +34,24 @@ int main(int argc,char **argv) {
         }
     }
     wheel.setFormats({"avif","bmp","jpg","pdf","tiff","webp"});
+    // Keyboard selection walks the sectors and wraps around.
+    wheel.hovered=-1; wheel.step(1); check(wheel.selected()=="avif","Right arrow must start at the first sector");
+    wheel.step(-1); check(wheel.selected()=="webp","Left arrow must wrap to the last sector");
+    // The switcher tabs are separate targets and never select a sector.
+    for (int i=0;i<3;++i) {
+        const QPointF tab(192+(i-1)*86,192+176);
+        check(wheel.tabAt(tab)==i,"Each wheel tab must be reachable");
+        check(wheel.hitTest(tab)==-1,"Tabs must not overlap sectors");
+    }
+    int requested=-1; wheel.modeRequested=[&](RadialWheel::Mode m){ requested=m; };
+    QMouseEvent click(QEvent::MouseButtonRelease,QPointF(192+86,192+176),QPointF(),Qt::LeftButton,Qt::NoButton,Qt::NoModifier);
+    QApplication::sendEvent(&wheel,&click); check(requested==RadialWheel::Actions,"Clicking a tab must request that wheel");
+    wheel.setMode(RadialWheel::Tools);
+    wheel.setItems({{"compress","Compress","compress"},{"resize-half","Resize 50%","resize"},{"zip","Compress to ZIP","archive"}});
+    check(wheel.formats==QStringList({"compress","resize-half","zip"}),"Items must expose their identifiers");
+    wheel.step(1); check(wheel.selectedLabel()=="Compress","Tool labels must follow the selection");
+    wheel.setMode(RadialWheel::Convert); wheel.modeRequested=nullptr;
+    wheel.setFormats({"avif","bmp","jpg","pdf","tiff","webp"});
     wheel.hide();
     if (const auto directory=qEnvironmentVariable("METROID_WHEEL_FRAMES"); !directory.isEmpty()) {
         QDir().mkpath(directory);
@@ -41,19 +59,37 @@ int main(int argc,char **argv) {
         QTimer capture;
         int frame=0;
         QObject::connect(&capture,&QTimer::timeout,&app,[&] {
+            // Open, hover WebP, switch to tools, hover, switch to actions, hover, close.
             if (frame==20) wheel.trackGlobal(QPointF(wheel.x()+131,wheel.y()+86));
+            if (frame==40) { wheel.setMode(RadialWheel::Tools); wheel.setItems({{"compress","Compress","compress"},{"resize-half","Resize 50%","resize"},
+                {"rotate-right","Rotate right","rotate"},{"rotate-left","Rotate left","rotate-left"},{"flip","Mirror","flip"},{"grayscale","Black & white","grayscale"},
+                {"strip","Remove metadata","strip"},{"zip","Compress to ZIP","archive"}}); wheel.hovered=-1; }
+            if (frame==52) wheel.trackGlobal(QPointF(wheel.x()+192+60,wheel.y()+192-105));
+            if (frame==75) { wheel.setMode(RadialWheel::Actions); wheel.setItems({{"copy","Copy","copy"},{"copy-to","Copy to…","copy-to"},
+                {"move-to","Move to…","move"},{"path","Copy path","path"},{"terminal","Terminal","terminal"},{"reveal","Show in folder","folder"}}); wheel.hovered=-1; }
+            if (frame==87) wheel.trackGlobal(QPointF(wheel.x()+192-110,wheel.y()+192+60));
             wheel.grab().save(directory+QString("/frame-%1.png").arg(frame++,3,10,QChar('0')));
-            if (frame==65) wheel.dismiss();
-            if (frame==73) app.quit();
+            if (frame==112) wheel.dismiss();
+            if (frame==120) app.quit();
         });
-        capture.start(20); app.exec(); capture.stop(); wheel.hide();
+        capture.start(20); app.exec(); capture.stop(); wheel.hide(); wheel.setMode(RadialWheel::Convert);
         wheel.setFormats({}); wheel.setLoading(true); wheel.openAt({400,400}); advance(250);
         wheel.grab().save(directory+"/loading.png");
         wheel.setFormats({}); wheel.message="No common format"; advance(100);
         wheel.grab().save(directory+"/unavailable.png");
         wheel.sourceName="Evening session.flac"; wheel.sourceType="flac";
         wheel.setFormats({"aiff","flac","m4a","mp3","ogg","opus","wav","wma"}); advance(100);
-        wheel.grab().save(directory+"/audio.png"); wheel.hide();
+        wheel.grab().save(directory+"/audio.png");
+        wheel.sourceName="Harbour at dusk.jpg"; wheel.sourceType="jpg"; wheel.setMode(RadialWheel::Tools);
+        wheel.setItems({{"compress","Compress","compress"},{"resize-half","Resize 50%","resize"},{"rotate-right","Rotate right","rotate"},
+            {"rotate-left","Rotate left","rotate-left"},{"flip","Mirror","flip"},{"grayscale","Black & white","grayscale"},
+            {"strip","Remove metadata","strip"},{"zip","Compress to ZIP","archive"}});
+        advance(260); wheel.trackGlobal(QPointF(wheel.x()+192+120,wheel.y()+192-50)); advance(300);
+        wheel.grab().save(directory+"/tools.png"); wheel.setMode(RadialWheel::Actions);
+        wheel.setItems({{"copy","Copy","copy"},{"copy-to","Copy to…","copy-to"},{"move-to","Move to…","move"},
+            {"path","Copy path","path"},{"terminal","Terminal","terminal"},{"reveal","Show in folder","folder"}});
+        advance(260); wheel.trackGlobal(QPointF(wheel.x()+192-110,wheel.y()+192+60)); advance(300);
+        wheel.grab().save(directory+"/actions.png"); wheel.hide();
     }
     std::cout<<"Radial wheel hit testing and edge placement passed\n";
 }
