@@ -7,25 +7,28 @@ use std::{
 };
 
 #[derive(Parser)]
-#[command(version, about = "Metroid — conversions locales, fichiers préservés")]
+#[command(
+    version,
+    about = "Metroid — local conversion, original files preserved"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Action,
 }
 #[derive(Subcommand)]
 enum Action {
-    /// Diagnostic des moteurs locaux
+    /// Inspect locally installed engines
     Doctor {
         #[arg(long)]
         json: bool,
     },
-    /// Formats possibles pour un fichier
+    /// List available output formats for a file
     Formats {
         input: PathBuf,
         #[arg(long)]
         json: bool,
     },
-    /// Convertir un ou plusieurs fichiers, sans écraser les originaux
+    /// Convert files without overwriting the originals
     Convert {
         #[arg(required = true)]
         inputs: Vec<PathBuf>,
@@ -40,24 +43,24 @@ enum Action {
         #[arg(long)]
         json: bool,
     },
-    /// Ouvrir le bureau natif
+    /// Open the native desktop
     Gui { files: Vec<PathBuf> },
-    /// Choisir un format avec fuzzel, wofi ou rofi
+    /// Choose a format with fuzzel, wofi or rofi
     Pick {
         input: PathBuf,
         #[arg(long, default_value = "fuzzel", value_parser = ["fuzzel", "wofi", "rofi"])]
         menu: String,
     },
-    /// Fusionner plusieurs PDF avec qpdf
+    /// Merge multiple PDF files using qpdf
     MergePdf {
         #[arg(required = true)]
         inputs: Vec<PathBuf>,
         #[arg(long, default_value = ".")]
         output_dir: PathBuf,
     },
-    /// Worker JSON Lines sur stdin/stdout, sans port réseau
+    /// JSON Lines worker over stdin/stdout, without network sockets
     Serve,
-    /// Installer le lanceur Linux et les menus contextuels utilisateur
+    /// Install the Linux launcher and user context menus
     Integrate,
 }
 fn print_json(value: &impl serde::Serialize) -> Result<()> {
@@ -75,7 +78,7 @@ fn gui(files: &[PathBuf]) -> Result<()> {
         sibling
     } else {
         metroid::executable("metroid-desktop")
-            .context("Bureau absent : installez metroid-desktop")?
+            .context("Desktop missing: install metroid-desktop")?
     };
     Command::new(program).args(files).spawn()?;
     Ok(())
@@ -83,7 +86,7 @@ fn gui(files: &[PathBuf]) -> Result<()> {
 fn integrate() -> Result<()> {
     #[cfg(windows)]
     {
-        bail!("Utilisez scripts/install-windows.ps1 pour le menu Envoyer vers");
+        bail!("Use scripts/install-windows.ps1 for the Send to menu");
     }
     #[cfg(not(windows))]
     {
@@ -92,32 +95,32 @@ fn integrate() -> Result<()> {
         let exe = std::env::current_exe()?.with_file_name("metroid-desktop");
         anyhow::ensure!(
             exe.is_file(),
-            "Installez d'abord les deux exécutables côte à côte"
+            "Install both executables in the same directory first"
         );
         let exe = exe.to_string_lossy();
         anyhow::ensure!(
             !exe.contains(['\n', '\r', '%', '`', '$', '"', '\\', '\'']),
-            "Chemin d'installation non pris en charge"
+            "Unsupported installation path"
         );
-        let home = PathBuf::from(std::env::var_os("HOME").context("HOME absent")?);
+        let home = PathBuf::from(std::env::var_os("HOME").context("HOME is not set")?);
         let data = std::env::var_os("XDG_DATA_HOME")
             .map(PathBuf::from)
             .unwrap_or_else(|| home.join(".local/share"));
         let launcher = format!(
-            "[Desktop Entry]\nType=Application\nName=Metroid\nComment=Convertir des fichiers localement\nExec=\"{exe}\" %F\nIcon=metroid\nTerminal=false\nCategories=Utility;Graphics;\n"
+            "[Desktop Entry]\nType=Application\nName=Metroid\nComment=Convert files locally\nExec=\"{exe}\" %F\nIcon=metroid\nTerminal=false\nCategories=Utility;Graphics;\n"
         );
         for (relative, contents) in [
             ("applications/metroid.desktop", launcher),
             (
                 "kio/servicemenus/metroid.desktop",
                 format!(
-                    "[Desktop Entry]\nType=Service\nMimeType=application/octet-stream;\nActions=metroid;\nX-KDE-Priority=TopLevel\n[Desktop Action metroid]\nName=Convertir avec Metroid\nIcon=metroid\nExec=\"{exe}\" %F\n"
+                    "[Desktop Entry]\nType=Service\nMimeType=application/octet-stream;\nActions=metroid;\nX-KDE-Priority=TopLevel\n[Desktop Action metroid]\nName=Convert with Metroid\nIcon=metroid\nExec=\"{exe}\" %F\n"
                 ),
             ),
             (
                 "nemo/actions/metroid.nemo_action",
                 format!(
-                    "[Nemo Action]\nName=Convertir avec Metroid\nComment=Conversions locales\nExec=\"{exe}\" %F\nSelection=Any\nExtensions=any;\nQuote=double\n"
+                    "[Nemo Action]\nName=Convert with Metroid\nComment=Local file conversion\nExec=\"{exe}\" %F\nSelection=Any\nExtensions=any;\nQuote=double\n"
                 ),
             ),
             (
@@ -131,7 +134,7 @@ fn integrate() -> Result<()> {
             if relative.starts_with("nautilus/") {
                 fs::set_permissions(&path, fs::Permissions::from_mode(0o755))?;
             }
-            println!("Installé : {}", path.display());
+            println!("Installed: {}", path.display());
         }
         let icon = data.join("icons/hicolor/scalable/apps/metroid.svg");
         fs::create_dir_all(icon.parent().unwrap())?;
@@ -159,11 +162,11 @@ fn main() -> Result<()> {
                 for b in d.backends {
                     println!(
                         "{} {}",
-                        if b.available { "OK     " } else { "ABSENT " },
+                        if b.available { "OK     " } else { "MISSING" },
                         b.name
                     );
                 }
-                println!("La disponibilité des codecs dépend des moteurs installés.");
+                println!("Codec availability depends on the installed engines.");
             }
         }
         Action::Formats { input, json } => {
@@ -177,7 +180,7 @@ fn main() -> Result<()> {
                         f.target,
                         f.category,
                         f.backend,
-                        if f.available { "" } else { " (absent)" }
+                        if f.available { "" } else { " (missing)" }
                     );
                 }
             }
@@ -238,10 +241,10 @@ fn main() -> Result<()> {
                 .map(|f| f.target)
                 .collect();
             if formats.is_empty() {
-                bail!("Aucune conversion disponible");
+                bail!("No conversions available");
             }
             let mut child = Command::new(&menu)
-                .arg("--dmenu")
+                .arg(if menu == "rofi" { "-dmenu" } else { "--dmenu" })
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .spawn()?;
@@ -255,7 +258,7 @@ fn main() -> Result<()> {
                 return Ok(());
             }
             let target = String::from_utf8(output.stdout)?.trim().to_owned();
-            anyhow::ensure!(formats.contains(&target), "Sélection inconnue");
+            anyhow::ensure!(formats.contains(&target), "Unknown selection");
             println!(
                 "{}",
                 metroid::convert(&input, &target, None, None, 3600)?.display()

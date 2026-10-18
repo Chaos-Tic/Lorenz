@@ -1,25 +1,35 @@
 # Validation
 
-## Automatisée
+## Automated coverage
 
-Les tests Rust vérifient le registre, les extensions, les erreurs JSON, le worker
-JSON Lines, la préservation de la source, les collisions de destination concurrentes,
-les chemins inhabituels, l'annulation, le délai et le nettoyage après erreur.
-Les essais moteurs couvrent PNG → WebP, SRT → VTT et Markdown → HTML → texte.
-Le lancement Qt hors écran vérifie la création de la fenêtre et sa fermeture.
+Rust tests cover the registry, extensions, JSON errors, the JSON Lines worker,
+source preservation, concurrent output collisions, unusual file names, cancellation,
+timeouts, and cleanup after failure. Real engine tests cover PNG → WebP, SRT → VTT,
+Markdown → HTML → text, WAV → FLAC, AVI → GIF, PDF → text/PNG, and PDF merging.
+The headless Qt smoke test verifies window construction and shutdown.
 
-## Recette manuelle par plateforme
+A desktop integration test selects WebP and clicks the real conversion button:
 
-1. Déposer deux PNG, vérifier les formats communs et choisir WebP avec la roue.
-2. Convertir deux fois : les originaux restent inchangés et les sorties sont distinctes.
-3. Déposer un fichier inconnu : aucun format disponible, message explicite.
-4. Déposer un mélange de formats incompatibles : conversion désactivée.
-5. Tester les noms Unicode, espaces, apostrophes et caractères de shell.
-6. Choisir un autre dossier, convertir et ouvrir le dossier du résultat.
-7. Lancer une vidéo longue, annuler, vérifier l'arrêt du moteur et l'absence de sortie partielle.
-8. Fermer pendant un traitement : annulation demandée, fenêtre conservée jusqu'à l'arrêt.
-9. Vérifier le diagnostic, les moteurs manquants et les erreurs de codecs.
-10. Tester menus Nautilus/Dolphin/Nemo, Thunar et Envoyer vers Windows séparément.
+```sh
+QT_QPA_PLATFORM=offscreen metroid-desktop --test-convert /path/to/test.png
+```
 
-À exécuter sous GNOME Wayland, KDE Wayland, Hyprland, Sway, XFCE X11, Windows 10
-et Windows 11. Une compilation réussie ne valide pas ces interactions.
+Use a disposable input directory. The test creates a real output, returns a nonzero
+exit code on failure, and leaves the input unchanged. `METROID_SCREENSHOT` optionally
+sets an absolute screenshot destination for either desktop test mode.
+
+## Manual checklist per platform
+
+1. Drop two PNG files, inspect common formats, and select WebP using the wheel.
+2. Convert twice: originals remain unchanged and output names are distinct.
+3. Drop an unknown file type: no format is available and a clear message appears.
+4. Drop incompatible file types together: conversion is disabled.
+5. Test Unicode, spaces, quotes, and shell metacharacters in file names.
+6. Select a different output directory, convert, and open the output folder.
+7. Convert a long video, cancel, and verify the engine stops without partial output.
+8. Close during conversion: cancellation is requested and the window stays open until it stops.
+9. Check diagnostics, missing engines, and codec errors.
+10. Test Nautilus/Dolphin/Nemo menus, Thunar, and Windows Send to separately.
+
+Run this checklist on GNOME Wayland, KDE Wayland, Hyprland, Sway, XFCE X11,
+Windows 10, and Windows 11. Successful compilation does not validate these interactions.

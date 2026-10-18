@@ -1,17 +1,16 @@
 # Distribution
 
-La version 0.1 utilise des installations utilisateur depuis les sources. Aucun paquet
-n'est annoncé comme publié, signé ou accepté dans un dépôt de distribution.
+Version 0.1 uses per-user installations from source. No package is claimed to be
+published, signed, or accepted by a distribution repository.
 
-- Linux : `scripts/install-linux.sh`, sans privilèges administrateur.
-- Windows : `scripts/install-windows.ps1`, après installation de Rust, CMake, MSVC et Qt6.
-- Le moteur et le bureau doivent être placés dans le même répertoire.
-- Qt est lié dynamiquement ; les bibliothèques et plugins Qt doivent être distribués
-  selon leur licence. Les moteurs restent optionnels et ne sont pas embarqués.
-- Les artefacts CI du cœur ne comprennent ni Qt ni les moteurs de conversion.
+- Linux: `scripts/install-linux.sh`, without administrator privileges.
+- Windows: `scripts/install-windows.ps1`, after installing Rust, CMake, MSVC, and Qt6.
+- Keep the core and desktop executables in the same directory.
+- Qt is dynamically linked; distribute its libraries and plugins under their
+  applicable licenses. Conversion engines are optional and are not bundled.
+- Core CI artifacts do not include Qt or conversion engines.
 
-Étapes avant une distribution publique : choisir la licence du projet, auditer les
-licences des moteurs, produire et vérifier les paquets deb/rpm/PKGBUILD, déployer Qt
-sous Windows et Linux, tester en VM, puis prévoir les signatures et les canaux de
-mise à jour. Flatpak exige une stratégie explicite pour les moteurs hôtes et les
-permissions ; aucune permission réseau ne doit être ajoutée par commodité.
+Before public distribution: choose the project license, audit engine licenses,
+build and verify deb/rpm/PKGBUILD packages, deploy Qt on Windows and Linux, test in
+VMs, then arrange signing and update channels. Flatpak requires an explicit policy
+for host engines and permissions; network access must not be added for convenience.

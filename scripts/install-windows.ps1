@@ -18,4 +18,4 @@ foreach ($folder in @([Environment]::GetFolderPath('Programs'), [Environment]::G
     $shortcut.TargetPath = Join-Path $destination 'metroid-desktop.exe'
     $shortcut.Save()
 }
-Write-Host 'Metroid installé dans Démarrer et Envoyer vers.'
+Write-Host 'Metroid is installed in Start and Send to.'

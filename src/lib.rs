@@ -130,7 +130,7 @@ pub fn doctor() -> Doctor {
 pub fn publish(source: &Path, input: &Path, directory: &Path, target: &str) -> Result<PathBuf> {
     let stem = input
         .file_stem()
-        .context("Nom de fichier manquant")?
+        .context("Missing file name")?
         .to_string_lossy();
     for index in 1..10000 {
         let suffix = if index == 1 {
@@ -144,11 +144,11 @@ pub fn publish(source: &Path, input: &Path, directory: &Path, target: &str) -> R
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
             Err(e) => {
                 return Err(e)
-                    .context("Publication atomique impossible sur ce système de fichiers");
+                    .context("Atomic output publication is not supported on this filesystem");
             }
         }
     }
-    bail!("Trop de fichiers de sortie portant ce nom")
+    bail!("Too many output files with this name")
 }
 
 pub fn run_backend(
@@ -166,7 +166,7 @@ pub fn run_backend(
         .stdout(Stdio::null())
         .stderr(log)
         .spawn()
-        .context("Impossible de lancer le moteur")?;
+        .context("Cannot start conversion engine")?;
     let start = Instant::now();
     loop {
         if let Some(status) = child.try_wait()? {
@@ -179,7 +179,7 @@ pub fn run_backend(
             let mut bytes = Vec::new();
             file.read_to_end(&mut bytes)?;
             bail!(
-                "Moteur en échec ({status}) : {}",
+                "Conversion engine failed ({status}): {}",
                 String::from_utf8_lossy(&bytes)
             );
         }
@@ -188,9 +188,9 @@ pub fn run_backend(
             let _ = child.kill();
             let _ = child.wait();
             bail!(if cancelled {
-                "Conversion annulée"
+                "Conversion cancelled"
             } else {
-                "Délai de conversion dépassé"
+                "Conversion timed out"
             });
         }
         thread::sleep(Duration::from_millis(80));
@@ -204,29 +204,25 @@ pub fn convert(
     cancel: Option<&Path>,
     timeout: u64,
 ) -> Result<PathBuf> {
-    ensure!(!cancel.is_some_and(Path::exists), "Conversion annulée");
-    let input = input.canonicalize().context("Fichier source introuvable")?;
-    ensure!(input.is_file(), "La source doit être un fichier");
+    ensure!(!cancel.is_some_and(Path::exists), "Conversion cancelled");
+    let input = input.canonicalize().context("Source file not found")?;
+    ensure!(input.is_file(), "Source must be a regular file");
     let target = target.to_ascii_lowercase();
     let rule = registry()
         .into_iter()
         .find(|r| r.inputs.contains(&extension(&input)) && r.outputs.contains(&target))
-        .context("Conversion non prise en charge")?;
+        .context("Unsupported conversion")?;
     ensure!(
         extension(&input) != target,
-        "Le fichier est déjà dans ce format"
+        "The file is already in this format"
     );
-    let backend = executable(&rule.backend).with_context(|| {
-        format!(
-            "Moteur absent : {}. Consultez metroid doctor.",
-            rule.backend
-        )
-    })?;
+    let backend = executable(&rule.backend)
+        .with_context(|| format!("Missing engine: {}. Run metroid doctor.", rule.backend))?;
     let directory = directory
         .unwrap_or(input.parent().unwrap())
         .canonicalize()
-        .context("Dossier de sortie introuvable")?;
-    ensure!(directory.is_dir(), "La destination doit être un dossier");
+        .context("Output directory not found")?;
+    ensure!(directory.is_dir(), "Destination must be a directory");
     let workspace = tempfile::Builder::new()
         .prefix(".metroid-")
         .tempdir_in(&directory)?;
@@ -250,13 +246,16 @@ pub fn convert(
         })
         .collect();
     run_backend(&backend, &args, workspace.path(), cancel, timeout)?;
-    ensure!(output.is_file(), "Le moteur n'a produit aucun fichier");
-    ensure!(!cancel.is_some_and(Path::exists), "Conversion annulée");
+    ensure!(
+        output.is_file(),
+        "The engine did not produce an output file"
+    );
+    ensure!(!cancel.is_some_and(Path::exists), "Conversion cancelled");
     publish(&output, &input, &directory, &target)
 }
 
 pub fn merge_pdf(inputs: &[PathBuf], directory: &Path) -> Result<PathBuf> {
-    ensure!(inputs.len() >= 2, "Sélectionnez au moins deux PDF");
+    ensure!(inputs.len() >= 2, "Select at least two PDF files");
     let directory = directory.canonicalize()?;
     let workspace = tempfile::Builder::new()
         .prefix(".metroid-")
@@ -267,20 +266,20 @@ pub fn merge_pdf(inputs: &[PathBuf], directory: &Path) -> Result<PathBuf> {
         let input = input.canonicalize()?;
         ensure!(
             input.is_file() && extension(&input) == "pdf",
-            "Chaque source doit être un PDF"
+            "Each source must be a PDF file"
         );
         args.push(input.to_string_lossy().into_owned());
         args.push("1-z".into());
     }
     args.extend(["--".into(), output.to_string_lossy().into_owned()]);
     run_backend(
-        &executable("qpdf").context("Moteur absent : qpdf")?,
+        &executable("qpdf").context("Missing engine: qpdf")?,
         &args,
         workspace.path(),
         None,
         3600,
     )?;
-    publish(&output, Path::new("fusion.pdf"), &directory, "pdf")
+    publish(&output, Path::new("merged.pdf"), &directory, "pdf")
 }
 
 #[cfg(test)]

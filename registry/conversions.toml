@@ -14,7 +14,7 @@ backend = "ffmpeg"
 args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file,pipe", "-i", "{input}", "-vn", "{output}"]
 
 [[conversion]]
-category = "Vidéo"
+category = "Video"
 inputs = ["mp4", "mov", "mkv", "webm", "avi", "wmv"]
 outputs = ["mp4", "mov", "mkv", "webm", "avi", "gif"]
 backend = "ffmpeg"
@@ -28,21 +28,21 @@ backend = "pandoc"
 args = ["--sandbox", "{input}", "-t", "{writer}", "-o", "{output}"]
 
 [[conversion]]
-category = "PDF · texte"
+category = "PDF · text"
 inputs = ["pdf"]
 outputs = ["txt"]
 backend = "pdftotext"
 args = ["-layout", "{input}", "{output}"]
 
 [[conversion]]
-category = "PDF · première page"
+category = "PDF · first page"
 inputs = ["pdf"]
 outputs = ["png"]
 backend = "pdftoppm"
 args = ["-f", "1", "-singlefile", "-r", "150", "-png", "{input}", "{output_stem}"]
 
 [[conversion]]
-category = "Sous-titres"
+category = "Subtitles"
 inputs = ["srt", "vtt"]
 outputs = ["srt", "vtt"]
 backend = "ffmpeg"
