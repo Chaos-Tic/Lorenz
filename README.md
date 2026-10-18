@@ -173,7 +173,7 @@ CI; interactive Windows 10/11 validation and a native Windows drag gesture are p
 
 | Family | Engine | Formats |
 | --- | --- | --- |
-| Images | ImageMagick | PNG, JPG, WebP, TIFF, BMP, AVIF, PDF; HEIC, GIF and SVG input |
+| Images | ImageMagick | PNG, JPG, WebP, TIFF, BMP, AVIF, PDF; HEIC and GIF input |
 | Video | FFmpeg | MP4, MOV, MKV, WebM, AVI, WMV, GIF |
 | Audio | FFmpeg | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA; audio from any video |
 | Documents | Pandoc · LibreOffice | MD, DOCX, EPUB, HTML, ODT, TXT; RTF input; DOCX/DOC/ODT/RTF → PDF |
@@ -211,10 +211,17 @@ Selections show what all selected items have in common. These routes are declare
 [`registry/tools.toml`](registry/tools.toml); a declared route is not a certification
 of every codec. HEIC, AVIF and H.264 support depends on how your engines were built.
 
-Pandoc runs with `--sandbox`; some Pandoc builds then cannot write DOCX/ODT (see
-[Troubleshooting](docs/TROUBLESHOOTING.md)). LibreOffice runs with a private,
-temporary profile, so it never touches your open documents. Engines are not
-isolated by an operating-system sandbox; keep them updated.
+Engines are hardened but not isolated by an operating-system sandbox; keep them
+updated and be careful with files from untrusted sources:
+
+- ImageMagick decodes each file with the coder named by its extension and runs under
+  a private policy that refuses script, text, URL and `@file` coders and delegates.
+  SVG input is not offered, because SVG renderers can embed other local files.
+- LibreOffice runs with a private temporary profile that never updates links and
+  blocks macros and active content; it never touches your open documents.
+- Pandoc runs with `--sandbox`; some builds then cannot write DOCX/ODT (see
+  [Troubleshooting](docs/TROUBLESHOOTING.md)). FFmpeg reads local files only.
+- Archives are extracted by bsdtar, which refuses absolute paths and `..` entries.
 
 ## Command line
 
@@ -272,7 +279,7 @@ and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 ## Roadmap
 
 - Drag gesture for GNOME Shell, wlroots compositors and Windows.
-- Tools with parameters (crop, trim, quality slider) and per-tool settings.
+- SVG input through a sandboxed renderer; tools with parameters (crop, trim, quality).
 - PDF to DOCX/EPUB, Apple Pages input, multipage image export options.
 - Content/MIME detection, codec capability probing, progress reporting.
 - Native packages (AUR, COPR, deb, Flatpak), signed Windows installer, license choice.

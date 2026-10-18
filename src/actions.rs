@@ -312,7 +312,11 @@ fn transfer(source: &Path, destination: &Path, remove: bool) -> Result<PathBuf> 
         .tempdir_in(destination)?;
     let staged = workspace.path().join("copy");
     fs::copy(source, &staged)?;
-    fs::File::open(&staged)?.sync_all()?;
+    // FlushFileBuffers on Windows requires a handle with write access.
+    fs::OpenOptions::new()
+        .write(true)
+        .open(&staged)?
+        .sync_all()?;
     ensure!(
         fs::metadata(&staged)?.len() == fs::metadata(source)?.len(),
         "The copy is incomplete"

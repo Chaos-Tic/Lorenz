@@ -364,7 +364,9 @@ int main(int argc,char **argv) {
         else if (args[i]=="--") { files+=args.mid(i+1); break; }
         else if (!args[i].startsWith("--")) files << args[i];
     }
-    auto option=[&](const QString &name) { const int i=args.indexOf(name); return i>=0 && i+1<args.size()?args[i+1]:QString(); };
+    // Options are read only before "--": a file named like an option stays a file.
+    const QStringList flags=args.mid(0,args.contains("--")?args.indexOf("--"):args.size());
+    auto option=[&](const QString &name) { const int i=flags.indexOf(name); return i>=0 && i+1<flags.size()?flags[i+1]:QString(); };
     if (const QString target=option("--convert-to"); !target.isEmpty()) {
         return runJob({"convert","--json","--to",target},files,"Conversion complete","Conversion failed");
     }
@@ -394,16 +396,16 @@ int main(int argc,char **argv) {
         else if (action=="move-to") notify("Moved",QString("%1 item(s) moved. Nothing was replaced.").arg(count));
         return job.exitCode();
     }
-    if (args.contains("--settings")) {
+    if (flags.contains("--settings")) {
         SettingsDialog dialog;
         if (const QString path=qEnvironmentVariable("METROID_SCREENSHOT"); !path.isEmpty())
             QTimer::singleShot(400,&dialog,[&dialog,path]{ dialog.grab().save(path); dialog.reject(); });
         return dialog.exec()==QDialog::Accepted?0:1;
     }
-    if (args.contains("--manager") || args.contains("--smoke-test") || args.contains("--test-convert")) {
+    if (flags.contains("--manager") || flags.contains("--smoke-test") || flags.contains("--test-convert")) {
         Window window; window.addFiles(files); window.show();
-        if (args.contains("--test-convert")) QTimer::singleShot(100,&window,[&]{ window.testConversion(); });
-        if (args.contains("--smoke-test")) QTimer::singleShot(400,&app,[&]{ const QString path=qEnvironmentVariable("METROID_SCREENSHOT"); if (!path.isEmpty()) window.grab().save(path); app.quit(); });
+        if (flags.contains("--test-convert")) QTimer::singleShot(100,&window,[&]{ window.testConversion(); });
+        if (flags.contains("--smoke-test")) QTimer::singleShot(400,&app,[&]{ const QString path=qEnvironmentVariable("METROID_SCREENSHOT"); if (!path.isEmpty()) window.grab().save(path); app.quit(); });
         return app.exec();
     }
     if (!files.isEmpty()) {
@@ -436,7 +438,7 @@ int main(int argc,char **argv) {
     QObject::connect(manager,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--manager"}); });
     menu.addSeparator(); auto *quit=menu.addAction("Quit tray companion"); QObject::connect(quit,&QAction::triggered,&app,&QApplication::quit);
     tray.setContextMenu(&menu); tray.show();
-    if (!args.contains("--background")) {
+    if (!flags.contains("--background")) {
         const QStringList keys=wheelKeys();
         notify("Metroid",QString("Drag a file, then tap %1 to convert, %2 for tools or %3 for actions.").arg(keyLabel(keys[0]),keyLabel(keys[1]),keyLabel(keys[2])));
     }

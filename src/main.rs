@@ -252,7 +252,7 @@ fn integrate() -> Result<()> {
         );
         let data = xdg_dir("XDG_DATA_HOME", ".local/share")?;
         let launcher = format!(
-            "[Desktop Entry]\nType=Application\nName=Metroid\nGenericName=File converter\nComment=Convert files locally\nExec=\"{exe}\" %F\nIcon=metroid\nTerminal=false\nCategories=Utility;FileTools;\nActions=manager;\n[Desktop Action manager]\nName=Open batch manager\nExec=\"{exe}\" --manager\n"
+            "[Desktop Entry]\nType=Application\nName=Metroid\nGenericName=File converter\nComment=Convert files locally\nExec=\"{exe}\" -- %F\nIcon=metroid\nTerminal=false\nCategories=Utility;FileTools;\nActions=manager;\n[Desktop Action manager]\nName=Open batch manager\nExec=\"{exe}\" --manager\n"
         );
         let wheels = [
             ("convert", "Convert with Metroid"),
@@ -268,7 +268,7 @@ fn integrate() -> Result<()> {
                     wheels
                         .iter()
                         .map(|(id, name)| format!(
-                            "[Desktop Action {id}]\nName={name}\nIcon=metroid\nExec=\"{exe}\" --wheel {id} %F\n"
+                            "[Desktop Action {id}]\nName={name}\nIcon=metroid\nExec=\"{exe}\" --wheel {id} -- %F\n"
                         ))
                         .collect::<String>()
                 ),
@@ -278,12 +278,12 @@ fn integrate() -> Result<()> {
             files.push((
                 format!("nemo/actions/metroid-{id}.nemo_action"),
                 format!(
-                    "[Nemo Action]\nName={name}\nComment=Local file processing\nExec=\"{exe}\" --wheel {id} %F\nIcon-Name=metroid\nSelection=Any\nExtensions=any;dir;\nQuote=double\n"
+                    "[Nemo Action]\nName={name}\nComment=Local file processing\nExec=\"{exe}\" --wheel {id} -- %F\nIcon-Name=metroid\nSelection=Any\nExtensions=any;dir;\nQuote=double\n"
                 ),
             ));
             files.push((
                 format!("nautilus/scripts/{name}"),
-                format!("#!/bin/sh\nexec '{exe}' --wheel {id} \"$@\"\n"),
+                format!("#!/bin/sh\nexec '{exe}' --wheel {id} -- \"$@\"\n"),
             ));
         }
         // Remove entries written by earlier versions.

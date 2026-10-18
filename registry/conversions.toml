@@ -4,10 +4,12 @@
 [[conversion]]
 category = "Images"
 glyph = "image"
-inputs = ["png", "jpg", "jpeg", "webp", "tif", "tiff", "bmp", "heic", "avif", "gif", "svg"]
+inputs = ["png", "jpg", "jpeg", "webp", "tif", "tiff", "bmp", "heic", "avif", "gif"]
 outputs = ["png", "jpg", "webp", "tiff", "bmp", "avif", "pdf"]
 backend = "magick"
-args = ["{input}", "-auto-orient", "{output}"]
+# SVG input is deliberately absent: ImageMagick hands SVG to a delegate
+# (Inkscape, librsvg) that may embed other local files referenced by links.
+args = ["{coded_input}", "-auto-orient", "{output}"]
 
 [[conversion]]
 category = "Video"

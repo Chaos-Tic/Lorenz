@@ -76,12 +76,16 @@ and persistent queue recovery remain development work.
 ## Extending a route
 
 Edit a TOML registry, rebuild the core, and test both a successful run and failure
-cleanup. Templates support these complete arguments: `{input}`, `{inputs}` (every
+cleanup. Templates support these complete arguments: `{input}`, `{coded_input}` (ImageMagick `coder:path`), `{inputs}` (every
 source), `{relative_inputs}` (bsdtar `-C dir name` pairs), `{archive_input}`,
 `{output}`, `{output_stem}`, `{output_dir}` and `{output_dir}/name` (a private
 directory for engines that choose their own file names), `{target}`, `{writer}`, and
 `{office_profile}` (a private LibreOffice profile). Placeholders are matched only in
 registry templates, never inside file names. New routes must not need a shell.
+
+Each workspace also receives a restrictive ImageMagick policy (`MAGICK_CONFIGURE_PATH`)
+and a pre-seeded LibreOffice profile. Desktop entry points pass paths after `--`, so a
+file named like an option is never read as one.
 Do not expose an output in the desktop until its publication behavior is understood,
 particularly for engines that emit multiple files.
 

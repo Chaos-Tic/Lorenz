@@ -311,6 +311,16 @@ pub fn expand(args: &[String], values: &Expansion) -> Vec<String> {
             "{input}" => expanded.push(input.clone()),
             "{inputs}" => expanded.extend(values.inputs.iter().map(|p| lossy(p))),
             "{archive_input}" => expanded.push(format!("@{input}")),
+            // ImageMagick decodes with the coder named by the extension, never by
+            // content sniffing (which could select MVG or another script coder).
+            "{coded_input}" => {
+                let coder = match extension(Path::new(&input)).as_str() {
+                    "jpg" => "jpeg".to_owned(),
+                    "tif" => "tiff".to_owned(),
+                    other => other.to_owned(),
+                };
+                expanded.push(format!("{coder}:{input}"));
+            }
             // bsdtar reads "-C dir name" pairs; names that bsdtar would treat
             // as options or nested archives are made explicitly relative.
             "{relative_inputs}" => {
@@ -354,6 +364,45 @@ pub fn expand(args: &[String], values: &Expansion) -> Vec<String> {
     }
     expanded
 }
+/// Restrictive engine settings, written into each private workspace:
+/// - an ImageMagick policy refusing script, text, URL and `@file` coders;
+/// - a LibreOffice profile that never updates links nor runs active content.
+///
+/// `run_backend` points ImageMagick at the policy when it exists.
+fn harden(workspace: &Path) -> Result<()> {
+    let magick = workspace.join("magick");
+    fs::create_dir_all(&magick)?;
+    fs::write(
+        magick.join("policy.xml"),
+        r#"<policymap>
+  <policy domain="coder" rights="none" pattern="{MVG,MSL,TEXT,LABEL,CAPTION,URL,HTTP,HTTPS,FTP,EPHEMERAL,SHOW,WIN,X,VID,INLINE,SVG,MSVG,RSVG}"/>
+  <policy domain="delegate" rights="none" pattern="*"/>
+  <policy domain="path" rights="none" pattern="@*"/>
+</policymap>
+"#,
+    )?;
+    let user = workspace.join("profile/user");
+    fs::create_dir_all(&user)?;
+    let item = |path: &str, name: &str, value: &str| {
+        format!(
+            r#"<item oor:path="{path}"><prop oor:name="{name}" oor:op="fuse"><value>{value}</value></prop></item>"#
+        )
+    };
+    fs::write(
+        user.join("registrymodifications.xcu"),
+        [
+            r#"<?xml version="1.0" encoding="UTF-8"?><oor:items xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">"#.to_owned(),
+            item("/org.openoffice.Office.Common/Security/Scripting", "DisableActiveContent", "true"),
+            item("/org.openoffice.Office.Common/Security/Scripting", "BlockUntrustedRefererLinks", "true"),
+            item("/org.openoffice.Office.Common/Security/Scripting", "MacroSecurityLevel", "3"),
+            item("/org.openoffice.Office.Writer/Content/Update", "Link", "0"),
+            item("/org.openoffice.Office.Calc/Content/Update", "Link", "1"),
+            "</oor:items>\n".to_owned(),
+        ]
+        .concat(),
+    )?;
+    Ok(())
+}
 /// Private destinations inside a workspace for one engine run.
 pub struct Staging {
     pub output: PathBuf,
@@ -364,6 +413,7 @@ impl Staging {
     pub fn new(workspace: &Path, extension: &str) -> Result<Self> {
         let output_dir = workspace.join("result");
         fs::create_dir(&output_dir)?;
+        harden(workspace)?;
         Ok(Self {
             output: workspace.join(format!("converted.{extension}")),
             output_dir,
@@ -404,7 +454,12 @@ pub fn run_backend(
 ) -> Result<()> {
     let log_path = log_dir.join("backend.log");
     let log = File::create(&log_path)?;
-    let mut child = Command::new(program)
+    let mut command = Command::new(program);
+    let policy = log_dir.join("magick");
+    if policy.is_dir() {
+        command.env("MAGICK_CONFIGURE_PATH", &policy);
+    }
+    let mut child = command
         .args(args)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
@@ -521,7 +576,7 @@ mod tests {
             assert!(
                 r.args
                     .iter()
-                    .any(|a| a == "{input}" || a == "{archive_input}")
+                    .any(|a| ["{input}", "{coded_input}", "{archive_input}"].contains(&a.as_str()))
             );
             assert!(!r.glyph.is_empty());
             assert!(!r.inputs.is_empty());

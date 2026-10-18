@@ -15,7 +15,7 @@ glyph = "compress"
 inputs = ["jpg", "jpeg", "webp", "avif"]
 backend = "magick"
 suffix = "compressed"
-args = ["{input}", "-auto-orient", "-strip", "-quality", "72", "{output}"]
+args = ["{coded_input}", "-auto-orient", "-strip", "-quality", "72", "{output}"]
 
 [[tool]]
 id = "compress"
@@ -25,7 +25,7 @@ glyph = "compress"
 inputs = ["png"]
 backend = "magick"
 suffix = "compressed"
-args = ["{input}", "-strip", "-define", "png:compression-level=9", "-define", "png:compression-filter=5", "{output}"]
+args = ["{coded_input}", "-strip", "-define", "png:compression-level=9", "-define", "png:compression-filter=5", "{output}"]
 
 [[tool]]
 id = "resize-half"
@@ -35,7 +35,7 @@ glyph = "resize"
 inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
 backend = "magick"
 suffix = "half"
-args = ["{input}", "-auto-orient", "-resize", "50%", "{output}"]
+args = ["{coded_input}", "-auto-orient", "-resize", "50%", "{output}"]
 
 [[tool]]
 id = "rotate-right"
@@ -45,7 +45,7 @@ glyph = "rotate"
 inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
 backend = "magick"
 suffix = "rotated"
-args = ["{input}", "-auto-orient", "-rotate", "90", "{output}"]
+args = ["{coded_input}", "-auto-orient", "-rotate", "90", "{output}"]
 
 [[tool]]
 id = "rotate-left"
@@ -55,7 +55,7 @@ glyph = "rotate-left"
 inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
 backend = "magick"
 suffix = "rotated"
-args = ["{input}", "-auto-orient", "-rotate", "-90", "{output}"]
+args = ["{coded_input}", "-auto-orient", "-rotate", "-90", "{output}"]
 
 [[tool]]
 id = "flip"
@@ -65,7 +65,7 @@ glyph = "flip"
 inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
 backend = "magick"
 suffix = "mirrored"
-args = ["{input}", "-auto-orient", "-flop", "{output}"]
+args = ["{coded_input}", "-auto-orient", "-flop", "{output}"]
 
 [[tool]]
 id = "grayscale"
@@ -75,7 +75,7 @@ glyph = "grayscale"
 inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff", "bmp"]
 backend = "magick"
 suffix = "bw"
-args = ["{input}", "-auto-orient", "-colorspace", "Gray", "{output}"]
+args = ["{coded_input}", "-auto-orient", "-colorspace", "Gray", "{output}"]
 
 [[tool]]
 id = "strip"
@@ -85,7 +85,7 @@ glyph = "strip"
 inputs = ["png", "jpg", "jpeg", "webp", "avif", "tif", "tiff"]
 backend = "magick"
 suffix = "clean"
-args = ["{input}", "-auto-orient", "-strip", "{output}"]
+args = ["{coded_input}", "-auto-orient", "-strip", "{output}"]
 
 [[tool]]
 id = "compress"

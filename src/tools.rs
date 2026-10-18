@@ -188,11 +188,9 @@ mod tests {
     #[test]
     fn registry_is_consistent() {
         for t in registry() {
-            assert!(
-                t.args
-                    .iter()
-                    .any(|a| a.starts_with("{input") || a == "{relative_inputs}")
-            );
+            assert!(t.args.iter().any(|a| a.starts_with("{input")
+                || a == "{coded_input}"
+                || a == "{relative_inputs}"));
             assert!(t.id.chars().all(|c| c.is_ascii_lowercase() || c == '-'));
             assert!(!t.combine || !t.name.is_empty() || t.min_files <= 1);
             assert!(
