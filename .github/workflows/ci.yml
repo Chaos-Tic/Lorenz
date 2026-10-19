@@ -254,6 +254,30 @@ jobs:
           COPR_WEBHOOK: ${{ secrets.COPR_WEBHOOK }}
         run: curl -fsS -X POST "$COPR_WEBHOOK"
 
+  # The Ubuntu PPA and the AUR follow each release; both download the
+  # release just published. Debian's apt repository (Chaos-Tic/apt) picks the
+  # .deb up within the hour.
+  ppa:
+    needs: release
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - env:
+          PPA_SIGNING_KEY: ${{ secrets.PPA_SIGNING_KEY }}
+          TAG: ${{ github.ref_name }}
+        run: bash packaging/debian/ppa.sh "${TAG#v}"
+  aur:
+    needs: release
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - env:
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+          TAG: ${{ github.ref_name }}
+        run: bash packaging/arch/aur.sh "${TAG#v}"
+
   installer:
     runs-on: ubuntu-latest
     strategy:

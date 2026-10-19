@@ -30,8 +30,8 @@ release carries `lorenz-VERSION-vendor.tar.xz`, the crates of `Cargo.lock`,
 written by `linux/vendor.sh` in CI.
 
 - Fedora COPR (`chaostic/lorenz`, Fedora 43 to 45): `fedora/lorenz.spec`
-  builds from the release tarball and the vendor archive (`%bcond vendor`, on by default), declaring every
-  bundled crate. CI job `fedora-spec` builds it and installs the result. The
+  builds from the release tarball and the vendor archive (`%bcond vendor`,
+  on by default), declaring every bundled crate. CI job `fedora-spec` builds it and installs the result. The
   COPR package uses source type SCM, method `make_srpm`: `.copr/Makefile`
   downloads both archives of the version in `Cargo.toml`, so the spec's
   `Version` needs no edit. The release job calls the package's COPR custom
@@ -41,19 +41,24 @@ written by `linux/vendor.sh` in CI.
   token in `~/.config/copr` lasts 180 days.
 - Ubuntu PPA (`ppa:chaos-tic/lorenz`, Launchpad account `chaos-tic`):
   `debian/` is the Debian packaging, kept out of the source tree as Debian
-  asks of upstreams. `debian/ppa.sh` builds a
-  signed source package per Ubuntu series (24.04, 26.04, 26.10) in an Ubuntu
-  container and uploads it with dput; Launchpad compiles it. The vendor archive
-  is the `orig-vendor` component, unpacked in `vendor/`. Ubuntu 24.04 builds
-  with its `rustc-1.85`; 22.04 is left out, its Qt is older than 6.4. Run it
-  after each release, with the gpg key registered on Launchpad
-  (fingerprint `42BD E8EB EC80 1832 D764 03B5 F83B 918D 484C 9E04`, valid
-  until 2028-10-18); a new Ubuntu series needs a line in its `case`.
-
+  asks of upstreams. The release job `ppa` runs `debian/ppa.sh VERSION` in
+  `ubuntu:24.04`: it builds a source package per Ubuntu series (24.04, 26.04,
+  26.10), signs it with the secret `PPA_SIGNING_KEY` (a key dedicated to CI,
+  registered on Launchpad) and uploads it with dput; Launchpad compiles it.
+  The vendor archive is the `orig-vendor` component, unpacked in `vendor/`.
+  Ubuntu 24.04 builds with its `rustc-1.85`; 22.04 is left out, its Qt is
+  older than 6.4. A new Ubuntu series needs a line in its `case`.
+- Arch AUR (`lorenz`): the release job `aur` runs `arch/aur.sh VERSION` in
+  `archlinux:latest`, with the secret `AUR_SSH_KEY` (a key dedicated to CI,
+  added to the AUR account): it sets `pkgver`, updates the checksums and
+  `.SRCINFO` with makepkg, and pushes.
 - Debian apt repository (`https://chaos-tic.github.io/apt`, repository
   `Chaos-Tic/apt`): publishes the `.deb` of each release, built on Debian 12
   by the `linux-package` job, signed with the repository's own key; it
-  refreshes every six hours.
+  refreshes every hour.
+
+A release (`v*` tag) therefore reaches Fedora, Ubuntu and Arch within the
+hour of its build, and Debian within the next hour.
 
 ### Official Fedora and Debian archives
 
