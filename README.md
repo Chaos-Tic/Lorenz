@@ -80,6 +80,16 @@ yay -S lorenz
 Any AUR helper works the same way (`paru -S lorenz`). Pick the conversion engines you
 want from the optional dependencies.
 
+### Fedora (COPR)
+
+Fedora 43 and later, built from source by [Fedora COPR](https://copr.fedorainfracloud.org/coprs/chaostic/lorenz/);
+`dnf upgrade` keeps it up to date:
+
+```sh
+sudo dnf copr enable chaostic/lorenz
+sudo dnf install lorenz
+```
+
 ### Ready-made packages
 
 Download the file for your distribution from the **Releases** page:

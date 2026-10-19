@@ -79,7 +79,7 @@ echo "built $(ls lorenz_*_source.changes)"
 EOF
     if [ $upload = 1 ]; then
         docker run --rm -v "$PWD/$out:/out" ubuntu:24.04 bash -c \
-            "apt-get update -qq && apt-get install -y -qq dput >/dev/null && dput ppa:$ppa /out/lorenz_$version-1~ppa${revision}~ubuntu${number}_source.changes"
+            "apt-get update -qq && apt-get install -y -qq dput gnupg >/dev/null && gpg --batch --quiet --import /out/signing-key.asc && dput ppa:$ppa /out/lorenz_$version-1~ppa${revision}~ubuntu${number}_source.changes"
     fi
 done
 ls -l "$out"

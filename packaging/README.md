@@ -29,20 +29,26 @@ Packages built from source by the distributions' own build services, so that
 release carries `lorenz-VERSION-vendor.tar.xz`, the crates of `Cargo.lock`,
 written by `linux/vendor.sh` in CI.
 
-- Fedora COPR (`chaos-tic/lorenz`): `fedora/lorenz.spec` builds from the release
-  tarball and the vendor archive (`%bcond vendor`, on by default), declaring every
+- Fedora COPR (`chaostic/lorenz`, Fedora 43 to 45): `fedora/lorenz.spec`
+  builds from the release tarball and the vendor archive (`%bcond vendor`, on by default), declaring every
   bundled crate. CI job `fedora-spec` builds it and installs the result. The
   COPR package uses source type SCM, method `make_srpm`: `.copr/Makefile`
   downloads both archives of the version in `Cargo.toml`, so the spec's
-  `Version` needs no edit. A GitHub webhook sending only *Releases* events
-  rebuilds it once the release job has attached the vendor archive.
-- Ubuntu PPA (`ppa:chaos-tic/lorenz`): `debian/` is the Debian packaging, kept
-  out of the source tree as Debian asks of upstreams. `debian/ppa.sh` builds a
+  `Version` needs no edit. The release job calls the package's COPR custom
+  webhook (secret `COPR_WEBHOOK`, from the project's Integrations page) once
+  the release and its vendor archive are published. Add each new Fedora
+  release with `copr-cli edit-chroot` or in the project settings; the API
+  token in `~/.config/copr` lasts 180 days.
+- Ubuntu PPA (`ppa:chaos-tic/lorenz`, Launchpad account `chaos-tic`):
+  `debian/` is the Debian packaging, kept out of the source tree as Debian
+  asks of upstreams. `debian/ppa.sh` builds a
   signed source package per Ubuntu series (24.04, 26.04, 26.10) in an Ubuntu
   container and uploads it with dput; Launchpad compiles it. The vendor archive
   is the `orig-vendor` component, unpacked in `vendor/`. Ubuntu 24.04 builds
   with its `rustc-1.85`; 22.04 is left out, its Qt is older than 6.4. Run it
-  after each release; a new Ubuntu series needs a line in its `case`.
+  after each release, with the gpg key registered on Launchpad
+  (fingerprint `42BD E8EB EC80 1832 D764 03B5 F83B 918D 484C 9E04`, valid
+  until 2028-10-18); a new Ubuntu series needs a line in its `case`.
 
 ### Official Fedora and Debian archives
 

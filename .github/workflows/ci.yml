@@ -249,6 +249,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
+      # Fedora COPR rebuilds from the release just published (.copr/Makefile).
+      - env:
+          COPR_WEBHOOK: ${{ secrets.COPR_WEBHOOK }}
+        run: curl -fsS -X POST "$COPR_WEBHOOK"
 
   installer:
     runs-on: ubuntu-latest

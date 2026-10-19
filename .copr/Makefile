@@ -4,7 +4,7 @@
 version := $(shell sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)
 
 srpm:
-	dnf install -y rpmdevtools
+	dnf install -y -q rpmdevtools
 	sed 's/^Version: .*/Version:        $(version)/' packaging/fedora/lorenz.spec >$(outdir)/lorenz.spec
 	spectool -g -C $(outdir) $(outdir)/lorenz.spec
 	rpmbuild -bs $(outdir)/lorenz.spec --define '_sourcedir $(outdir)' --define '_srcrpmdir $(outdir)'
