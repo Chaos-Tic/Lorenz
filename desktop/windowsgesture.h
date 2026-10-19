@@ -29,7 +29,7 @@ public:
         wheel.filesEntered = [this](const QStringList &entered) {
             if (entered == files) return;
             files = entered;
-            wheel.sourceName = files.size() == 1 ? QFileInfo(files.first()).fileName() : QString("%1 items").arg(files.size());
+            wheel.sourceName = files.size() == 1 ? QFileInfo(files.first()).fileName() : L("%1 items").arg(files.size());
             wheel.sourceType = QFileInfo(files.first()).isDir() ? "folder" : QFileInfo(files.first()).suffix().toLower();
             load(wheel.mode, true);
         };

@@ -4,12 +4,11 @@
 
 | Asset | Purpose |
 | --- | --- |
-| `shift-drag-wheel.png` | Actual KWin Convert wheel while hovering WebP during a file drag |
-| `ctrl-drag-tools.png`, `alt-drag-actions.png` | Actual KWin Tools and Actions wheels from the same isolated session |
-| `three-wheels.png` | The three captures above, side by side |
-| `shift-drag.gif` | Native wheel frames every 20 ms: opening, hover, switching to Tools and Actions, dismissal |
+| `shift-drag-wheel.png`, `ctrl-drag-tools.png`, `alt-drag-actions.png` | The Convert, Tools and Actions wheels rendered by the app, one choice magnified |
+| `three-wheels.png`, `three-wheels-dark.png` | The three wheels side by side, light and dark |
+| `shift-drag.gif` | Native wheel frames every 40 ms: opening, magnifying, switching to Tools and Actions, dismissal |
 | `settings.png` | Actual settings dialog (wheel keys and start at login) |
-| `banner.svg` | Vector header using the desktop's graphite, mint, and soft-white palette |
+| `banner.svg`, `banner-dark.svg` | Vector header: a glass wheel over a dawn or dusk backdrop, picked by the reader's theme |
 | `desktop-ready.png` | Actual native Qt window before adding files |
 | `desktop-converted.png` | Actual successful PNG-to-WebP conversion using generated sample data |
 | `workflow.gif` | Two-state slideshow of those screenshots, not a real-time recording |
@@ -33,7 +32,9 @@ The second command performs a real conversion and leaves a converted file beside
 sample. Inspect captures for layout, filenames, and accidental personal information
 before publishing. The SVG is editable source; no external font or image fetch is needed.
 
-Wheel captures come from the isolated KWin interaction test (`wheel.png`, `tools.png`,
+The wheel images come from CI (the `wheel-frames` artifact of the desktop-linux job): the wheel test renders its frames with `LORENZ_THEME=light|dark` over `tests/fixtures/wallpaper-*.jpg` (`LORENZ_WHEEL_BACKDROP`), then each frame is laid over the same wallpaper and given rounded corners with ImageMagick. The batch window and settings captures still show the 0.1 interface.
+
+Earlier wheel captures came from the isolated KWin interaction test (`wheel.png`, `tools.png`,
 `actions.png` in its evidence folder). The input driver captures only the wheel widget,
 avoiding unrelated desktop content. The settings capture uses
 `LORENZ_SCREENSHOT=/absolute/path/settings.png lorenz-desktop --settings`.

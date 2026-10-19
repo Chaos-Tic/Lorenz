@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/media/banner.svg" alt="Lorenz — A lighter way to convert." width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
+    <img src="docs/media/banner.svg" alt="Lorenz — A lighter way to convert." width="100%">
+  </picture>
 </p>
 
 <p align="center">
@@ -17,16 +20,20 @@ on your computer. Originals are never modified: `photo.png` becomes `photo.webp`
 and a tool produces `photo-compressed.png`. A number is added only when a name is
 already taken. No account, server, or cloud service is involved.
 
-The global drag gesture is implemented for **KDE Plasma 6.8 on Wayland**. Every
-other Linux desktop gets the same wheels from the file manager's context menu, and
-Windows from **Send to**. This is an independent implementation inspired by the
+The global drag gesture works on **Windows 10 and 11** and on **KDE Plasma 6.8
+(Wayland)**. Every other Linux desktop gets the same wheels from the file manager's
+context menu. The interface speaks English and French, following the system or the
+language picked at setup. This is an independent implementation inspired by the
 interaction of Tangerine for Mac; it contains no Tangerine code and is not affiliated
 with Tangerine or with any namesake franchise. **Status: under development.**
 
 [Install](#install-on-linux) · [The three wheels](#three-wheels) · [Formats and tools](#what-lorenz-can-do) · [Desktop guide](docs/USER_GUIDE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 <p align="center">
-  <img src="docs/media/three-wheels.png" alt="The Convert, Tools and Actions wheels captured in a KWin session" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/three-wheels-dark.png">
+    <img src="docs/media/three-wheels.png" alt="The Convert, Tools and Actions wheels in frosted glass, each with one choice magnified" width="100%">
+  </picture>
 </p>
 
 *Real wheels captured during a Wayland file drag in an isolated KWin session.*

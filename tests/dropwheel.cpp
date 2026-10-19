@@ -12,7 +12,7 @@ int main(int argc,char **argv) {
     wheel.modeRequested=[&](RadialWheel::Mode mode){ requested=mode; };
     wheel.setItems({{"png","PNG","image"},{"webp","WEBP","image"}});
     wheel.openAt({500,500});
-    const QPoint hub(192,192), first(192+122,192), tools(192,368);
+    const QPoint hub=RadialWheel::center().toPoint(), first=wheel.itemCenter(0).toPoint(), tools=wheel.tabRect(1).center().toPoint();
     const Qt::DropActions copyOrMove=Qt::CopyAction|Qt::MoveAction;
 
     QMimeData files; const QString path=QDir::temp().absoluteFilePath("Mountain light.png");

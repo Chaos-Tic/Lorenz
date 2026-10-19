@@ -36,6 +36,9 @@ SolidCompression=yes
 ; The tray companion keeps lorenz-desktop.exe open; close it to replace it.
 CloseApplications=force
 RestartApplications=no
+; Offer French or English, preselected from the Windows display language.
+ShowLanguageDialog=yes
+LanguageDetectionMethod=uilanguage
 
 [Languages]
 Name: "fr"; MessagesFile: "compiler:Languages\French.isl"
@@ -74,6 +77,11 @@ Name: "autostart"; Description: "{cm:TaskAutostart}"; GroupDescription: "{cm:Gro
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
+
+[INI]
+; The language picked here is the app's language too ("Language" in lorenz.conf;
+; "auto" there would follow the system instead).
+Filename: "{localappdata}\lorenz\lorenz.conf"; Section: "General"; Key: "Language"; String: "{language}"
 
 [Icons]
 ; Start menu and Send to: right-click files > Send to > Lorenz opens the wheels.

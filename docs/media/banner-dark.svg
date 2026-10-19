@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+<title id="title">Lorenz — A lighter way to convert.</title>
+<desc id="desc">A frosted-glass Lorenz wheel over a dusk backdrop, its WEBP choice magnified.</desc>
+<defs>
+<clipPath id="card"><rect width="1200" height="300" rx="24"/></clipPath>
+<filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="60"/></filter>
+<filter id="lift" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".5"/></filter>
+<linearGradient id="film" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#78e0ff"/><stop offset=".3" stop-color="#aa96ff"/><stop offset=".55" stop-color="#ff96d6"/><stop offset=".8" stop-color="#ffd68c"/><stop offset="1" stop-color="#78e0ff"/></linearGradient>
+<linearGradient id="sheen" x1="0" y1="0" x2=".6" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".14"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="armed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#40baf0" stop-opacity=".3"/></linearGradient>
+</defs>
+<g clip-path="url(#card)">
+<rect width="1200" height="300" fill="#11131f"/>
+<g filter="url(#soft)"><circle cx="760" cy="40" r="170" fill="#4a2fa0"/><circle cx="1130" cy="120" r="190" fill="#0e6c96"/><circle cx="930" cy="330" r="170" fill="#8a2f6e"/><circle cx="260" cy="320" r="200" fill="#2a2350"/><circle cx="80" cy="0" r="160" fill="#1d2a4a"/></g>
+</g>
+<g filter="url(#lift)">
+<circle cx="960" cy="150" r="122" fill="#161628" fill-opacity=".38"/>
+<circle cx="960" cy="150" r="122" fill="url(#sheen)"/>
+<circle cx="960" cy="150" r="121.5" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.2"/>
+<circle cx="960" cy="150" r="123" fill="none" stroke="url(#film)" stroke-width="1.6" stroke-opacity=".9"/>
+</g>
+<g font-family="Geist, 'Segoe UI', Inter, -apple-system, Helvetica, Arial, sans-serif" text-anchor="middle">
+<g fill="#fff" fill-opacity=".07" stroke="#fff" stroke-opacity=".3" stroke-width=".8">
+<rect x="940" y="49" width="40" height="34" rx="10"/><rect x="1013" y="91" width="40" height="34" rx="10"/><rect x="1013" y="175" width="40" height="34" rx="10"/>
+<rect x="940" y="217" width="40" height="34" rx="10"/><rect x="867" y="175" width="40" height="34" rx="10"/>
+</g>
+<g fill="#f3f4f8" font-size="11" font-weight="600"><text x="960" y="70">AVIF</text><text x="1033" y="112">BMP</text><text x="1033" y="196">JPG</text><text x="960" y="238">PDF</text><text x="887" y="196">TIFF</text></g>
+<rect x="855" y="80" width="64" height="56" rx="16" fill="url(#armed)" stroke="#40baf0" stroke-opacity=".7"/>
+<text x="887" y="109" fill="#9fdcf8" font-size="16" font-weight="700">WEBP</text><text x="887" y="124" fill="#9fdcf8" font-size="9" font-weight="500">Web</text>
+<circle cx="960" cy="150" r="50" fill="#1e1e34" fill-opacity=".6" stroke="#fff" stroke-opacity=".4" stroke-width="1"/>
+<text x="960" y="152" fill="#9fdcf8" font-size="21" font-weight="700">WEBP</text>
+<text x="960" y="168" fill="#f3f4f8" font-size="8.5" font-weight="600">Release to convert</text>
+</g>
+<g font-family="Geist, 'Segoe UI', Inter, -apple-system, Helvetica, Arial, sans-serif">
+<text x="56" y="70" fill="#bcc2d0" font-size="12" font-weight="500" letter-spacing="3">AT YOUR CURSOR · IN YOUR FLOW</text>
+<text x="52" y="146" fill="#f3f4f8" font-size="64" font-weight="600" letter-spacing="-2">Lorenz</text>
+<text x="56" y="190" fill="#dfe3ec" font-size="22">A lighter way to convert.</text>
+<text x="56" y="246" fill="#bcc2d0" font-size="14">Drag a file. Tap Shift, Ctrl or Alt. Release on a choice.</text>
+</g>
+</svg>

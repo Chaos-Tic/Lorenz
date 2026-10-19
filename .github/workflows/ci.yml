@@ -63,6 +63,16 @@ jobs:
       - run: cmake --build build --parallel 2
       - run: ctest --test-dir build --output-on-failure
       - run: QT_QPA_PLATFORM=offscreen build/lorenz-desktop --smoke-test
+      # Frames of the wheel (open, magnify, switch) for visual review.
+      - run: |
+          for look in light dark; do
+            QT_QPA_PLATFORM=offscreen LORENZ_THEME=$look LORENZ_WHEEL_BACKDROP=tests/fixtures/wallpaper-$look.jpg \
+              LORENZ_WHEEL_FRAMES=wheel-frames/$look build/lorenz-wheel-test
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wheel-frames
+          path: wheel-frames
   desktop-windows:
     runs-on: windows-latest
     steps:
@@ -97,8 +107,9 @@ jobs:
       - name: Install and uninstall silently
         shell: pwsh
         run: |
-          $setup = Start-Process dist/Lorenz-Setup-x64.exe -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=desktopicon', '/LOG=setup.log'
+          $setup = Start-Process dist/Lorenz-Setup-x64.exe -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=desktopicon', '/LANG=fr', '/LOG=setup.log'
           if ($setup.ExitCode) { Get-Content setup.log; throw "setup failed: $($setup.ExitCode)" }
+          if (-not (Select-String -Quiet -Path (Join-Path $env:LOCALAPPDATA 'lorenz\lorenz.conf') -Pattern '^Language=fr')) { throw 'the setup language was not passed to the app' }
           $installed = Join-Path $env:LOCALAPPDATA 'Programs\Lorenz'
           foreach ($file in 'lorenz.exe', 'lorenz-desktop.exe', 'Qt6Core.dll', 'platforms\qwindows.dll', 'unins000.exe') {
               if (-not (Test-Path (Join-Path $installed $file))) { throw "missing $file" }
