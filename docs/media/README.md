@@ -6,6 +6,7 @@
 | --- | --- |
 | `shift-drag-wheel.png`, `ctrl-drag-tools.png`, `alt-drag-actions.png` | The Convert, Tools and Actions wheels rendered by the app, one choice magnified |
 | `three-wheels.png`, `three-wheels-dark.png` | The three wheels side by side, light and dark |
+| `demo.gif` | README hero: a photo is dragged, Shift is tapped, the wheel (native frames from the CI demo run, `LORENZ_WHEEL_DEMO`) opens over `tests/fixtures/demo-scene-light.jpg`, the photo is released on WebP and the new file appears with a notification. Composed with ImageMagick at 30 fps |
 | `shift-drag.gif` | Native wheel frames every 40 ms: opening, magnifying, switching to Tools and Actions, dismissal |
 | `settings.png` | Actual settings dialog (wheel keys and start at login) |
 | `banner.svg`, `banner-dark.svg` | Vector header: a glass wheel over a dawn or dusk backdrop, picked by the reader's theme |

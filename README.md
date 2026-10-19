@@ -13,6 +13,10 @@
 
 **Drag a file. Tap a key. Drop onto a choice.**
 
+<p align="center">
+  <img src="docs/media/demo.gif" alt="A photo is dragged across the desktop, Shift is tapped, the frosted-glass wheel opens and magnifies each format under the pointer, the photo is released on WebP, and Mountain light.webp appears beside the original with a notification" width="100%">
+</p>
+
 Lorenz puts three wheels under your cursor while you drag a file: **Shift** converts
 it, **Ctrl** edits it (compress, resize, rotate, split, merge…) and **Alt** acts on it
 (copy, move, share, terminal…). Everything runs locally with the engines installed
