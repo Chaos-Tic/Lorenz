@@ -74,10 +74,10 @@ private:
         return QGuiApplication::palette().color(QPalette::Window).lightness() < 128;
     }
     static Theme theme(bool dark) {
-        if (dark) return {true, QColor("#f3f4f8"), QColor("#bcc2d0"), rgba(22, 22, 40, .34), rgba(30, 30, 52, .46), rgba(255, 255, 255, .14),
+        if (dark) return {true, QColor("#f3f4f8"), QColor("#bcc2d0"), rgba(22, 22, 40, .22), rgba(30, 30, 52, .40), rgba(255, 255, 255, .14),
             rgba(255, 255, 255, .5), rgba(255, 255, 255, .12), rgba(255, 255, 255, .06), rgba(0, 0, 0, .7), rgba(24, 24, 44, .42),
             rgba(255, 255, 255, .08), rgba(255, 255, 255, .18), rgba(26, 28, 44, .9)};
-        return {false, QColor("#151820"), QColor("#4a5060"), rgba(255, 255, 255, .30), rgba(255, 255, 255, .52), rgba(255, 255, 255, .42),
+        return {false, QColor("#151820"), QColor("#4a5060"), rgba(255, 255, 255, .16), rgba(255, 255, 255, .44), rgba(255, 255, 255, .42),
             rgba(255, 255, 255, .98), rgba(255, 255, 255, .4), rgba(255, 255, 255, .22), rgba(42, 30, 92, .5), rgba(255, 255, 255, .4),
             rgba(21, 24, 32, .06), rgba(21, 24, 32, .14), rgba(244, 245, 250, .9)};
     }
@@ -111,9 +111,9 @@ private:
     // Frosted glass source: a small, blurred and slightly saturated copy.
     static QImage frost(const QImage &source) {
         if (source.isNull()) return {};
-        QImage img = source.convertToFormat(QImage::Format_RGB32).scaled(qMax(1, source.width() / 6), qMax(1, source.height() / 6),
+        QImage img = source.convertToFormat(QImage::Format_RGB32).scaled(qMax(1, source.width() / 5), qMax(1, source.height() / 5),
             Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-        const int w = img.width(), h = img.height(), r = 3;
+        const int w = img.width(), h = img.height(), r = 2;
         // A failed capture (no screen, protected content) comes back flat:
         // the tinted fallback glass looks better than frosted black.
         qint64 sum = 0, squares = 0;
@@ -182,7 +182,7 @@ private:
     }
     void hoverAt(QPointF local) {
         lastPointer = local;
-        const QPointF d = local - center();
+        const QPointF d = local / scale - dCenter();
         const qreal r = std::hypot(d.x(), d.y());
         pointing = !closing && count() && r >= hubRadius + 4 && r <= discRadius + 12;
         if (pointing) { pointerAngle = std::atan2(d.x(), -d.y()); if (pointerAngle < 0) pointerAngle += 2 * pi; }
@@ -202,10 +202,13 @@ private:
     }
 public:
     // Layout, in widget pixels: the disc on top, the key bar under it.
-    static constexpr int extent = 560;
-    static constexpr int tall = 620;
+    // Drawn in a 560x620 design space, shown at 88%.
+    static constexpr qreal scale = 0.88;
+    static constexpr int extent = 493;
+    static constexpr int tall = 546;
     static constexpr qreal discRadius = 220, hubRadius = 72, ring = 150;
-    static QPointF center() { return {extent / 2.0, 250}; }
+    static QPointF dCenter() { return {280, 250}; }
+    static QPointF center() { return dCenter() * scale; }
     qreal magnify = 1.32;
     QStringList formats; // Item identifiers, kept for callers and tests.
     QVector<Item> items;
@@ -397,7 +400,7 @@ public:
     // disc outside the hub. The hub cancels.
     int hitTest(QPointF local) const {
         if (items.isEmpty()) return -1;
-        const QPointF d = local - center();
+        const QPointF d = local / scale - dCenter();
         const qreal r = std::hypot(d.x(), d.y());
         if (r < hubRadius + 4 || r > discRadius + 12) return -1;
         qreal a = std::atan2(d.x(), -d.y()); if (a < 0) a += 2 * pi;
@@ -406,13 +409,12 @@ public:
     // Where a choice sits at rest.
     QPointF itemCenter(int i) const {
         const qreal a = slot(i);
-        return center() + QPointF(ring * std::sin(a), -ring * std::cos(a));
+        return (dCenter() + QPointF(ring * std::sin(a), -ring * std::cos(a))) * scale;
     }
-    QRectF tabRect(int index) const {
-        const QRectF bar = barRect();
-        return QRectF(bar.left() + 5 + index * 132, bar.top() + 5, 132, 44);
-    }
-    QRectF barRect() const { return QRectF(extent / 2.0 - 254, center().y() + discRadius + 42, 508, 54); }
+    QRectF dBarRect() const { return QRectF(dCenter().x() - 254, dCenter().y() + discRadius + 42, 508, 54); }
+    QRectF dTabRect(int index) const { const QRectF bar = dBarRect(); return QRectF(bar.left() + 5 + index * 132, bar.top() + 5, 132, 44); }
+    QRectF tabRect(int index) const { const QRectF r = dTabRect(index); return QRectF(r.topLeft() * scale, r.size() * scale); }
+    QRectF barRect() const { const QRectF r = dBarRect(); return QRectF(r.topLeft() * scale, r.size() * scale); }
     int tabAt(QPointF local) const {
         if (!showTabs) return -1;
         for (int i = 0; i < 3; ++i) if (tabRect(i).contains(local)) return i;
@@ -430,12 +432,13 @@ public:
     void paintEvent(QPaintEvent *) override {
         QPainter p(this);
         p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform);
+        p.scale(scale, scale);
         const Theme t = theme(darkScheme());
         const Tone tn = tone(mode);
         const QColor accentText = t.dark ? tn.lite : tn.deep;
         const qreal o = qBound(0.0, open.x, 1.2);
         p.setOpacity(qBound(0.0, o, 1.0) * closingOpacity);
-        const QPointF c = center();
+        const QPointF c = dCenter();
         // Disc: scales in from 0.92.
         p.save();
         p.translate(c); p.scale(0.92 + 0.08 * o, 0.92 + 0.08 * o); p.translate(-c);
@@ -491,7 +494,7 @@ private:
         p.setClipPath(shape, Qt::IntersectClip);
         if (!backdrop.isNull()) {
             p.save(); p.translate(focus); p.scale(zoom, zoom); p.translate(-focus);
-            p.drawImage(QRectF(0, 0, width(), height()), backdrop);
+            p.drawImage(QRectF(0, 0, width() / scale, height() / scale), backdrop);
             p.restore();
             p.fillPath(shape, tint);
         } else {
@@ -524,7 +527,7 @@ private:
         const qreal appear = qBound(0.0, s.appear.x, 1.2);
         if (appear <= 0.001) return;
         const qreal a = slot(i) + s.push.x;
-        const QPointF at = center() + QPointF(s.radius.x * std::sin(a), -s.radius.x * std::cos(a));
+        const QPointF at = dCenter() + QPointF(s.radius.x * std::sin(a), -s.radius.x * std::cos(a));
         const qreal scale = s.scale.x * (0.86 + 0.14 * appear), arm = qBound(0.0, s.arm.x, 1.0);
         p.save();
         p.setOpacity(p.opacity() * qBound(0.0, appear, 1.0) * qBound(0.0, s.alpha.x, 1.0));
@@ -567,7 +570,7 @@ private:
         p.restore();
     }
     void paintHub(QPainter &p, const Theme &t, const Tone &tn, QColor accentText) {
-        const QPointF c = center();
+        const QPointF c = dCenter();
         const qreal arm = qBound(0.0, hubArm.x, 1.0);
         const QRectF r(c.x() - hubRadius, c.y() - hubRadius, 2 * hubRadius, 2 * hubRadius);
         QRadialGradient shade(c + QPointF(0, 10), hubRadius + 18);
@@ -625,7 +628,7 @@ private:
     // The key bar: which key opens which wheel; the lit pill slides.
     void paintBar(QPainter &p, const Theme &t) {
         static const QStringList titles{"Convert", "Tools", "Actions"};
-        const QRectF bar = barRect();
+        const QRectF bar = dBarRect();
         QPainterPath capsule; capsule.addRoundedRect(bar, 27, 27);
         // A soft shadow: stacked, widening capsules, each nearly transparent.
         p.setPen(Qt::NoPen);
@@ -638,7 +641,7 @@ private:
         QPainterPath top; top.moveTo(bar.left() + 26, bar.top() + 0.8); top.lineTo(bar.right() - 26, bar.top() + 0.8);
         p.setPen(QPen(t.rimHi, 1)); p.drawPath(top);
         const Tone lit = tone(Mode(qBound(0, int(std::lround(pill.x)), 2)));
-        QRectF pillRect = tabRect(0).translated(132 * pill.x, 0);
+        QRectF pillRect = dTabRect(0).translated(132 * pill.x, 0);
         QPainterPath pillPath; pillPath.addRoundedRect(pillRect, 22, 22);
         p.fillPath(pillPath, alpha(lit.tint, t.dark ? 0.3 : 0.2));
         QLinearGradient pillLit(pillRect.topLeft(), pillRect.bottomLeft());
@@ -646,7 +649,7 @@ private:
         p.fillPath(pillPath, pillLit);
         p.setPen(QPen(alpha(lit.tint, 0.5), 1)); p.setBrush(Qt::NoBrush); p.drawPath(pillPath);
         for (int i = 0; i < 3; ++i) {
-            const QRectF r = tabRect(i);
+            const QRectF r = dTabRect(i);
             const bool on = i == int(mode);
             const QColor ink = on ? (t.dark ? QColor(Qt::white) : tone(Mode(i)).deep) : t.ink2;
             const QString key = tabKeys.value(i);
@@ -658,7 +661,7 @@ private:
             p.setFont(keyFont); p.setPen(ink); p.drawText(chip, Qt::AlignCenter, key);
             p.setFont(labelFont); p.drawText(QRectF(chip.right() + 8, r.top(), labelW + 2, r.height()), Qt::AlignVCenter | Qt::AlignLeft, titles[i]);
         }
-        const qreal sep = tabRect(2).right() + 4;
+        const qreal sep = dTabRect(2).right() + 4;
         p.setPen(QPen(t.keyLine, 1)); p.drawLine(QPointF(sep, bar.center().y() - 11), QPointF(sep, bar.center().y() + 11));
         const QRectF rest(sep + 4, bar.top(), bar.right() - sep - 8, bar.height());
         const QFont keyFont = font(11, QFont::Medium, true), labelFont = font(13, QFont::Medium);

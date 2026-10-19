@@ -37,7 +37,7 @@ for attempt in $(seq 1 100); do
  done
 sleep 2
 [[ "$(qdbus6 org.kde.KWin /Lorenz org.lorenz.KWin.BuildId)" == "$LORENZ_PLUGIN_ID" ]]
-[[ "$(qdbus6 org.kde.KWin /Lorenz org.lorenz.KWin.WheelSize)" == 560 ]]
+[[ "$(qdbus6 org.kde.KWin /Lorenz org.lorenz.KWin.WheelSize)" == 493 ]]
 original=$(sha256sum "$LORENZ_TEST_RUN/sample.png")
 # Shift without a drag must not activate anything.
 call Key 42 true
