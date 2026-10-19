@@ -1,24 +1,29 @@
 # Distribution
 
-Version 0.1 uses per-user installations: from source on Linux, from a prebuilt
-unsigned package or from source on Windows. No package is claimed to be
-published, signed, or accepted by a distribution repository.
+Version 0.1 ships per-user installers on Windows and system packages on Linux,
+all built and installed in clean environments by CI, and attached to the
+GitHub release when a `v*` tag is pushed. None is signed or accepted by a
+distribution repository yet.
 
-- Linux: `./install.sh` builds from source for the current user (`~/.local`). It
-  uses the distribution's package manager (pacman, apt, dnf, zypper, xbps, apk) only
-  for build tools and engines, and asks before each step, including start at login.
-  `./uninstall.sh` removes everything it installed.
-- Windows: CI builds `Metroid-windows-x64.zip` (binaries with Qt deployed by
-  windeployqt, `Install.cmd`, `Uninstall.cmd`), installs and uninstalls it, and
-  attaches it to the release when a `v*` tag is pushed. The installer is
-  per-user, asks before installing engines through winget and before enabling
-  start at sign-in. `scripts/install-windows.ps1` also builds from a checkout.
+- Windows: `windows/metroid.iss` (Inno Setup 6) builds `Metroid-Setup-x64.exe`
+  from the executables and the Qt files deployed by windeployqt. It installs for
+  the current user without administrator rights, adds Start, Send to and an
+  optional desktop shortcut, can install engines through winget and enable start
+  at sign-in, and registers an uninstaller in Settings → Apps.
+  `scripts/install-windows.ps1` builds and installs from a checkout.
+- Linux: `linux/build-package.sh deb|rpm|arch` builds a package in a container of
+  the target family (`debian:12`, `fedora:latest`, `archlinux:latest`);
+  `linux/test-package.sh` installs, checks and removes it. `linux/stage.sh` lays
+  out the files every format shares (`/usr/bin`, launcher, icon, Dolphin and
+  Nemo menus written by `metroid integrate --data-dir`). `arch/PKGBUILD` is
+  AUR-ready once its checksum is set. `linux/build-appimage.sh` bundles Qt on
+  Ubuntu 22.04. `./install.sh` still builds from source for one user.
 - Keep the core and desktop executables in the same directory.
 - Qt is dynamically linked; distribute its libraries and plugins under their
-  applicable licenses. Conversion engines are optional and are not bundled.
-- Core CI artifacts do not include Qt or conversion engines.
+  applicable licenses. Conversion engines are recommended, never bundled.
 
-Before public distribution: choose the project license, audit engine licenses,
-build and verify deb/rpm/PKGBUILD packages, deploy Qt on Windows and Linux, test in
-VMs, then arrange signing and update channels. Flatpak requires an explicit policy
-for host engines and permissions; network access must not be added for convenience.
+Metroid is GPL-3.0-or-later; packages install the license text. Before wider
+distribution: audit engine licenses, sign the Windows installer,
+publish the PKGBUILD to the AUR, and test on physical machines. Flatpak requires
+an explicit policy for host engines and permissions; network access must not be
+added for convenience.

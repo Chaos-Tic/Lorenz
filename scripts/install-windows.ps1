@@ -1,7 +1,7 @@
 # Installs Metroid for the current user in %LOCALAPPDATA%\Programs\Metroid.
 #
-# From the release package (Metroid-windows-x64.zip): double-click Install.cmd.
-# From a source checkout: needs Rust, MSVC C++ build tools, CMake and Qt 6
+# Most people should use Metroid-Setup-x64.exe from the Releases page instead.
+# This script builds from a source checkout and needs Rust, MSVC C++ build tools, CMake and Qt 6
 # (CMAKE_PREFIX_PATH set to Qt, windeployqt on PATH).
 #
 # Without options, each step asks first. Options answer in advance:

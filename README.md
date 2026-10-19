@@ -57,6 +57,28 @@ moves in your file manager. The keys can be changed in **Settings** (tray icon).
 
 ## Install on Linux
 
+### Ready-made packages
+
+Download the file for your distribution from the **Releases** page:
+
+| Distribution | File | Install |
+| --- | --- | --- |
+| Debian 12+, Ubuntu 24.04+, Mint 22+ | `metroid_VERSION_amd64.deb` | `sudo apt install ./metroid_*.deb` |
+| Fedora (current release) | `metroid-VERSION-1.fcNN.x86_64.rpm` | `sudo dnf install ./metroid-*.rpm` |
+| Arch, EndeavourOS, CachyOS | `metroid-VERSION-1-x86_64.pkg.tar.zst` | `sudo pacman -U metroid-*.pkg.tar.zst` |
+| Any other (glibc 2.35+) | `Metroid-x86_64.AppImage` | `chmod +x Metroid-*.AppImage`, then run it |
+
+Packages install Metroid for every user, with its application-menu entry and the
+Dolphin and Nemo context menus, and recommend the conversion engines (apt and dnf
+install recommended packages by default; on Arch, pick them from the optional
+dependencies). Nautilus users run `metroid integrate` once for the GNOME Files
+scripts; `metroid autostart enable` starts the tray companion at login. The
+AppImage bundles Qt but no engines and adds no file-manager menus. The KDE drag
+gesture is not packaged: it must be built against your exact KWin version
+(`./scripts/install-kwin.sh`).
+
+### From source
+
 ```sh
 git clone https://github.com/Chaos-Tic/Metroid.git
 cd Metroid
@@ -157,38 +179,46 @@ Uninstalling never touches your files.
 
 Windows 10 (1809 or later) or Windows 11, no build tools needed:
 
-1. Download **Metroid-windows-x64.zip**: from the repository's **Releases** page, or
-   from the latest successful **Build and test** run under **Actions** (artifact
-   *Metroid-windows-x64*).
-2. Extract it, open the `Metroid` folder and double-click **Install.cmd**. The
-   package is not signed yet: if Windows SmartScreen warns, choose
-   *More info → Run anyway*.
-3. Answer the questions:
-   - install the conversion engines with winget (ImageMagick, FFmpeg, Pandoc,
-     Poppler, qpdf); recommended;
-   - install LibreOffice for Word, PowerPoint and spreadsheet files (large, optional);
+1. Download **Metroid-Setup-x64.exe** from the repository's **Releases** page (or
+   the *package-windows* artifact of the latest successful **Build and test** run).
+2. Double-click it. The installer is not signed yet: if Windows SmartScreen warns,
+   choose *More info → Run anyway*.
+3. Tick what you want, then *Install*:
+   - a desktop shortcut;
+   - the conversion engines through winget (ImageMagick, FFmpeg, Pandoc, Poppler,
+     qpdf), recommended;
+   - LibreOffice for Word, PowerPoint and spreadsheet files (large, optional);
    - start Metroid when you sign in.
 
-Metroid is installed for your account only, in `%LOCALAPPDATA%\Programs\Metroid`, and
-added to **Start** and **Send to**. Right-click files → **Send to → Metroid** opens
-the wheels. Archives use the `tar` included with Windows; *Compress PDF* needs
-Ghostscript, which is not on winget (install it from ghostscript.com if needed).
-Engine installers may ask for administrator rights; Metroid itself does not.
+Metroid is installed for your account only, in `%LOCALAPPDATA%\Programs\Metroid`,
+without administrator rights, and added to **Start** and **Send to**.
 
-To uninstall, double-click **Uninstall.cmd** in the same folder; engines stay
-installed (`winget uninstall` removes them). Options for unattended installs:
+**Drag gesture:** while the Metroid companion runs (tray icon), drag files from
+Explorer or any app, tap **Shift** (convert), **Ctrl** (tools) or **Alt**
+(actions), and release over a sector of the wheel that opens under the pointer.
+Tap another key, or point at a tab, to switch wheels; release elsewhere or press
+Esc to drop normally. The wheel always takes a *copy*, so a drag that would move
+files never removes the originals. Right-click files → **Send to → Metroid**
+opens the same wheels without dragging. Archives use the
+`tar` included with Windows; *Compress PDF* needs Ghostscript, which is not on
+winget (install it from ghostscript.com if needed). Engine installers may ask for
+administrator rights; Metroid itself does not.
+
+To update, run a newer installer over the old one. To uninstall: **Settings → Apps
+→ Metroid → Uninstall**; engines stay installed (`winget uninstall` removes them).
+Unattended install, choosing the tasks:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File install.ps1 -Engines -NoOffice -Autostart
+Metroid-Setup-x64.exe /VERYSILENT /TASKS="desktopicon,engines,autostart"
 ```
 
 **From source** (developers): with Rust, MSVC C++ build tools, CMake and Qt 6
 (`CMAKE_PREFIX_PATH` set, `windeployqt` on `PATH`), run
 `./scripts/install-windows.ps1` from the checkout; it asks the same questions.
 
-There is no drag gesture on Windows yet. CI builds the package, installs and
-uninstalls it on Windows and runs real conversions there; interactive validation
-on Windows 10/11 is still pending.
+CI builds the installer, installs and uninstalls it silently on Windows, tests the
+wheel's copy-only drops and runs real conversions there; interactive validation of
+the drag gesture on Windows 10/11 is in progress.
 
 ## What Metroid can do
 
@@ -304,11 +334,12 @@ and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 
 ## Roadmap
 
-- Drag gesture for GNOME Shell, wlroots compositors and Windows.
+- Drag gesture for GNOME Shell and wlroots compositors.
 - SVG input through a sandboxed renderer; tools with parameters (crop, trim, quality).
 - PDF to DOCX/EPUB, Apple Pages input, multipage image export options.
 - Content/MIME detection, codec capability probing, progress reporting.
-- Native packages (AUR, COPR, deb, Flatpak), signed Windows installer, license choice.
+- Repository channels (AUR, COPR, Flatpak) and a signed Windows installer.
 
-No redistribution license has been granted yet; a license must be chosen before
-public distribution. See [`packaging/README.md`](packaging/README.md).
+## License
+
+Metroid is free software under the [GNU General Public License v3.0 or later](LICENSE).
