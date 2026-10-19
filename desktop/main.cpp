@@ -1,6 +1,9 @@
 #include <QtWidgets>
 #include <cmath>
 #include "radialwheel.h"
+#ifdef Q_OS_WIN
+#include "windowsgesture.h"
+#endif
 
 static QString corePath() {
     QString name = "metroid";
@@ -438,6 +441,13 @@ int main(int argc,char **argv) {
     QObject::connect(manager,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--manager"}); });
     menu.addSeparator(); auto *quit=menu.addAction("Quit tray companion"); QObject::connect(quit,&QAction::triggered,&app,&QApplication::quit);
     tray.setContextMenu(&menu); tray.show();
+#ifdef Q_OS_WIN
+    // The companion hosts the drag gesture on Windows, as KWin does on Plasma.
+    WindowsGesture gesture(corePath(),wheelKeys,keyLabel,[&](RadialWheel::Mode mode,const QString &id,const QStringList &paths){
+        const QStringList options{"--convert-to","--tool","--action"};
+        QProcess::startDetached(app.applicationFilePath(),QStringList{options[mode],id,"--"}+paths);
+    });
+#endif
     if (!flags.contains("--background")) {
         const QStringList keys=wheelKeys();
         notify("Metroid",QString("Drag a file, then tap %1 to convert, %2 for tools or %3 for actions.").arg(keyLabel(keys[0]),keyLabel(keys[1]),keyLabel(keys[2])));

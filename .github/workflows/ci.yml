@@ -73,6 +73,7 @@ jobs:
           cache: true
       - run: cmake -S . -B build
       - run: cmake --build build --config Release
+      - run: ctest --test-dir build -C Release --output-on-failure
       # metroid-desktop is a windowed program: PowerShell does not wait for it.
       - shell: pwsh
         run: |

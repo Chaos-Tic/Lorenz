@@ -11,8 +11,9 @@ wheel key switches wheels in place. The batch window is optional.
 
 - Implemented and locally tested with KWin **6.8.0**, Wayland pointer drags, and local
   `text/uri-list` files. The build script currently accepts the 6.8 release series.
-- XWayland source apps, touch/tablet drags, GNOME, other compositors, and native
-  Windows gesture interception are not validated or implemented by this extension.
+- XWayland source apps, touch/tablet drags, GNOME and other compositors are not
+  validated or implemented by this extension. Windows has its own gesture in the
+  tray companion (`desktop/windowsgesture.h`).
 - Remote URLs and non-file drags are ignored. Folders get the actions and ZIP tool.
   Mixed selections show common items only. Batches are limited to 128 paths and
   256 KiB of URI data.

@@ -191,8 +191,15 @@ Windows 10 (1809 or later) or Windows 11, no build tools needed:
    - start Metroid when you sign in.
 
 Metroid is installed for your account only, in `%LOCALAPPDATA%\Programs\Metroid`,
-without administrator rights, and added to **Start** and **Send to**. Right-click
-files → **Send to → Metroid** opens the wheels at the pointer. Archives use the
+without administrator rights, and added to **Start** and **Send to**.
+
+**Drag gesture:** while the Metroid companion runs (tray icon), drag files from
+Explorer or any app, tap **Shift** (convert), **Ctrl** (tools) or **Alt**
+(actions), and release over a sector of the wheel that opens under the pointer.
+Tap another key, or point at a tab, to switch wheels; release elsewhere or press
+Esc to drop normally. The wheel always takes a *copy*, so a drag that would move
+files never removes the originals. Right-click files → **Send to → Metroid**
+opens the same wheels without dragging. Archives use the
 `tar` included with Windows; *Compress PDF* needs Ghostscript, which is not on
 winget (install it from ghostscript.com if needed). Engine installers may ask for
 administrator rights; Metroid itself does not.
@@ -209,9 +216,9 @@ Metroid-Setup-x64.exe /VERYSILENT /TASKS="desktopicon,engines,autostart"
 (`CMAKE_PREFIX_PATH` set, `windeployqt` on `PATH`), run
 `./scripts/install-windows.ps1` from the checkout; it asks the same questions.
 
-There is no drag gesture on Windows yet. CI builds the installer, installs and
-uninstalls it silently on Windows and runs real conversions there; interactive
-validation on Windows 10/11 is still pending.
+CI builds the installer, installs and uninstalls it silently on Windows, tests the
+wheel's copy-only drops and runs real conversions there; interactive validation of
+the drag gesture on Windows 10/11 is in progress.
 
 ## What Metroid can do
 
