@@ -63,6 +63,12 @@ jobs:
       - run: cmake --build build --parallel 2
       - run: ctest --test-dir build --output-on-failure
       - run: QT_QPA_PLATFORM=offscreen build/lorenz-desktop --smoke-test
+      # Frames of the wheel (open, magnify, switch) for visual review.
+      - run: QT_QPA_PLATFORM=offscreen LORENZ_WHEEL_FRAMES=wheel-frames build/lorenz-wheel-test
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wheel-frames
+          path: wheel-frames
   desktop-windows:
     runs-on: windows-latest
     steps:
