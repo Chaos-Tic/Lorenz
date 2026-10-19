@@ -50,6 +50,11 @@ written by `linux/vendor.sh` in CI.
   (fingerprint `42BD E8EB EC80 1832 D764 03B5 F83B 918D 484C 9E04`, valid
   until 2028-10-18); a new Ubuntu series needs a line in its `case`.
 
+- Debian apt repository (`https://chaos-tic.github.io/apt`, repository
+  `Chaos-Tic/apt`): publishes the `.deb` of each release, built on Debian 12
+  by the `linux-package` job, signed with the repository's own key; it
+  refreshes every six hours.
+
 ### Official Fedora and Debian archives
 
 Both require a sponsor and a review, and both prefer each crate packaged on

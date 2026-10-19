@@ -90,6 +90,19 @@ sudo dnf copr enable chaostic/lorenz
 sudo dnf install lorenz
 ```
 
+### Debian and Ubuntu (apt)
+
+Debian 12+, Ubuntu 24.04+ and their derivatives, from the
+[Chaos-Tic apt repository](https://chaos-tic.github.io/apt); `apt upgrade`
+keeps it up to date:
+
+```sh
+sudo curl -fsSLo /usr/share/keyrings/chaos-tic.gpg https://chaos-tic.github.io/apt/chaos-tic-apt.gpg
+echo "deb [signed-by=/usr/share/keyrings/chaos-tic.gpg] https://chaos-tic.github.io/apt stable main" |
+  sudo tee /etc/apt/sources.list.d/chaos-tic.list
+sudo apt update && sudo apt install lorenz
+```
+
 ### Ready-made packages
 
 Download the file for your distribution from the **Releases** page:
