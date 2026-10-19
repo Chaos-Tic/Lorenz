@@ -114,6 +114,37 @@ fn backend_cancellation_and_timeout_reap_process() {
     assert!(error.to_string().contains("timed out"));
 }
 
+// Engines start helpers of their own (LibreOffice's soffice.bin, Ghostscript
+// under ImageMagick): stopping a conversion must stop them too.
+#[cfg(unix)]
+#[test]
+fn backend_timeout_stops_the_engines_children() {
+    let d = tempfile::tempdir().unwrap();
+    let shell = lorenz::executable("sh").unwrap();
+    let pid_file = d.path().join("child.pid");
+    let script = format!("sleep 30 & echo $! > '{}'; wait", pid_file.display());
+    let args = ["-c".to_owned(), script];
+    let error = lorenz::run_backend(&shell, &args, d.path(), None, 1).unwrap_err();
+    assert!(error.to_string().contains("timed out"));
+    let pid = fs::read_to_string(&pid_file).unwrap();
+    // Reaped by init once its group is killed; give it a moment.
+    let alive = || {
+        std::process::Command::new("kill")
+            .args(["-0", pid.trim()])
+            .stderr(std::process::Stdio::null())
+            .status()
+            .unwrap()
+            .success()
+    };
+    for _ in 0..50 {
+        if !alive() {
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    panic!("the engine's child {} outlived the timeout", pid.trim());
+}
+
 #[test]
 fn pdf_text_render_and_merge() {
     if ["pdftotext", "pdftoppm", "qpdf"]

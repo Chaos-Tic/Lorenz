@@ -1,6 +1,6 @@
 [package]
 name = "lorenz"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 description = "Local file conversion for Linux and Windows"
 rust-version = "1.85"
@@ -13,3 +13,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tempfile = "3"
 toml = "1"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

@@ -5,7 +5,7 @@ use std::{
     fs::{self, File},
     io::{Read, Seek, SeekFrom},
     path::{Path, PathBuf},
-    process::{Command, Stdio},
+    process::{Child, Command, Stdio},
     thread,
     time::{Duration, Instant},
 };
@@ -626,6 +626,9 @@ pub fn run_backend(
         command.env("MAGICK_CONFIGURE_PATH", &policy);
     }
     command.env("LORENZ_MEDIA", log_dir.join("media"));
+    // Its own process group, so that stopping it reaches the helpers it starts.
+    #[cfg(unix)]
+    std::os::unix::process::CommandExt::process_group(&mut command, 0);
     let mut child = command
         .args(args)
         .stdin(Stdio::null())
@@ -651,6 +654,7 @@ pub fn run_backend(
         }
         let cancelled = cancel.is_some_and(Path::exists);
         if cancelled || start.elapsed() > Duration::from_secs(timeout) {
+            stop_helpers(&child);
             let _ = child.kill();
             let _ = child.wait();
             bail!(if cancelled {
@@ -660,6 +664,29 @@ pub fn run_backend(
             });
         }
         thread::sleep(Duration::from_millis(80));
+    }
+}
+
+/// Stops what a running engine started: on Unix its process group, on Windows
+/// its process tree. Called only while the engine is alive and not yet reaped,
+/// so its id cannot belong to another process; the caller then reaps it.
+fn stop_helpers(child: &Child) {
+    #[cfg(unix)]
+    {
+        let group = child.id() as libc::pid_t;
+        // SAFETY: kill only sends a signal; a negative pid names the group
+        // created for this engine by process_group(0).
+        unsafe {
+            libc::kill(-group, libc::SIGKILL);
+        }
+    }
+    #[cfg(windows)]
+    {
+        let _ = Command::new("taskkill")
+            .args(["/T", "/F", "/PID", &child.id().to_string()])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
     }
 }
 
