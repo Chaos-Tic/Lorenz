@@ -542,10 +542,14 @@ private:
         p.translate(at); p.scale(scale, scale);
         const QRectF box(-46, -40, 92, 80);
         QPainterPath shape; shape.addRoundedRect(box, 20, 20);
+        // The armed tile lifts off the glass: a soft shadow in its own
+        // rounded shape, stacked from nearly transparent layers.
         if (arm > 0.01) {
-            QRadialGradient glow(QPointF(0, 14), 60);
-            glow.setColorAt(0, alpha(tn.tint, 0.45 * arm)); glow.setColorAt(1, alpha(tn.tint, 0));
-            p.setPen(Qt::NoPen); p.setBrush(glow); p.drawEllipse(QPointF(0, 16), 62, 40);
+            p.setPen(Qt::NoPen);
+            for (int i = 1; i <= 6; ++i) {
+                p.setBrush(alpha(t.shadow, 0.035 * arm));
+                p.drawRoundedRect(box.translated(0, 3 + i).adjusted(-i, -i + 2, i, i), 20 + i, 20 + i);
+            }
         }
         p.fillPath(shape, mix(t.tile, alpha(tn.tint, t.dark ? 0.3 : 0.2), arm));
         if (arm > 0.01) {
