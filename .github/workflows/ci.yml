@@ -248,7 +248,10 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
+        # SHA256SUMS lets users check a download (docs/VERIFYING.md).
+        run: |
+          (cd dist && sha256sum -- * >SHA256SUMS)
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
       # Fedora COPR rebuilds from the release just published (.copr/Makefile).
       - env:
           COPR_WEBHOOK: ${{ secrets.COPR_WEBHOOK }}

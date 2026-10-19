@@ -13,6 +13,11 @@
 
 **Drag a file. Tap a key. Drop onto a choice.**
 
+> *Why Lorenz?* The project is named after **Edward Lorenz** (1917–2008), the
+> meteorologist whose work founded chaos theory and gave us the **butterfly
+> effect**. Fitting for a tool by [Chaos-Tic](https://github.com/Chaos-Tic): a
+> small gesture, a whole file transformed.
+
 <p align="center">
   <img src="docs/media/demo.gif" alt="A photo is dragged across the desktop, Shift is tapped, the frosted-glass wheel opens and magnifies each format under the pointer, the photo is released on WebP, and Mountain light.webp appears beside the original with a notification" width="100%">
 </p>
@@ -27,9 +32,10 @@ already taken. No account, server, or cloud service is involved.
 The global drag gesture works on **Windows 10 and 11** and on **KDE Plasma 6.8
 (Wayland)**. Every other Linux desktop gets the same wheels from the file manager's
 context menu. The interface speaks English and French, following the system or the
-language picked at setup. This is an independent implementation inspired by the
-interaction of Tangerine for Mac; it contains no Tangerine code and is not affiliated
-with Tangerine or with any namesake franchise. **Status: under development.**
+language picked at setup. Lorenz is an independent project inspired by Tangerine
+for Mac (see [Acknowledgements](#acknowledgements)). **Status: under development**:
+what is verified and what is not yet done are listed in
+[Roadmap and known gaps](#roadmap-and-known-gaps).
 
 [Install](#install-on-linux) · [The three wheels](#three-wheels) · [Formats and tools](#what-lorenz-can-do) · [Desktop guide](docs/USER_GUIDE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
@@ -105,7 +111,8 @@ sudo apt update && sudo apt install lorenz
 
 ### Ready-made packages
 
-Download the file for your distribution from the **Releases** page:
+Download the file for your distribution from the **Releases** page, and check it
+against the release's `SHA256SUMS` ([how](docs/VERIFYING.md)):
 
 | Distribution | File | Install |
 | --- | --- | --- |
@@ -375,30 +382,80 @@ and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Missing engines, Pandoc, filesystems, startup, desktop integration |
 | [Architecture](docs/ARCHITECTURE.md) | Data flow, source map, registries, process interfaces |
 | [Validation](docs/TESTING.md) | Automated coverage and a manual platform checklist |
-| [Distribution](packaging/README.md) | Installation boundaries and packaging plans |
+| [Distribution](packaging/README.md) | Package repositories and how each release reaches them |
+| [Compatibility](docs/COMPATIBILITY.md) | What was verified, where and when |
+| [Verifying downloads](docs/VERIFYING.md) | SHA-256 checksums and repository keys |
+| [Security](SECURITY.md) | Reporting a vulnerability, threat model, known limits |
+| [Changelog](CHANGELOG.md) | What changed in each release |
 | [Visual assets](docs/media/README.md) | Screenshot provenance and refresh instructions |
 
-## Roadmap
+## Roadmap and known gaps
 
-- Drag gesture for GNOME Shell and wlroots compositors.
-- SVG input through a sandboxed renderer; tools with parameters (crop, trim, quality).
-- PDF to DOCX/EPUB, Apple Pages input.
-- Content/MIME detection, codec capability probing, progress reporting.
-- Repository channels (COPR, Flatpak) and a signed Windows installer.
+Not done yet, in rough order of priority:
+
+- **Engine isolation.** Engines run as your user with Lorenz's restrictions
+  (ImageMagick policy, Pandoc sandbox, FFmpeg limited to local files, private
+  LibreOffice profile) and a timeout; they are not confined further
+  (no bubblewrap or AppContainer) and have no memory or CPU limit. See
+  [SECURITY.md](SECURITY.md).
+- **File type detection** relies on extensions; content (MIME) detection is
+  planned. Each engine still parses the content itself.
+- **Real-machine testing.** CI and containers cover building, installing and
+  headless runs; real sessions are verified only where
+  [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) says so (GNOME, Windows 10/11
+  and other desktops wait for a dated check).
+- **Windows signing.** Installers are unsigned (see
+  [Code signing](#code-signing)); a winget package is not published yet.
+- **Official distribution archives.** Lorenz is in the AUR, a Fedora COPR, an
+  Ubuntu PPA and its own apt repository, not in the official Debian, Ubuntu or
+  Fedora archives (they require a sponsor and every Rust crate packaged
+  separately).
+- **Features:** drag gesture for GNOME Shell and wlroots compositors; SVG input
+  through a sandboxed renderer; tools with parameters (crop, trim, quality);
+  PDF to DOCX/EPUB; Apple Pages input; codec probing and progress reporting;
+  Flatpak.
+- **macOS:** not started.
+
+## Acknowledgements
+
+Lorenz is an independent project inspired by
+[Tangerine for macOS](https://www.tangerineformac.com/). Full credit to the
+creators of Tangerine for the original interaction concept that inspired this
+project. Lorenz is developed independently, contains no Tangerine source code,
+and is not affiliated with or endorsed by Tangerine, nor with any namesake
+franchise.
 
 ## License
 
 Lorenz is free software under the [GNU General Public License v3.0 or later](LICENSE).
 
-## Code signing policy
+## Code signing
 
-Windows releases are to be signed for free by [SignPath.io](https://about.signpath.io),
-with a certificate from the [SignPath Foundation](https://signpath.org) (application
-pending; current releases are unsigned). Only installers built by this repository's
-GitHub Actions workflow from tagged commits are submitted for signing.
+Windows installers are **not code-signed** yet: Windows SmartScreen may warn
+before running them. Do not disable SmartScreen or your antivirus; instead,
+download only from the [official channels](#official-download-channels) and
+compare the file with the release's `SHA256SUMS` as described in
+[docs/VERIFYING.md](docs/VERIFYING.md). A checksum proves the file is the one
+published here; it does not replace a publisher signature. On Linux, COPR,
+Launchpad and the Chaos-Tic apt repository sign their package indexes, which
+your package manager checks; the AUR package builds from this repository's
+source tarball, pinned by its SHA-256 in the PKGBUILD.
 
-- Committers and reviewers: [Chaos-Tic](https://github.com/Chaos-Tic)
-- Approvers: [Chaos-Tic](https://github.com/Chaos-Tic)
+## Official download channels
+
+Lorenz is published only by [Chaos-Tic](https://github.com/Chaos-Tic) through:
+
+- this repository's [Releases](https://github.com/Chaos-Tic/Lorenz/releases);
+- the AUR package [`lorenz`](https://aur.archlinux.org/packages/lorenz);
+- the Fedora COPR [`chaostic/lorenz`](https://copr.fedorainfracloud.org/coprs/chaostic/lorenz/);
+- the Ubuntu PPA [`ppa:chaos-tic/lorenz`](https://launchpad.net/~chaos-tic/+archive/ubuntu/lorenz);
+- the apt repository [chaos-tic.github.io/apt](https://chaos-tic.github.io/apt);
+- the [KDE Store](https://store.kde.org/p/2379605).
+
+Copies elsewhere are not maintained here. Releases up to now are GPL-3.0-or-later,
+so redistributing them under that license is allowed; if you find a copy that
+breaks the license or impersonates the project, please
+[open an issue](https://github.com/Chaos-Tic/Lorenz/issues).
 
 ### Privacy
 
