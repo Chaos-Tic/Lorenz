@@ -1,9 +1,9 @@
 ﻿; Lorenz installer for Windows (Inno Setup 6). CI builds it with:
-;   iscc /DAppVersion=0.1.0 packaging\windows\lorenz.iss
+;   iscc /DAppVersion=1.0.0 packaging\windows\lorenz.iss
 ; dist\Lorenz (SourceDir) holds lorenz.exe, lorenz-desktop.exe and the Qt files from windeployqt.
 ; Silent install for scripts: Lorenz-Setup-x64.exe /VERYSILENT /TASKS="engines,autostart"
 #ifndef AppVersion
-  #define AppVersion "0.1.0"
+  #define AppVersion "1.0.0"
 #endif
 #ifndef SourceDir
   #define SourceDir "..\..\dist\Lorenz"

@@ -68,7 +68,7 @@ public:
         auto *doctor = new QPushButton(L("Diagnostics")); nav->addWidget(doctor);
         auto *pin = new QCheckBox(L("Always on top")); pin->setToolTip(L("Subject to your desktop / compositor rules")); nav->addWidget(pin);
         nav->addStretch(); nav->addWidget(label(L("●  LOCAL PROCESSING"), "local"));
-        nav->addWidget(label(L("Your files stay\non your computer."), "muted")); nav->addWidget(label("VERSION 0.1.0", "eyebrow"));
+        nav->addWidget(label(L("Your files stay\non your computer."), "muted")); nav->addWidget(label("VERSION " LORENZ_VERSION, "eyebrow"));
         outer->addWidget(sidebar);
         auto *main = new QVBoxLayout; main->setContentsMargins(32,28,32,24); main->setSpacing(15); outer->addLayout(main,1);
         main->addWidget(label(L("YOUR DESKTOP. YOUR FILES."), "eyebrow"));

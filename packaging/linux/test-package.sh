@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installs a built package in a clean container, checks it, then removes it:
-#   packaging/linux/test-package.sh dist/lorenz_0.1.0_amd64.deb
+#   packaging/linux/test-package.sh dist/lorenz_1.0.0_amd64.deb
 set -euo pipefail
 package=$(realpath "${1:?usage: packaging/linux/test-package.sh PACKAGE}")
 case $package in
