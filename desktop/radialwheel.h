@@ -3,6 +3,7 @@
 #include <cmath>
 #include <functional>
 #include <numeric>
+#include "i18n.h"
 
 // One native wheel for compositor gestures, the Windows gesture and
 // file-context actions. Three modes: formats, tools and file actions.
@@ -67,6 +68,8 @@ private:
         return {QColor(64, 186, 240), QColor("#0b6690"), QColor("#9fdcf8"), 190};
     }
     static bool darkScheme() {
+        // LORENZ_THEME=light|dark forces the look (documentation captures).
+        if (const QString forced = qEnvironmentVariable("LORENZ_THEME"); forced == "dark" || forced == "light") return forced == "dark";
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         if (const auto scheme = QGuiApplication::styleHints()->colorScheme(); scheme != Qt::ColorScheme::Unknown)
             return scheme == Qt::ColorScheme::Dark;
@@ -99,7 +102,8 @@ private:
             {"grayscale", {"", "Greyscale copy"}}, {"strip", {"", "Removes GPS and camera data"}}, {"zip", {"", "One archive beside it"}},
             {"copy", {"", "To the clipboard"}}, {"copy-to", {"", "Pick a folder"}}, {"move-to", {"", "Pick a folder"}},
             {"path", {"", "Full path as text"}}, {"terminal", {"", "Opens in this folder"}}, {"reveal", {"", "Reveal in the file manager"}}};
-        return text.value(id.toLower());
+        const auto entry = text.value(id.toLower());
+        return {entry.first.isEmpty() ? QString() : L(entry.first), entry.second.isEmpty() ? QString() : L(entry.second)};
     }
     static void arrowHead(QPainter &p, QPointF tip, qreal degrees) {
         p.drawLine(tip, tip + polar(5, degrees + 150)); p.drawLine(tip, tip + polar(5, degrees - 150));
@@ -378,8 +382,12 @@ public:
             const QRect area = screen->availableGeometry();
             topLeft.setX(qBound(area.left(), topLeft.x(), qMax(area.left(), area.right() - width() + 1)));
             topLeft.setY(qBound(area.top(), topLeft.y(), qMax(area.top(), area.bottom() - height() + 1)));
-            // The desktop does not move during a drag: capture it once.
-            if (captureBackdrop && !isVisible()) {
+            // LORENZ_WHEEL_BACKDROP stands in for the desktop in documentation
+            // captures: its top-left corner, the wheel's size, sits behind it.
+            if (const QString stand = qEnvironmentVariable("LORENZ_WHEEL_BACKDROP"); !stand.isEmpty()) {
+                backdrop = frost(QImage(stand).copy(0, 0, width(), height()));
+            } else if (captureBackdrop && !isVisible()) {
+                // The desktop does not move during a drag: capture it once.
                 const QRect g = screen->geometry();
                 backdrop = frost(screen->grabWindow(0, topLeft.x() - g.x(), topLeft.y() - g.y(), width(), height()).toImage());
             }
@@ -565,7 +573,7 @@ private:
             p.setPen(QPen(ink, 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); glyph(p, item.glyph);
             p.restore();
             p.setPen(ink); p.setFont(font(12, QFont::Medium));
-            p.drawText(QRectF(-44, 4, 88, 30), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, item.label);
+            p.drawText(QRectF(-44, 4, 88, 30), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, L(item.label));
         }
         p.restore();
     }
@@ -597,11 +605,11 @@ private:
             p.save(); p.translate(0, -30); p.scale(0.9, 0.9);
             p.setPen(QPen(t.ink, 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)); glyph(p, glyphFor(sourceType)); p.restore();
         }
-        const QString title = loading ? "Reading…" : count() == 0 ? "Unavailable" : titles[mode];
+        const QString title = L(loading ? "Reading…" : count() == 0 ? "Unavailable" : titles[mode]);
         p.setPen(t.ink); p.setFont(font(18, QFont::DemiBold));
         p.drawText(QRectF(-64, -8, 128, 24), Qt::AlignCenter, title);
         p.setPen(t.ink2); p.setFont(font(11.5, QFont::Medium));
-        const QString detail = loading ? "Finding options" : count() == 0 ? message.section('\n', 0, 0) : sourceName;
+        const QString detail = loading ? L("Finding options") : count() == 0 ? L(message.section('\n', 0, 0)) : sourceName;
         p.drawText(QRectF(-60, 18, 120, 16), Qt::AlignCenter, QFontMetrics(p.font()).elidedText(detail, Qt::ElideMiddle, 116));
         p.restore();
         // Armed: the choice, big, and what releasing does.
@@ -612,12 +620,13 @@ private:
             p.save();
             p.setOpacity(p.opacity() * arm);
             p.translate(c); p.scale(0.92 + 0.08 * arm, 0.92 + 0.08 * arm);
-            const int len = item.label.size();
+            const QString name = mode == Convert ? item.label : L(item.label);
+            const int len = name.size();
             p.setPen(accentText); p.setFont(font(len <= 5 ? 30 : len <= 9 ? 20 : 16, QFont::DemiBold));
             const qreal top = hint.isEmpty() ? -22 : -32;
-            p.drawText(QRectF(-62, top, 124, 36), Qt::AlignCenter | Qt::TextWordWrap, item.label);
+            p.drawText(QRectF(-62, top, 124, 36), Qt::AlignCenter | Qt::TextWordWrap, name);
             p.setPen(t.ink); p.setFont(font(11.5, QFont::DemiBold));
-            p.drawText(QRectF(-62, top + 38, 124, 16), Qt::AlignCenter, verbs[mode]);
+            p.drawText(QRectF(-62, top + 38, 124, 16), Qt::AlignCenter, L(verbs[mode]));
             if (!hint.isEmpty()) {
                 p.setPen(t.ink2); p.setFont(font(11, QFont::Medium));
                 p.drawText(QRectF(-56, top + 55, 112, 30), Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, hint);
@@ -652,23 +661,23 @@ private:
             const QRectF r = dTabRect(i);
             const bool on = i == int(mode);
             const QColor ink = on ? (t.dark ? QColor(Qt::white) : tone(Mode(i)).deep) : t.ink2;
-            const QString key = tabKeys.value(i);
+            const QString key = L(tabKeys.value(i));
             const QFont keyFont = font(11, QFont::Medium, true), labelFont = font(13, QFont::Medium);
-            const qreal keyW = QFontMetricsF(keyFont).horizontalAdvance(key) + 14, labelW = QFontMetricsF(labelFont).horizontalAdvance(titles[i]);
+            const qreal keyW = QFontMetricsF(keyFont).horizontalAdvance(key) + 14, labelW = QFontMetricsF(labelFont).horizontalAdvance(L(titles[i]));
             qreal x = r.center().x() - (keyW + 8 + labelW) / 2;
             const QRectF chip(x, r.center().y() - 10, keyW, 20);
             p.setPen(QPen(t.keyLine, 0.5)); p.setBrush(t.keyBg); p.drawRoundedRect(chip, 7, 7);
             p.setFont(keyFont); p.setPen(ink); p.drawText(chip, Qt::AlignCenter, key);
-            p.setFont(labelFont); p.drawText(QRectF(chip.right() + 8, r.top(), labelW + 2, r.height()), Qt::AlignVCenter | Qt::AlignLeft, titles[i]);
+            p.setFont(labelFont); p.drawText(QRectF(chip.right() + 8, r.top(), labelW + 2, r.height()), Qt::AlignVCenter | Qt::AlignLeft, L(titles[i]));
         }
         const qreal sep = dTabRect(2).right() + 4;
         p.setPen(QPen(t.keyLine, 1)); p.drawLine(QPointF(sep, bar.center().y() - 11), QPointF(sep, bar.center().y() + 11));
         const QRectF rest(sep + 4, bar.top(), bar.right() - sep - 8, bar.height());
         const QFont keyFont = font(11, QFont::Medium, true), labelFont = font(13, QFont::Medium);
-        const qreal keyW = QFontMetricsF(keyFont).horizontalAdvance("Esc") + 14, labelW = QFontMetricsF(labelFont).horizontalAdvance("Cancel");
+        const qreal keyW = QFontMetricsF(keyFont).horizontalAdvance("Esc") + 14, labelW = QFontMetricsF(labelFont).horizontalAdvance(L("Cancel"));
         const QRectF chip(rest.center().x() - (keyW + 8 + labelW) / 2, rest.center().y() - 10, keyW, 20);
         p.setPen(QPen(t.keyLine, 0.5)); p.setBrush(t.keyBg); p.drawRoundedRect(chip, 7, 7);
         p.setFont(keyFont); p.setPen(t.ink); p.drawText(chip, Qt::AlignCenter, "Esc");
-        p.setFont(labelFont); p.setPen(t.ink2); p.drawText(QRectF(chip.right() + 8, rest.top(), labelW + 2, rest.height()), Qt::AlignVCenter | Qt::AlignLeft, "Cancel");
+        p.setFont(labelFont); p.setPen(t.ink2); p.drawText(QRectF(chip.right() + 8, rest.top(), labelW + 2, rest.height()), Qt::AlignVCenter | Qt::AlignLeft, L("Cancel"));
     }
 };

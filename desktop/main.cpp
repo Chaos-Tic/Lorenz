@@ -31,8 +31,8 @@ public:
         setAcceptDrops(true); setObjectName("dropZone"); setMinimumHeight(160);
         auto *layout = new QVBoxLayout(this);
         auto *symbol = label("＋", "dropSymbol"); symbol->setAlignment(Qt::AlignCenter);
-        auto *title = label("Drop your files here", "dropTitle"); title->setAlignment(Qt::AlignCenter);
-        auto *hint = label("Images, audio, video, documents and PDF", "muted"); hint->setAlignment(Qt::AlignCenter);
+        auto *title = label(L("Drop your files here"), "dropTitle"); title->setAlignment(Qt::AlignCenter);
+        auto *hint = label(L("Images, audio, video, documents and PDF"), "muted"); hint->setAlignment(Qt::AlignCenter);
         layout->addWidget(symbol); layout->addWidget(title); layout->addWidget(hint); layout->addSpacing(10);
     }
     void dragEnterEvent(QDragEnterEvent *e) override { if (e->mimeData()->hasUrls()) e->acceptProposedAction(); }
@@ -57,57 +57,57 @@ class Window : public QMainWindow {
     QByteArray response;
 public:
     Window() {
-        setWindowTitle("Lorenz · Local file converter"); resize(1060, 820); setMinimumSize(870, 700);
+        setWindowTitle(L("Lorenz · Local file converter")); resize(1060, 820); setMinimumSize(870, 700);
         auto *root = new QWidget; setCentralWidget(root);
         auto *outer = new QHBoxLayout(root); outer->setContentsMargins(0,0,0,0); outer->setSpacing(0);
         auto *sidebar = new QFrame; sidebar->setObjectName("sidebar"); sidebar->setFixedWidth(190);
         auto *nav = new QVBoxLayout(sidebar); nav->setContentsMargins(22,30,20,24); nav->setSpacing(18);
         nav->addWidget(label("◉", "brand")); nav->addWidget(label("LORENZ", "brandName"));
-        nav->addWidget(label("FILE CONVERTER", "eyebrow")); nav->addSpacing(32);
-        auto *active = label("▸  Convert", "navActive"); nav->addWidget(active);
-        auto *doctor = new QPushButton("Diagnostics"); nav->addWidget(doctor);
-        auto *pin = new QCheckBox("Always on top"); pin->setToolTip("Subject to your desktop / compositor rules"); nav->addWidget(pin);
-        nav->addStretch(); nav->addWidget(label("●  LOCAL PROCESSING", "local"));
-        nav->addWidget(label("Your files stay\non your computer.", "muted")); nav->addWidget(label("VERSION 0.1.0", "eyebrow"));
+        nav->addWidget(label(L("FILE CONVERTER"), "eyebrow")); nav->addSpacing(32);
+        auto *active = label(L("▸  Convert"), "navActive"); nav->addWidget(active);
+        auto *doctor = new QPushButton(L("Diagnostics")); nav->addWidget(doctor);
+        auto *pin = new QCheckBox(L("Always on top")); pin->setToolTip(L("Subject to your desktop / compositor rules")); nav->addWidget(pin);
+        nav->addStretch(); nav->addWidget(label(L("●  LOCAL PROCESSING"), "local"));
+        nav->addWidget(label(L("Your files stay\non your computer."), "muted")); nav->addWidget(label("VERSION 0.1.0", "eyebrow"));
         outer->addWidget(sidebar);
         auto *main = new QVBoxLayout; main->setContentsMargins(32,28,32,24); main->setSpacing(15); outer->addLayout(main,1);
-        main->addWidget(label("YOUR DESKTOP. YOUR FILES.", "eyebrow"));
-        main->addWidget(label("Change the format.\nKeep control.", "hero"));
-        main->addWidget(label("Simple file conversion. No account. No uploads.", "muted"));
+        main->addWidget(label(L("YOUR DESKTOP. YOUR FILES."), "eyebrow"));
+        main->addWidget(label(L("Change the format.\nKeep control."), "hero"));
+        main->addWidget(label(L("Simple file conversion. No account. No uploads."), "muted"));
         auto *drop = new DropZone; main->addWidget(drop);
         auto *tools = new QHBoxLayout;
-        browse = new QPushButton("＋  Add files"); tools->addWidget(browse);
-        clear = new QPushButton("Clear"); tools->addWidget(clear); tools->addStretch();
-        summary = label("No files", "muted"); tools->addWidget(summary); main->addLayout(tools);
-        table = new QTableWidget(0,3); table->setHorizontalHeaderLabels({"FILE", "SIZE", "STATUS"});
+        browse = new QPushButton(L("＋  Add files")); tools->addWidget(browse);
+        clear = new QPushButton(L("Clear")); tools->addWidget(clear); tools->addStretch();
+        summary = label(L("No files"), "muted"); tools->addWidget(summary); main->addLayout(tools);
+        table = new QTableWidget(0,3); table->setHorizontalHeaderLabels({L("FILE"), L("SIZE"), L("STATUS")});
         table->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);
         table->horizontalHeader()->setSectionResizeMode(1,QHeaderView::ResizeToContents);
         table->horizontalHeader()->setSectionResizeMode(2,QHeaderView::ResizeToContents);
         table->verticalHeader()->hide(); table->setSelectionBehavior(QAbstractItemView::SelectRows);
         table->setEditTriggers(QAbstractItemView::NoEditTriggers); table->setShowGrid(false); table->setMinimumHeight(140); main->addWidget(table,1);
         auto *settings = new QHBoxLayout;
-        auto *formatBox = new QVBoxLayout; formatBox->addWidget(label("OUTPUT FORMAT", "eyebrow"));
+        auto *formatBox = new QVBoxLayout; formatBox->addWidget(label(L("OUTPUT FORMAT"), "eyebrow"));
         auto *formatRow = new QHBoxLayout; format = new QComboBox; format->setMinimumWidth(130); formatRow->addWidget(format,1);
-        auto *wheel = new QPushButton("◉"); wheel->setToolTip("Open the format wheel"); formatRow->addWidget(wheel);
+        auto *wheel = new QPushButton("◉"); wheel->setToolTip(L("Open the format wheel")); formatRow->addWidget(wheel);
         formatBox->addLayout(formatRow); settings->addLayout(formatBox,1);
-        auto *destBox = new QVBoxLayout; destBox->addWidget(label("SAVE TO", "eyebrow"));
-        choose = new QPushButton("Next to the originals  ▾"); destBox->addWidget(choose); settings->addLayout(destBox,2); main->addLayout(settings);
-        destination = label("Originals are preserved. Only the extension changes; existing files are never replaced.", "muted"); main->addWidget(destination);
+        auto *destBox = new QVBoxLayout; destBox->addWidget(label(L("SAVE TO"), "eyebrow"));
+        choose = new QPushButton(L("Next to the originals  ▾")); destBox->addWidget(choose); settings->addLayout(destBox,2); main->addLayout(settings);
+        destination = label(L("Originals are preserved. Only the extension changes; existing files are never replaced."), "muted"); main->addWidget(destination);
         progress = new QProgressBar; progress->setRange(0,1); progress->setValue(0); progress->setTextVisible(false); progress->setFixedHeight(4); main->addWidget(progress);
-        auto *bottom = new QHBoxLayout; status = label("Ready to convert", "muted"); bottom->addWidget(status,1);
-        stop = new QPushButton("Cancel"); stop->setEnabled(false); bottom->addWidget(stop);
-        start = new QPushButton("Convert  →"); start->setObjectName("primary"); start->setEnabled(false); bottom->addWidget(start); main->addLayout(bottom);
-        auto *open = new QPushButton("Open last output folder"); main->addWidget(open,0,Qt::AlignRight);
+        auto *bottom = new QHBoxLayout; status = label(L("Ready to convert"), "muted"); bottom->addWidget(status,1);
+        stop = new QPushButton(L("Cancel")); stop->setEnabled(false); bottom->addWidget(stop);
+        start = new QPushButton(L("Convert  →")); start->setObjectName("primary"); start->setEnabled(false); bottom->addWidget(start); main->addLayout(bottom);
+        auto *open = new QPushButton(L("Open last output folder")); main->addWidget(open,0,Qt::AlignRight);
         connect(open,&QPushButton::clicked,this,[this]{ if (!lastOutput.isEmpty()) QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(lastOutput).absolutePath())); });
         drop->receive = [this](const QStringList &files){ addFiles(files); };
-        connect(browse,&QPushButton::clicked,this,[this]{ addFiles(QFileDialog::getOpenFileNames(this,"Choose files")); });
+        connect(browse,&QPushButton::clicked,this,[this]{ addFiles(QFileDialog::getOpenFileNames(this,L("Choose files"))); });
         connect(clear,&QPushButton::clicked,this,[this]{ table->setRowCount(0); refreshFormats(); });
         connect(choose,&QPushButton::clicked,this,[this]{
-            QMenu menu; auto *original = menu.addAction("Next to the originals"); auto *custom = menu.addAction("Choose a folder…");
+            QMenu menu; auto *original = menu.addAction(L("Next to the originals")); auto *custom = menu.addAction(L("Choose a folder…"));
             auto *selected = menu.exec(choose->mapToGlobal(QPoint(0,choose->height())));
             if (selected == original) outputDir.clear();
-            else if (selected == custom) { auto dir = QFileDialog::getExistingDirectory(this,"Output folder"); if (!dir.isEmpty()) outputDir = dir; }
-            choose->setText(outputDir.isEmpty() ? "Next to the originals  ▾" : QDir(outputDir).dirName() + "  ▾"); choose->setToolTip(outputDir);
+            else if (selected == custom) { auto dir = QFileDialog::getExistingDirectory(this,L("Output folder")); if (!dir.isEmpty()) outputDir = dir; }
+            choose->setText(outputDir.isEmpty() ? L("Next to the originals  ▾") : QDir(outputDir).dirName() + "  ▾"); choose->setToolTip(outputDir);
         });
         connect(start,&QPushButton::clicked,this,[this]{
             if (format->count() == 0 || !cancellation.isValid()) return;
@@ -120,7 +120,7 @@ public:
             const auto result = QJsonDocument::fromJson(response.trimmed()).object();
             const bool ok = code == 0 && result["ok"].toBool();
             auto *item = table->item(current,2);
-            item->setText(ok ? "Done" : cancelling ? "Cancelled" : "Failed");
+            item->setText(ok ? L("Done") : cancelling ? L("Cancelled") : L("Failed"));
             item->setForeground(QColor(ok ? "#9bd7bc" : "#ff9299"));
             const QString error = result["error"].toString(QString::fromUtf8(worker.readAllStandardError()));
             item->setToolTip(ok ? result["output"].toString() : error);
@@ -128,14 +128,14 @@ public:
             ++current; next();
         });
         connect(&worker,&QProcess::errorOccurred,this,[this](QProcess::ProcessError e){
-            if (e == QProcess::FailedToStart) { table->item(current,2)->setText("Core unavailable"); status->setText(worker.errorString()); setBusy(false); }
+            if (e == QProcess::FailedToStart) { table->item(current,2)->setText(L("Core unavailable")); status->setText(worker.errorString()); setBusy(false); }
         });
         connect(doctor,&QPushButton::clicked,this,[this]{ showDoctor(); });
         connect(pin,&QCheckBox::toggled,this,[this](bool enabled){ setWindowFlag(Qt::WindowStaysOnTopHint, enabled); show(); });
         connect(wheel,&QPushButton::clicked,this,[this]{ showWheel(); });
         auto *shortcut = new QShortcut(QKeySequence("Ctrl+O"),this); connect(shortcut,&QShortcut::activated,browse,&QPushButton::click);
         auto *escape = new QShortcut(QKeySequence(Qt::Key_Escape),this); connect(escape,&QShortcut::activated,this,[this]{ if (stop->isEnabled()) cancel(); });
-        if (corePath().isEmpty()) status->setText("The Lorenz core is missing. Reinstall the application.");
+        if (corePath().isEmpty()) status->setText(L("The Lorenz core is missing. Reinstall the application."));
     }
     QString cancelPath() const { return cancellation.path()+"/cancel"; }
     void testConversion() {
@@ -153,7 +153,7 @@ public:
         timer->start(100);
         QTimer::singleShot(30000,this,[this]{ if (current >= 0) cancel(); });
     }
-    void cancel() { cancelling = true; QFile f(cancelPath()); if (f.open(QIODevice::WriteOnly)) { f.close(); status->setText("Cancelling…"); stop->setEnabled(false); } }
+    void cancel() { cancelling = true; QFile f(cancelPath()); if (f.open(QIODevice::WriteOnly)) { f.close(); status->setText(L("Cancelling…")); stop->setEnabled(false); } }
     void setBusy(bool busy) {
         browse->setEnabled(!busy); clear->setEnabled(!busy); choose->setEnabled(!busy); format->setEnabled(!busy);
         stop->setEnabled(busy); start->setEnabled(!busy && format->count()>0); current = busy ? current : -1;
@@ -161,11 +161,11 @@ public:
     }
     void next() {
         if (cancelling || current >= table->rowCount()) {
-            if (cancelling) for (int i=current;i<table->rowCount();++i) table->item(i,2)->setText("Not processed");
-            status->setText(QString("%1 completed · %2 failed%3").arg(succeeded).arg(failed).arg(cancelling ? " · queue stopped" : "")); setBusy(false); return;
+            if (cancelling) for (int i=current;i<table->rowCount();++i) table->item(i,2)->setText(L("Not processed"));
+            status->setText(L("%1 completed · %2 failed%3").arg(succeeded).arg(failed).arg(cancelling ? L(" · queue stopped") : "")); setBusy(false); return;
         }
-        response.clear(); table->item(current,2)->setText("Conversion…"); table->item(current,2)->setForeground(QColor("#edc16e"));
-        status->setText(QString("Processing %1 / %2").arg(current+1).arg(table->rowCount()));
+        response.clear(); table->item(current,2)->setText(L("Conversion…")); table->item(current,2)->setForeground(QColor("#edc16e"));
+        status->setText(L("Processing %1 / %2").arg(current+1).arg(table->rowCount()));
         QStringList args {"convert", "--to", format->currentData().toString(), "--json", "--cancel-file", cancelPath()};
         if (!outputDir.isEmpty()) args << "--output-dir" << outputDir;
         args << "--" << table->item(current,0)->data(Qt::UserRole).toString(); worker.start(corePath(),args);
@@ -180,7 +180,7 @@ public:
             const int row = table->rowCount(); table->insertRow(row);
             auto *file = new QTableWidgetItem(info.fileName()); file->setData(Qt::UserRole,canonical); file->setToolTip(canonical); table->setItem(row,0,file);
             table->setItem(row,1,new QTableWidgetItem(QLocale().formattedDataSize(info.size())));
-            table->setItem(row,2,new QTableWidgetItem("Queued")); table->setRowHeight(row,38);
+            table->setItem(row,2,new QTableWidgetItem(L("Queued"))); table->setRowHeight(row,38);
         }
         refreshFormats();
     }
@@ -193,17 +193,17 @@ public:
             if (row==0) common=targets; else common.intersect(targets);
         }
         QStringList sorted=common.values(); sorted.sort(); for (const auto &f : sorted) format->addItem(names[f],f);
-        summary->setText(QString("%1 file(s)").arg(table->rowCount())); start->setEnabled(!common.isEmpty());
-        status->setText(table->rowCount()==0 ? "Ready to convert" : common.isEmpty() ? "No common format available. Check diagnostics." : "Choose a format, then start converting.");
+        summary->setText(L("%1 file(s)").arg(table->rowCount())); start->setEnabled(!common.isEmpty());
+        status->setText(table->rowCount()==0 ? L("Ready to convert") : common.isEmpty() ? L("No common format available. Check diagnostics.") : L("Choose a format, then start converting."));
     }
     void showDoctor() {
         const auto doc=query({"doctor","--json"}).object();
-        QDialog dialog(this); dialog.setWindowTitle("Backend diagnostics"); dialog.resize(520,400); auto *l=new QVBoxLayout(&dialog);
-        l->addWidget(label("Your local conversion engines", "dropTitle"));
-        if (doc.isEmpty()) l->addWidget(label("Cannot contact the Lorenz core."));
-        for (const auto &entry : doc["backends"].toArray()) { auto b=entry.toObject(); l->addWidget(label((b["available"].toBool()? "✓  " : "—  ")+b["name"].toString()+(b["available"].toBool()? " · available" : " · not installed"))); }
-        l->addWidget(label("Codec support varies by installation. Missing engines disable their conversions. See the README for package details.","muted"));
-        auto *close=new QPushButton("Close"); l->addWidget(close); connect(close,&QPushButton::clicked,&dialog,&QDialog::accept); dialog.exec();
+        QDialog dialog(this); dialog.setWindowTitle(L("Backend diagnostics")); dialog.resize(520,400); auto *l=new QVBoxLayout(&dialog);
+        l->addWidget(label(L("Your local conversion engines"), "dropTitle"));
+        if (doc.isEmpty()) l->addWidget(label(L("Cannot contact the Lorenz core.")));
+        for (const auto &entry : doc["backends"].toArray()) { auto b=entry.toObject(); l->addWidget(label((b["available"].toBool()? "✓  " : "—  ")+b["name"].toString()+(b["available"].toBool()? L(" · available") : L(" · not installed")))); }
+        l->addWidget(label(L("Codec support varies by installation. Missing engines disable their conversions. See the README for package details."),"muted"));
+        auto *close=new QPushButton(L("Close")); l->addWidget(close); connect(close,&QPushButton::clicked,&dialog,&QDialog::accept); dialog.exec();
     }
     void showWheel() {
         if (format->count()==0 || current>=0) return;
@@ -211,7 +211,7 @@ public:
         wheel->setParent(this,wheel->windowFlags());
         QStringList values; for (int i=0;i<format->count();++i) values << format->itemData(i).toString();
         wheel->setFormats(values);
-        wheel->sourceName=QString("%1 files").arg(table->rowCount());
+        wheel->sourceName=L("%1 files").arg(table->rowCount());
         wheel->chosen=[this,wheel](const QString &target) {
             if (!target.isEmpty()) format->setCurrentIndex(format->findData(target));
             QTimer::singleShot(120,wheel,&QObject::deleteLater);
@@ -220,7 +220,7 @@ public:
     }
 
     void closeEvent(QCloseEvent *event) override {
-        if (current>=0) { cancel(); event->ignore(); status->setText("Cancelling. Close the window once processing has stopped."); } else event->accept();
+        if (current>=0) { cancel(); event->ignore(); status->setText(L("Cancelling. Close the window once processing has stopped.")); } else event->accept();
     }
 };
 
@@ -249,34 +249,41 @@ static QVector<RadialWheel::Item> menuItems(const QString &kind,const QStringLis
 class SettingsDialog : public QDialog {
     QList<QComboBox*> keys;
     QCheckBox *login;
+    QComboBox *language;
 public:
     SettingsDialog() {
-        setWindowTitle("Lorenz settings"); setFixedWidth(500);
+        setWindowTitle(L("Lorenz settings")); setFixedWidth(500);
         auto *layout=new QVBoxLayout(this); layout->setSpacing(12); layout->setContentsMargins(26,22,26,20);
-        layout->addWidget(label("Wheels","dropTitle"));
-        layout->addWidget(label("Start dragging a file, then tap a key. Each key opens its own wheel; tap another key to switch while it is open.","muted"));
+        layout->addWidget(label(L("Wheels"),"dropTitle"));
+        layout->addWidget(label(L("Start dragging a file, then tap a key. Each key opens its own wheel; tap another key to switch while it is open."),"muted"));
         auto *grid=new QFormLayout; const QStringList current=wheelKeys();
-        const QStringList descriptions{"Convert to another format","Tools: compress, resize, rotate, split, merge…","Actions: copy, move, share, terminal…"};
+        const QStringList descriptions{L("Convert to another format"),L("Tools: compress, resize, rotate, split, merge…"),L("Actions: copy, move, share, terminal…")};
         for (int i=0;i<3;++i) {
-            auto *box=new QComboBox; box->addItem("Shift","Shift"); box->addItem("Ctrl","Control"); box->addItem("Alt","Alt"); box->addItem("Off","None");
+            auto *box=new QComboBox; box->addItem(L("Shift"),"Shift"); box->addItem("Ctrl","Control"); box->addItem("Alt","Alt"); box->addItem(L("Off"),"None");
             box->setCurrentIndex(qMax(0,box->findData(current[i]))); box->setToolTip(descriptions[i]);
-            keys << box; grid->addRow(wheelNames[i],box);
+            keys << box; grid->addRow(L(wheelNames[i]),box);
         }
         layout->addLayout(grid);
-        layout->addWidget(label("Startup","dropTitle"));
-        login=new QCheckBox("Start Lorenz when I log in"); layout->addWidget(login);
+        layout->addWidget(label(L("Startup"),"dropTitle"));
+        login=new QCheckBox(L("Start Lorenz when I log in")); layout->addWidget(login);
         QProcess status; status.start(corePath(),{"autostart","status"}); status.waitForFinished(3000);
         login->setChecked(status.readAllStandardOutput().trimmed()=="enabled");
-        layout->addWidget(label("The tray companion shows notifications and gives access to the batch manager. The KWin gesture works without it.","muted"));
+        layout->addWidget(label(L("The tray companion shows notifications and gives access to the batch manager. The KWin gesture works without it."),"muted"));
+        layout->addWidget(label(L("Language"),"dropTitle"));
+        language=new QComboBox; language->addItem(L("Automatic (system)"),"auto"); language->addItem("English","en"); language->addItem("Français","fr");
+        language->setCurrentIndex(qMax(0,language->findData(lorenz::languageSetting()))); layout->addWidget(language);
+        layout->addWidget(label(L("Applies the next time Lorenz starts."),"muted"));
         auto *buttons=new QDialogButtonBox(QDialogButtonBox::Save|QDialogButtonBox::Cancel); layout->addWidget(buttons);
+        buttons->button(QDialogButtonBox::Save)->setText(L("Save")); buttons->button(QDialogButtonBox::Cancel)->setText(L("Cancel"));
         connect(buttons,&QDialogButtonBox::rejected,this,&QDialog::reject);
         connect(buttons,&QDialogButtonBox::accepted,this,[this]{
             QStringList chosen; for (auto *box:keys) chosen << box->currentData().toString();
             for (int i=0;i<3;++i) for (int j=i+1;j<3;++j) if (chosen[i]!="None" && chosen[i]==chosen[j]) {
-                QMessageBox::warning(this,"Lorenz","Each wheel needs a different key."); return;
+                QMessageBox::warning(this,"Lorenz",L("Each wheel needs a different key.")); return;
             }
             QSettings settings(configPath(),QSettings::IniFormat);
             for (int i=0;i<3;++i) settings.setValue("Wheels/"+wheelNames[i],chosen[i]);
+            settings.setValue("Language",language->currentData().toString());
             settings.sync();
             QProcess::execute(corePath(),{"autostart",login->isChecked()?"enable":"disable"});
             accept();
@@ -328,7 +335,7 @@ int main(int argc,char **argv) {
       p.setBrush(QColor("#edf3f1")); p.setPen(Qt::NoPen); p.drawEllipse(QPointF(32,32),5,5);
     }
     QSystemTrayIcon tray{QIcon(mark)};
-    tray.setToolTip("Lorenz · drag a file, then tap Shift, Ctrl or Alt");
+    tray.setToolTip(L("Lorenz · drag a file, then tap Shift, Ctrl or Alt"));
     auto notify=[&](const QString &title,const QString &message) {
         const QString sender=QStandardPaths::findExecutable("notify-send");
         if (!sender.isEmpty()) QProcess::startDetached(sender,{"--app-name=Lorenz","--icon=lorenz",title,message});
@@ -340,8 +347,8 @@ int main(int argc,char **argv) {
         app.setQuitOnLastWindowClosed(false);
         QProcess job; QTemporaryDir cancellationSignal; QByteArray result;
         if (!cancellationSignal.isValid()) return 2;
-        QMenu menu; auto *cancel=menu.addAction("Cancel");
-        QObject::connect(cancel,&QAction::triggered,&app,[&]{ QFile flag(cancellationSignal.path()+"/cancel"); if (!flag.open(QIODevice::WriteOnly)) notify("Cancellation failed",flag.errorString()); });
+        QMenu menu; auto *cancel=menu.addAction(L("Cancel"));
+        QObject::connect(cancel,&QAction::triggered,&app,[&]{ QFile flag(cancellationSignal.path()+"/cancel"); if (!flag.open(QIODevice::WriteOnly)) notify(L("Cancellation failed"),flag.errorString()); });
         tray.setContextMenu(&menu); tray.show();
         QObject::connect(&job,&QProcess::readyReadStandardOutput,&app,[&]{ result+=job.readAllStandardOutput(); });
         QObject::connect(&job,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),&app,[&](int code,QProcess::ExitStatus){
@@ -350,8 +357,8 @@ int main(int argc,char **argv) {
                 const auto item=QJsonDocument::fromJson(line).object();
                 if (item["ok"].toBool()) outputs << QFileInfo(item["output"].toString()).fileName(); else failure=item["error"].toString();
             }
-            const QString created=outputs.size()==1?outputs.first()+" created.":QString("%1 items created.").arg(outputs.size());
-            notify(code==0?done:failed,code==0?created+" Originals preserved.":failure.left(300));
+            const QString created=outputs.size()==1?outputs.first()+L(" created."):L("%1 items created.").arg(outputs.size());
+            notify(code==0?done:failed,code==0?created+L(" Originals preserved."):failure.left(300));
             app.exit(code);
         });
         QObject::connect(&job,&QProcess::errorOccurred,&app,[&](QProcess::ProcessError e){ if (e==QProcess::FailedToStart) { notify(failed,job.errorString()); app.exit(2); } });
@@ -371,16 +378,16 @@ int main(int argc,char **argv) {
     const QStringList flags=args.mid(0,args.contains("--")?args.indexOf("--"):args.size());
     auto option=[&](const QString &name) { const int i=flags.indexOf(name); return i>=0 && i+1<flags.size()?flags[i+1]:QString(); };
     if (const QString target=option("--convert-to"); !target.isEmpty()) {
-        return runJob({"convert","--json","--to",target},files,"Conversion complete","Conversion failed");
+        return runJob({"convert","--json","--to",target},files,L("Conversion complete"),L("Conversion failed"));
     }
     if (const QString tool=option("--tool"); !tool.isEmpty()) {
-        return runJob({"tool",tool,"--json"},files,"Done","The tool failed");
+        return runJob({"tool",tool,"--json"},files,L("Done"),L("The tool failed"));
     }
     if (const QString action=option("--action"); !action.isEmpty()) {
         if (files.isEmpty() || corePath().isEmpty()) return 2;
         QStringList command{"action",action,"--json"};
         if (action=="copy-to" || action=="move-to") {
-            const QString folder=QFileDialog::getExistingDirectory(nullptr,action=="copy-to"?"Copy to":"Move to",QFileInfo(files.first()).absolutePath());
+            const QString folder=QFileDialog::getExistingDirectory(nullptr,action=="copy-to"?L("Copy to"):L("Move to"),QFileInfo(files.first()).absolutePath());
             if (folder.isEmpty()) return 0;
             command << "--dest" << folder;
         }
@@ -392,11 +399,11 @@ int main(int argc,char **argv) {
             if (item.contains("output")) ++count;
             if (item.contains("error")) failure=item["error"].toString();
         }
-        if (job.exitCode()!=0) notify("Action failed",failure.isEmpty()?QString::fromUtf8(job.readAllStandardError()).left(300):failure);
-        else if (action=="copy") notify("Copied","Ready to paste in your file manager.");
-        else if (action=="path") notify("Path copied",files.size()==1?files.first():QString("%1 paths").arg(files.size()));
-        else if (action=="copy-to") notify("Copied",QString("%1 item(s) copied. Nothing was replaced.").arg(count));
-        else if (action=="move-to") notify("Moved",QString("%1 item(s) moved. Nothing was replaced.").arg(count));
+        if (job.exitCode()!=0) notify(L("Action failed"),failure.isEmpty()?QString::fromUtf8(job.readAllStandardError()).left(300):failure);
+        else if (action=="copy") notify(L("Copied"),L("Ready to paste in your file manager."));
+        else if (action=="path") notify(L("Path copied"),files.size()==1?files.first():L("%1 paths").arg(files.size()));
+        else if (action=="copy-to") notify(L("Copied"),L("%1 item(s) copied. Nothing was replaced.").arg(count));
+        else if (action=="move-to") notify(L("Moved"),L("%1 item(s) moved. Nothing was replaced.").arg(count));
         return job.exitCode();
     }
     if (flags.contains("--settings")) {
@@ -416,9 +423,9 @@ int main(int argc,char **argv) {
         for (auto &file:files) file=QFileInfo(file).absoluteFilePath();
         RadialWheel wheel; QStringList keys=wheelKeys(); for (auto &k:keys) k=keyLabel(k); wheel.tabKeys=keys;
         int start=qMax(0,kinds.indexOf(option("--wheel")));
-        wheel.sourceName=files.size()==1?QFileInfo(files.first()).fileName():QString("%1 items").arg(files.size());
+        wheel.sourceName=files.size()==1?QFileInfo(files.first()).fileName():L("%1 items").arg(files.size());
         wheel.sourceType=QFileInfo(files.first()).isDir()?"folder":QFileInfo(files.first()).suffix().toLower();
-        wheel.message="Nothing available";
+        wheel.message=L("Nothing available");
         auto load=[&](RadialWheel::Mode mode){ wheel.setMode(mode); wheel.setItems(menuItems(kinds[mode],files)); };
         load(RadialWheel::Mode(start));
         wheel.modeRequested=load;
@@ -435,11 +442,11 @@ int main(int argc,char **argv) {
     }
     app.setQuitOnLastWindowClosed(false);
     QMenu menu;
-    auto *settings=menu.addAction("Settings…");
+    auto *settings=menu.addAction(L("Settings…"));
     QObject::connect(settings,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--settings"}); });
-    auto *manager=menu.addAction("Open batch manager");
+    auto *manager=menu.addAction(L("Open batch manager"));
     QObject::connect(manager,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--manager"}); });
-    menu.addSeparator(); auto *quit=menu.addAction("Quit tray companion"); QObject::connect(quit,&QAction::triggered,&app,&QApplication::quit);
+    menu.addSeparator(); auto *quit=menu.addAction(L("Quit tray companion")); QObject::connect(quit,&QAction::triggered,&app,&QApplication::quit);
     tray.setContextMenu(&menu); tray.show();
 #ifdef Q_OS_WIN
     // The companion hosts the drag gesture on Windows, as KWin does on Plasma.
@@ -450,7 +457,7 @@ int main(int argc,char **argv) {
 #endif
     if (!flags.contains("--background")) {
         const QStringList keys=wheelKeys();
-        notify("Lorenz",QString("Drag a file, then tap %1 to convert, %2 for tools or %3 for actions.").arg(keyLabel(keys[0]),keyLabel(keys[1]),keyLabel(keys[2])));
+        notify("Lorenz",L("Drag a file, then tap %1 to convert, %2 for tools or %3 for actions.").arg(L(keyLabel(keys[0])),L(keyLabel(keys[1])),L(keyLabel(keys[2]))));
     }
     return app.exec();
 }
