@@ -1,0 +1,42 @@
+#!/usr/bin/make -f
+# The crates come from the vendor component (lorenz_VERSION.orig-vendor.tar.xz),
+# unpacked in vendor/: the build never uses the network.
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export CARGO_HOME = $(CURDIR)/debian/cargo-home
+# Ubuntu 24.04's default Rust is older than the 1.85 that edition 2024 needs.
+RUST_BIN := $(wildcard /usr/lib/rust-1.85/bin)
+ifneq ($(RUST_BIN),)
+export PATH := $(RUST_BIN):$(PATH)
+endif
+
+%:
+	dh $@ --buildsystem=cmake --builddirectory=debian/build
+
+override_dh_auto_configure:
+	mkdir -p $(CARGO_HOME)
+	printf '[source.crates-io]\nreplace-with = "vendored"\n[source.vendored]\ndirectory = "$(CURDIR)/vendor"\n' \
+		>$(CARGO_HOME)/config.toml
+	dh_auto_configure -- -DBUILD_TESTING=OFF
+
+override_dh_auto_build:
+	dh_auto_build
+	cargo build --release --frozen
+
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	cargo test --release --frozen
+endif
+
+override_dh_auto_install:
+	install -Dm755 target/release/lorenz debian/lorenz/usr/bin/lorenz
+	install -Dm755 debian/build/lorenz-desktop debian/lorenz/usr/bin/lorenz-desktop
+	debian/lorenz/usr/bin/lorenz integrate --data-dir debian/lorenz/usr/share \
+		--exe /usr/bin/lorenz-desktop >/dev/null
+
+# dh_clean deletes *.orig files, but cargo checks the crates' Cargo.toml.orig.
+override_dh_clean:
+	dh_clean -XCargo.toml.orig
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf target $(CARGO_HOME)

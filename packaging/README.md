@@ -22,6 +22,42 @@ install from the AUR (`yay -S lorenz`).
 - Qt is dynamically linked; distribute its libraries and plugins under their
   applicable licenses. Conversion engines are recommended, never bundled.
 
+## Package repositories
+
+Packages built from source by the distributions' own build services, so that
+`dnf upgrade` and `apt upgrade` deliver new versions. Both build offline: each
+release carries `lorenz-VERSION-vendor.tar.xz`, the crates of `Cargo.lock`,
+written by `linux/vendor.sh` in CI.
+
+- Fedora COPR (`chaos-tic/lorenz`): `fedora/lorenz.spec` builds from the release
+  tarball and the vendor archive (`%bcond vendor`, on by default), declaring every
+  bundled crate. CI job `fedora-spec` builds it and installs the result. The
+  COPR package uses source type SCM, method `make_srpm`: `.copr/Makefile`
+  downloads both archives of the version in `Cargo.toml`, so the spec's
+  `Version` needs no edit. A GitHub webhook sending only *Releases* events
+  rebuilds it once the release job has attached the vendor archive.
+- Ubuntu PPA (`ppa:chaos-tic/lorenz`): `debian/` is the Debian packaging, kept
+  out of the source tree as Debian asks of upstreams. `debian/ppa.sh` builds a
+  signed source package per Ubuntu series (24.04, 26.04, 26.10) in an Ubuntu
+  container and uploads it with dput; Launchpad compiles it. The vendor archive
+  is the `orig-vendor` component, unpacked in `vendor/`. Ubuntu 24.04 builds
+  with its `rustc-1.85`; 22.04 is left out, its Qt is older than 6.4. Run it
+  after each release; a new Ubuntu series needs a line in its `case`.
+
+### Official Fedora and Debian archives
+
+Both require a sponsor and a review, and both prefer each crate packaged on
+its own rather than bundled:
+
+- Fedora: build the spec `--without vendor`, which takes the crates from
+  Fedora's `rust-*` packages, file a Package Review request in Red Hat
+  Bugzilla, and join the `packager` group through a sponsor.
+- Debian (Ubuntu inherits it): file an ITP bug against `wnpp`, upload to
+  mentors.debian.net and find a sponsor. The Debian Rust team packages each
+  crate separately; the crates Debian lacks (the newest `syn` and `toml`, for
+  instance) would have to be packaged first, or Lorenz kept on versions
+  Debian has.
+
 Lorenz is GPL-3.0-or-later; packages install the license text. Before wider
 distribution: audit engine licenses, sign the Windows installer
 and test on physical machines. Flatpak requires

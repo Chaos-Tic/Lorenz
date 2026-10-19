@@ -172,6 +172,42 @@ jobs:
           name: package-${{ matrix.format }}
           path: dist
       - run: bash packaging/linux/test-package.sh $(ls dist/*.deb dist/*.rpm dist/*.pkg.tar.zst 2>/dev/null)
+  # The crates for offline builds from source: Fedora COPR and the Ubuntu PPA
+  # download this archive from the release.
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+      - run: sh packaging/linux/vendor.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: package-vendor
+          path: dist/lorenz-*-vendor.tar.xz
+  # packaging/fedora/lorenz.spec, as COPR builds it: from the sources, offline.
+  fedora-spec:
+    needs: vendor
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - run: dnf install -y git rpm-build dnf-plugins-core
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: package-vendor
+          path: dist
+      - run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)
+          sed -i "s/^Version: .*/Version:        $version/" packaging/fedora/lorenz.spec
+          mkdir -p ~/rpmbuild/SOURCES
+          git config --global --add safe.directory "$PWD"
+          git archive --prefix="Lorenz-$version/" -o ~/rpmbuild/SOURCES/Lorenz-$version.tar.gz HEAD
+          cp dist/lorenz-*-vendor.tar.xz ~/rpmbuild/SOURCES/
+          dnf builddep -y packaging/fedora/lorenz.spec
+          rpmbuild -bb packaging/fedora/lorenz.spec
+          bash packaging/linux/test-package.sh ~/rpmbuild/RPMS/x86_64/lorenz-$version-*.x86_64.rpm
   # Built on the oldest supported base: an AppImage runs on newer systems only.
   appimage:
     runs-on: ubuntu-22.04
@@ -199,7 +235,7 @@ jobs:
   # packages that the jobs above built and tested.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [desktop-windows, linux-package-install, appimage]
+    needs: [desktop-windows, linux-package-install, appimage, vendor, fedora-spec]
     runs-on: ubuntu-latest
     permissions:
       contents: write

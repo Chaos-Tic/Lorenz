@@ -1,0 +1,35 @@
+Source: lorenz
+Section: utils
+Priority: optional
+Maintainer: Chaos-Tic <58691435+Chaos-Tic@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13),
+               cmake,
+               qt6-base-dev,
+               @RUST@
+Standards-Version: 4.7.2
+Homepage: https://github.com/Chaos-Tic/Lorenz
+Vcs-Browser: https://github.com/Chaos-Tic/Lorenz
+Vcs-Git: https://github.com/Chaos-Tic/Lorenz.git
+Rules-Requires-Root: no
+
+Package: lorenz
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, qt6-qpa-plugins
+Recommends: ffmpeg,
+            imagemagick,
+            pandoc,
+            poppler-utils,
+            qpdf,
+            ghostscript,
+            libarchive-tools,
+            libnotify-bin,
+            qt6-wayland
+Suggests: libreoffice-writer-nogui,
+          libreoffice-calc-nogui,
+          libreoffice-impress-nogui,
+          wl-clipboard | xclip
+Description: Local file conversion with radial wheels
+ Converts images, video, audio, documents and PDFs on this computer with
+ FFmpeg, ImageMagick, Pandoc, Poppler, qpdf and LibreOffice; originals are
+ never modified. Right-click files in Dolphin or Nemo, or open Lorenz from
+ the applications menu. Missing engines only hide the formats that need them.
