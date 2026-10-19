@@ -68,6 +68,18 @@ moves in your file manager. The keys can be changed in **Settings** (tray icon).
 
 ## Install on Linux
 
+### Arch Linux (AUR)
+
+Lorenz is available on the [AUR](https://aur.archlinux.org/packages/lorenz) for Arch
+and its derivatives (EndeavourOS, Manjaro, CachyOS):
+
+```sh
+yay -S lorenz
+```
+
+Any AUR helper works the same way (`paru -S lorenz`). Pick the conversion engines you
+want from the optional dependencies.
+
 ### Ready-made packages
 
 Download the file for your distribution from the **Releases** page:
@@ -349,7 +361,7 @@ and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 - SVG input through a sandboxed renderer; tools with parameters (crop, trim, quality).
 - PDF to DOCX/EPUB, Apple Pages input.
 - Content/MIME detection, codec capability probing, progress reporting.
-- Repository channels (AUR, COPR, Flatpak) and a signed Windows installer.
+- Repository channels (COPR, Flatpak) and a signed Windows installer.
 
 ## License
 
