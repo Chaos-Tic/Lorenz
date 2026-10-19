@@ -114,6 +114,15 @@ private:
         QImage img = source.convertToFormat(QImage::Format_RGB32).scaled(qMax(1, source.width() / 6), qMax(1, source.height() / 6),
             Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         const int w = img.width(), h = img.height(), r = 3;
+        // A failed capture (no screen, protected content) comes back flat:
+        // the tinted fallback glass looks better than frosted black.
+        qint64 sum = 0, squares = 0;
+        for (int y = 0; y < h; ++y) {
+            const auto *row = reinterpret_cast<const QRgb *>(img.constScanLine(y));
+            for (int x = 0; x < w; ++x) { const int l = qGray(row[x]); sum += l; squares += l * l; }
+        }
+        const qreal mean = qreal(sum) / (w * h), spread = std::sqrt(qMax(0.0, qreal(squares) / (w * h) - mean * mean));
+        if (spread < 2) return {};
         QVector<QRgb> line(qMax(w, h));
         for (int pass = 0; pass < 3; ++pass) {
             for (int y = 0; y < h; ++y) {
@@ -618,9 +627,12 @@ private:
         static const QStringList titles{"Convert", "Tools", "Actions"};
         const QRectF bar = barRect();
         QPainterPath capsule; capsule.addRoundedRect(bar, 27, 27);
-        QRadialGradient shade(bar.center() + QPointF(0, 14), bar.width() * 0.5);
-        shade.setColorAt(0.6, alpha(t.shadow, 0.18)); shade.setColorAt(1, Qt::transparent);
-        p.setPen(Qt::NoPen); p.setBrush(shade); p.drawRoundedRect(bar.adjusted(-14, -4, 14, 22), 40, 40);
+        // A soft shadow: stacked, widening capsules, each nearly transparent.
+        p.setPen(Qt::NoPen);
+        for (int i = 0; i < 8; ++i) {
+            p.setBrush(alpha(t.shadow, 0.03));
+            p.drawRoundedRect(bar.translated(0, 8).adjusted(-1.5 * i, -1.5 * i + 4, 1.5 * i, 1.5 * i), 27 + 1.5 * i, 27 + 1.5 * i);
+        }
         paintGlass(p, capsule, bar.center(), 1.04, t.capsule, t);
         p.setBrush(Qt::NoBrush); p.setPen(QPen(t.rimLo, 0.5)); p.drawPath(capsule);
         QPainterPath top; top.moveTo(bar.left() + 26, bar.top() + 0.8); top.lineTo(bar.right() - 26, bar.top() + 0.8);
