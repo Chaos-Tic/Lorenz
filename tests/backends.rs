@@ -116,7 +116,7 @@ fn backend_cancellation_and_timeout_reap_process() {
 
 // Engines start helpers of their own (LibreOffice's soffice.bin, Ghostscript
 // under ImageMagick): stopping a conversion must stop them too.
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 #[test]
 fn backend_timeout_stops_the_engines_children() {
     let d = tempfile::tempdir().unwrap();
@@ -127,17 +127,20 @@ fn backend_timeout_stops_the_engines_children() {
     let error = lorenz::run_backend(&shell, &args, d.path(), None, 1).unwrap_err();
     assert!(error.to_string().contains("timed out"));
     let pid = fs::read_to_string(&pid_file).unwrap();
-    // Reaped by init once its group is killed; give it a moment.
-    let alive = || {
-        std::process::Command::new("kill")
-            .args(["-0", pid.trim()])
-            .stderr(std::process::Stdio::null())
-            .status()
-            .unwrap()
-            .success()
+    // A killed orphan stays a zombie ("Z") until its new parent reaps it, which
+    // a container's first process may never do: that counts as stopped.
+    let running = || {
+        fs::read_to_string(format!("/proc/{}/stat", pid.trim()))
+            .ok()
+            .and_then(|stat| {
+                stat.rsplit(')')
+                    .next()
+                    .map(|rest| rest.trim_start().to_owned())
+            })
+            .is_some_and(|rest| !rest.starts_with('Z'))
     };
     for _ in 0..50 {
-        if !alive() {
+        if !running() {
             return;
         }
         std::thread::sleep(std::time::Duration::from_millis(100));
