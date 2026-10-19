@@ -343,3 +343,20 @@ and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 ## License
 
 Metroid is free software under the [GNU General Public License v3.0 or later](LICENSE).
+
+## Code signing policy
+
+Windows releases are to be signed for free by [SignPath.io](https://about.signpath.io),
+with a certificate from the [SignPath Foundation](https://signpath.org) (application
+pending; current releases are unsigned). Only installers built by this repository's
+GitHub Actions workflow from tagged commits are submitted for signing.
+
+- Committers and reviewers: [Chaos-Tic](https://github.com/Chaos-Tic)
+- Approvers: [Chaos-Tic](https://github.com/Chaos-Tic)
+
+### Privacy
+
+Metroid converts files on your computer. It does not transfer any information to
+other networked systems unless specifically requested by the user or the person
+installing or operating it: the Windows installer downloads conversion engines
+through winget only when you tick that option.
