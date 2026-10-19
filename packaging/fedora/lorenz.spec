@@ -4,7 +4,7 @@
 %bcond vendor 1
 
 Name:           lorenz
-Version:        1.0.0
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        Local file conversion with radial wheels
 
@@ -100,5 +100,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lorenz.desktop
 %{_datadir}/nemo/actions/lorenz-*.nemo_action
 
 %changelog
+* Mon Oct 19 2026 Chaos-Tic <58691435+Chaos-Tic@users.noreply.github.com> - 1.1.0-1
+- Stop the engine's own processes on cancel and timeout
+
 * Mon Oct 19 2026 Chaos-Tic <58691435+Chaos-Tic@users.noreply.github.com> - 1.0.0-1
 - First package built from source
