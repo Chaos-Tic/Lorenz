@@ -73,61 +73,132 @@ jobs:
           cache: true
       - run: cmake -S . -B build
       - run: cmake --build build --config Release
+      # metroid-desktop is a windowed program: PowerShell does not wait for it.
       - shell: pwsh
         run: |
           windeployqt --release build/Release/metroid-desktop.exe
           $env:QT_QPA_PLATFORM = 'offscreen'
-          build/Release/metroid-desktop.exe --smoke-test
-      # The ready-to-install package: unzip, double-click Install.cmd.
-      - name: Build the Windows package
+          $run = Start-Process build/Release/metroid-desktop.exe --smoke-test -Wait -PassThru
+          if ($run.ExitCode) { throw "smoke test failed: $($run.ExitCode)" }
+      # The installer people download: Metroid-Setup-x64.exe.
+      - name: Build the Windows installer
         shell: pwsh
         run: |
           cargo build --release --locked
           $root = 'dist/Metroid'
-          New-Item -ItemType Directory -Force "$root/bin" | Out-Null
-          Copy-Item target/release/metroid.exe, build/Release/metroid-desktop.exe "$root/bin"
-          windeployqt --release --no-translations "$root/bin/metroid-desktop.exe"
-          Copy-Item scripts/install-windows.ps1 "$root/install.ps1"
-          Copy-Item scripts/uninstall-windows.ps1 "$root/uninstall.ps1"
-          Copy-Item packaging/windows/*.cmd $root
-          Compress-Archive -Path $root -DestinationPath dist/Metroid-windows-x64.zip
-      - name: Install and uninstall the package
+          New-Item -ItemType Directory -Force $root | Out-Null
+          Copy-Item target/release/metroid.exe, build/Release/metroid-desktop.exe $root
+          windeployqt --release --no-translations "$root/metroid-desktop.exe"
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          choco install -y --no-progress innosetup
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q "/DAppVersion=$version" packaging/windows/metroid.iss
+          if ($LASTEXITCODE) { throw 'Inno Setup failed' }
+      - name: Install and uninstall silently
         shell: pwsh
         run: |
-          Expand-Archive dist/Metroid-windows-x64.zip test-install
-          powershell -NoProfile -ExecutionPolicy Bypass -File test-install/Metroid/install.ps1 -NoEngines -NoOffice -NoAutostart
-          if ($LASTEXITCODE) { throw 'install failed' }
+          $setup = Start-Process dist/Metroid-Setup-x64.exe -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=desktopicon', '/LOG=setup.log'
+          if ($setup.ExitCode) { Get-Content setup.log; throw "setup failed: $($setup.ExitCode)" }
           $installed = Join-Path $env:LOCALAPPDATA 'Programs\Metroid'
-          foreach ($file in 'metroid.exe', 'metroid-desktop.exe', 'Qt6Core.dll', 'platforms\qwindows.dll') {
+          foreach ($file in 'metroid.exe', 'metroid-desktop.exe', 'Qt6Core.dll', 'platforms\qwindows.dll', 'unins000.exe') {
               if (-not (Test-Path (Join-Path $installed $file))) { throw "missing $file" }
           }
-          if (-not (Test-Path (Join-Path ([Environment]::GetFolderPath('SendTo')) 'Metroid.lnk'))) { throw 'missing Send to entry' }
-          & "$installed\metroid.exe" autostart status
+          foreach ($folder in 'SendTo', 'Programs', 'Desktop') {
+              $link = Join-Path ([Environment]::GetFolderPath($folder)) 'Metroid.lnk'
+              if (-not (Test-Path $link)) { throw "missing $link" }
+          }
+          if ((& "$installed\metroid.exe" autostart status) -ne 'disabled') { throw 'autostart enabled without its task' }
           & "$installed\metroid.exe" doctor
           if ($LASTEXITCODE) { throw 'doctor failed' }
-          powershell -NoProfile -ExecutionPolicy Bypass -File test-install/Metroid/uninstall.ps1
-          if (Test-Path $installed) { throw 'uninstall left files' }
+          # The uninstaller restarts itself from a temporary copy and returns at once.
+          Start-Process "$installed\unins000.exe" -Wait -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES'
+          for ($i = 0; $i -lt 60 -and (Test-Path "$installed\metroid.exe"); $i++) { Start-Sleep 1 }
+          if (Test-Path "$installed\metroid.exe") { throw 'uninstall left files' }
+          if (Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Metroid.lnk')) { throw 'uninstall left the desktop shortcut' }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Metroid-windows-x64
-          path: dist/Metroid-windows-x64.zip
+          name: package-windows
+          path: dist/Metroid-Setup-x64.exe
+
+  # Each package is built in the distribution it targets, then installed in
+  # clean containers by linux-package-install.
+  linux-package:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { format: deb, image: 'debian:12' }
+          - { format: rpm, image: 'fedora:latest' }
+          - { format: arch, image: 'archlinux:latest' }
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: bash packaging/linux/build-package.sh ${{ matrix.format }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: package-${{ matrix.format }}
+          path: dist/*
+  linux-package-install:
+    needs: linux-package
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { format: deb, image: 'debian:12' }
+          - { format: deb, image: 'debian:stable' }
+          - { format: deb, image: 'ubuntu:24.04' }
+          - { format: rpm, image: 'fedora:latest' }
+          - { format: arch, image: 'archlinux:latest' }
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: package-${{ matrix.format }}
+          path: dist
+      - run: bash packaging/linux/test-package.sh $(ls dist/*.deb dist/*.rpm dist/*.pkg.tar.zst 2>/dev/null)
+  # Built on the oldest supported base: an AppImage runs on newer systems only.
+  appimage:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125 # v4
+        with:
+          version: '6.8.3'
+          cache: true
+      # Libraries the Qt xcb plugin loads; linuxdeploy bundles them from here.
+      - run: >-
+          sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev libxkbcommon-x11-0
+          libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
+      - run: bash packaging/linux/build-appimage.sh
+      - run: |
+          QT_QPA_PLATFORM=offscreen dist/Metroid-x86_64.AppImage --appimage-extract-and-run --smoke-test
+          cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/dist/Metroid-x86_64.AppImage" --appimage-extract >/dev/null
+          squashfs-root/usr/bin/metroid --version
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: package-appimage
+          path: dist/Metroid-x86_64.AppImage
 
   # Only this job may write, and it runs no build code: it publishes the
-  # package that desktop-windows built and tested.
+  # packages that the jobs above built and tested.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: desktop-windows
+    needs: [desktop-windows, linux-package-install, appimage]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: Metroid-windows-x64
+          pattern: package-*
+          merge-multiple: true
+          path: dist
       - env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" Metroid-windows-x64.zip --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
+        run: gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes
 
   installer:
     runs-on: ubuntu-latest

@@ -100,7 +100,15 @@ enum Task {
     /// JSON Lines worker over stdin/stdout, without network sockets
     Serve,
     /// Install the Linux launcher and user context menus
-    Integrate,
+    Integrate {
+        /// Write system entries in this directory (DESTDIR/usr/share when
+        /// packaging) instead of the user's; Nautilus scripts stay per-user
+        #[arg(long, requires = "exe")]
+        data_dir: Option<PathBuf>,
+        /// Installed path of metroid-desktop that system entries launch
+        #[arg(long, requires = "data_dir")]
+        exe: Option<PathBuf>,
+    },
 }
 fn print_json(value: &impl serde::Serialize) -> Result<()> {
     println!("{}", serde_json::to_string(value)?);
@@ -231,26 +239,38 @@ fn gui(files: &[PathBuf]) -> Result<()> {
     Command::new(desktop_executable()?).args(files).spawn()?;
     Ok(())
 }
-fn integrate() -> Result<()> {
+/// `system` is (data directory, installed metroid-desktop) for packages;
+/// without it, entries go to the user's data directory.
+fn integrate(system: Option<(PathBuf, PathBuf)>) -> Result<()> {
     #[cfg(windows)]
     {
-        bail!("Use scripts/install-windows.ps1 for the Send to menu");
+        let _ = system;
+        bail!("Use the Windows installer for the Send to menu");
     }
     #[cfg(not(windows))]
     {
         use std::fs;
         use std::os::unix::fs::PermissionsExt;
-        let exe = std::env::current_exe()?.with_file_name("metroid-desktop");
-        anyhow::ensure!(
-            exe.is_file(),
-            "Install both executables in the same directory first"
-        );
+        let system_wide = system.is_some();
+        let (data, exe) = match system {
+            Some((data, exe)) => {
+                anyhow::ensure!(exe.is_absolute(), "--exe must be an absolute path");
+                (data, exe)
+            }
+            None => {
+                let exe = std::env::current_exe()?.with_file_name("metroid-desktop");
+                anyhow::ensure!(
+                    exe.is_file(),
+                    "Install both executables in the same directory first"
+                );
+                (xdg_dir("XDG_DATA_HOME", ".local/share")?, exe)
+            }
+        };
         let exe = exe.to_string_lossy();
         anyhow::ensure!(
             !exe.contains(['\n', '\r', '%', '`', '$', '"', '\\', '\'']),
             "Unsupported installation path"
         );
-        let data = xdg_dir("XDG_DATA_HOME", ".local/share")?;
         let launcher = format!(
             "[Desktop Entry]\nType=Application\nName=Metroid\nGenericName=File converter\nComment=Convert files locally\nExec=\"{exe}\" -- %F\nIcon=metroid\nTerminal=false\nCategories=Utility;FileTools;\nActions=manager;\n[Desktop Action manager]\nName=Open batch manager\nExec=\"{exe}\" --manager\n"
         );
@@ -281,6 +301,10 @@ fn integrate() -> Result<()> {
                     "[Nemo Action]\nName={name}\nComment=Local file processing\nExec=\"{exe}\" --wheel {id} -- %F\nIcon-Name=metroid\nSelection=Any\nExtensions=any;dir;\nQuote=double\n"
                 ),
             ));
+            // Nautilus reads scripts from the user's directory only.
+            if system_wide {
+                continue;
+            }
             files.push((
                 format!("nautilus/scripts/{name}"),
                 format!("#!/bin/sh\nexec '{exe}' --wheel {id} -- \"$@\"\n"),
@@ -502,7 +526,7 @@ fn main() -> Result<()> {
             }
         },
         Task::Autostart { state } => autostart(&state)?,
-        Task::Integrate => integrate()?,
+        Task::Integrate { data_dir, exe } => integrate(data_dir.zip(exe))?,
     }
     Ok(())
 }
