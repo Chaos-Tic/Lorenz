@@ -709,9 +709,74 @@ pub fn convert(
             )?;
         }
     }
-    let output = staging.single_output()?;
     ensure!(!cancel.is_some_and(Path::exists), "Conversion cancelled");
+    // A multi-page source (PDF to images) yields one file per page: they are
+    // published together in a folder named after the source.
+    if !staging.output.is_file() {
+        let pages = fs::read_dir(&staging.output_dir)?
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().is_file())
+            .count();
+        if pages > 1 {
+            let mut stem = base_stem(&input);
+            stem.push("-pages");
+            return publish_dir(&staging.output_dir, &stem, &directory);
+        }
+    }
+    let output = staging.single_output()?;
     publish(&output, &input, &directory, &target)
+}
+
+/// True when every path is an image that converts to PDF, so several of
+/// them can become one document.
+pub fn images_only(inputs: &[PathBuf]) -> bool {
+    inputs.len() > 1
+        && registry().into_iter().any(|r| {
+            r.backend == "magick"
+                && r.outputs.iter().any(|o| o == "pdf")
+                && inputs.iter().all(|i| r.inputs.contains(&extension(i)))
+        })
+}
+
+/// Several images become one PDF, a page per image in the given order,
+/// named after the first: `photo-combined.pdf`. Sources are never modified.
+pub fn images_to_pdf(
+    inputs: &[PathBuf],
+    directory: Option<&Path>,
+    cancel: Option<&Path>,
+    timeout: u64,
+) -> Result<PathBuf> {
+    ensure!(images_only(inputs), "Select at least two images");
+    let inputs = inputs
+        .iter()
+        .map(|p| canonical(p).with_context(|| format!("Source not found: {}", p.display())))
+        .collect::<Result<Vec<_>>>()?;
+    for input in &inputs {
+        ensure!(input.is_file(), "Each source must be a regular file");
+    }
+    let backend = engine("magick").context("Missing engine: magick. Run lorenz doctor.")?;
+    let directory = output_directory(&inputs[0], directory)?;
+    let workspace = tempfile::Builder::new()
+        .prefix(".lorenz-")
+        .tempdir_in(&directory)?;
+    let staging = Staging::new(workspace.path(), "pdf")?;
+    let mut args = Vec::new();
+    for input in &inputs {
+        args.extend(expand(
+            &["{coded_input}".to_owned()],
+            &Expansion {
+                inputs: std::slice::from_ref(input),
+                ..Default::default()
+            },
+        ));
+    }
+    args.push("-auto-orient".into());
+    args.push(staging.output.to_string_lossy().into_owned());
+    run_backend(&backend, &args, workspace.path(), cancel, timeout)?;
+    ensure!(!cancel.is_some_and(Path::exists), "Conversion cancelled");
+    let mut stem = base_stem(&inputs[0]);
+    stem.push("-combined");
+    publish_as(&staging.output, &stem, &directory, "pdf")
 }
 
 pub fn merge_pdf(inputs: &[PathBuf], directory: &Path) -> Result<PathBuf> {

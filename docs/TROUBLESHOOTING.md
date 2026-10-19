@@ -30,11 +30,13 @@ Atomic output publication needs hard-link support. FAT/exFAT and some network
 filesystems do not provide it. Choose a supported local filesystem for the output,
 then copy the finished file to the removable drive.
 
-## PDF export contains only one page
+## Where are the pages of a PDF, or my combined PDF?
 
-The **Convert** wheel's PNG/JPG route exports the first page at 300 dpi. Use the
-**Tools** wheel (Ctrl) → **Pages to PNG** for every page, in a new folder. **Merge**
-appears in the Tools wheel when two or more PDFs are selected.
+Converting a PDF to PNG or JPG exports every page at 300 dpi. A one-page PDF gives
+one image next to it; a longer one gives a folder named `<name>-pages` holding one
+image per page. Converting several images to PDF at once gives a single document,
+`<first image>-combined.pdf`, with the pages in the order of the selection. To join
+existing PDFs, select them and use the Tools wheel (Ctrl) → **Merge**.
 
 ## Office, slide or spreadsheet formats are missing
 

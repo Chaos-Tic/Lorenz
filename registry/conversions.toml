@@ -81,20 +81,21 @@ backend = "pdftotext"
 args = ["-layout", "{input}", "{output}"]
 
 [[conversion]]
-category = "PDF · first page"
+category = "PDF · pages"
 glyph = "image"
 inputs = ["pdf"]
 outputs = ["png"]
 backend = "pdftoppm"
-args = ["-f", "1", "-singlefile", "-r", "300", "-png", "{input}", "{output_stem}"]
+# One image per page; several pages are published together in a folder.
+args = ["-r", "300", "-png", "{input}", "{output_dir}/page"]
 
 [[conversion]]
-category = "PDF · first page"
+category = "PDF · pages"
 glyph = "image"
 inputs = ["pdf"]
 outputs = ["jpg"]
 backend = "pdftoppm"
-args = ["-f", "1", "-singlefile", "-r", "300", "-jpeg", "{input}", "{output_stem}"]
+args = ["-r", "300", "-jpeg", "{input}", "{output_dir}/page"]
 
 [[conversion]]
 category = "Subtitles"

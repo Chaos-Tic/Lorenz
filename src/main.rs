@@ -378,14 +378,31 @@ fn main() -> Result<()> {
             json,
         } => {
             let mut failed = false;
-            for input in inputs {
-                match lorenz::convert(
-                    &input,
-                    &to,
-                    output_dir.as_deref(),
-                    cancel_file.as_deref(),
-                    timeout,
-                ) {
+            // Several images to PDF make one document, reported once.
+            let combine = to.eq_ignore_ascii_case("pdf") && lorenz::images_only(&inputs);
+            let jobs = if combine {
+                inputs[..1].to_vec()
+            } else {
+                inputs.clone()
+            };
+            for input in jobs {
+                let result = if combine {
+                    lorenz::images_to_pdf(
+                        &inputs,
+                        output_dir.as_deref(),
+                        cancel_file.as_deref(),
+                        timeout,
+                    )
+                } else {
+                    lorenz::convert(
+                        &input,
+                        &to,
+                        output_dir.as_deref(),
+                        cancel_file.as_deref(),
+                        timeout,
+                    )
+                };
+                match result {
                     Ok(output) => {
                         if json {
                             print_json(

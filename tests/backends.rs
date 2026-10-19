@@ -275,3 +275,55 @@ fn documents_embed_only_their_own_media() {
         .unwrap();
     assert!(String::from_utf8_lossy(&listing.stdout).contains(".png"));
 }
+
+#[test]
+fn pdf_pages_and_images_to_one_pdf() {
+    let (Some(magick), Some(qpdf)) = (engine("magick"), engine("qpdf")) else {
+        eprintln!("SKIP: magick or qpdf absent");
+        return;
+    };
+    if engine("pdftoppm").is_none() {
+        eprintln!("SKIP: pdftoppm absent");
+        return;
+    }
+    let d = tempfile::tempdir().unwrap();
+    let images: Vec<_> = ["red", "blue", "green"]
+        .iter()
+        .map(|colour| {
+            let path = d.path().join(format!("{colour}.png"));
+            assert!(
+                Command::new(&magick)
+                    .args(["-size", "40x30"])
+                    .arg(format!("xc:{colour}"))
+                    .arg(&path)
+                    .status()
+                    .unwrap()
+                    .success()
+            );
+            path
+        })
+        .collect();
+    // Several images become one PDF, a page each, named after the first.
+    assert!(lorenz::images_only(&images));
+    let pdf = lorenz::images_to_pdf(&images, None, None, 60).unwrap();
+    assert_eq!(pdf.file_name().unwrap(), "red-combined.pdf");
+    let pages = Command::new(&qpdf)
+        .arg("--show-npages")
+        .arg(&pdf)
+        .output()
+        .unwrap();
+    assert_eq!(String::from_utf8(pages.stdout).unwrap().trim(), "3");
+    // A multi-page PDF converts to a folder holding one image per page.
+    let folder = convert(&pdf, "png", None, None, 60).unwrap();
+    assert!(folder.is_dir());
+    assert_eq!(folder.file_name().unwrap(), "red-combined-pages");
+    let mut names: Vec<_> = fs::read_dir(&folder)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .collect();
+    names.sort();
+    assert_eq!(names.len(), 3);
+    assert!(names.iter().all(|n| n.ends_with(".png")));
+    // A single image is not combined.
+    assert!(!lorenz::images_only(&images[..1]));
+}

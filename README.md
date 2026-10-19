@@ -233,13 +233,13 @@ the drag gesture on Windows 10/11 is in progress.
 
 | Family | Engine | Formats |
 | --- | --- | --- |
-| Images | ImageMagick | PNG, JPG, WebP, TIFF, BMP, AVIF, PDF; HEIC and GIF input |
+| Images | ImageMagick | PNG, JPG, WebP, TIFF, BMP, AVIF, PDF (several images make one PDF); HEIC and GIF input |
 | Video | FFmpeg | MP4, MOV, MKV, WebM, AVI, WMV, GIF |
 | Audio | FFmpeg | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA; audio from any video |
 | Documents | Pandoc · LibreOffice | MD, DOCX, EPUB, HTML, ODT, TXT; RTF input; DOCX/DOC/ODT/RTF → PDF |
 | Slides | LibreOffice | PPT/PPTX/ODP → PDF, PPTX, ODP; first slide → PNG, JPG |
 | Spreadsheets | LibreOffice | XLSX, XLS, ODS, CSV → XLSX, ODS, CSV, PDF |
-| PDF | Poppler | Text; first page → PNG or JPG at 300 dpi |
+| PDF | Poppler | Text; every page → PNG or JPG at 300 dpi (a folder when there are several) |
 | Subtitles | FFmpeg | SRT ↔ VTT |
 | Archives | libarchive | ZIP, TAR, TGZ (GZ, BZ2, XZ, 7Z and RAR input) |
 
@@ -343,7 +343,7 @@ and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 
 - Drag gesture for GNOME Shell and wlroots compositors.
 - SVG input through a sandboxed renderer; tools with parameters (crop, trim, quality).
-- PDF to DOCX/EPUB, Apple Pages input, multipage image export options.
+- PDF to DOCX/EPUB, Apple Pages input.
 - Content/MIME detection, codec capability probing, progress reporting.
 - Repository channels (AUR, COPR, Flatpak) and a signed Windows installer.
 
