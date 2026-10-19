@@ -7,10 +7,7 @@ use std::{
 };
 
 #[derive(Parser)]
-#[command(
-    version,
-    about = "Lorenz — local conversion, original files preserved"
-)]
+#[command(version, about = "Lorenz — local conversion, original files preserved")]
 struct Cli {
     #[command(subcommand)]
     command: Task,
@@ -311,10 +308,7 @@ fn integrate(system: Option<(PathBuf, PathBuf)>) -> Result<()> {
             ));
         }
         // Remove entries written by earlier versions.
-        for old in [
-            "nemo/actions/lorenz.nemo_action",
-            "nautilus/scripts/Lorenz",
-        ] {
+        for old in ["nemo/actions/lorenz.nemo_action", "nautilus/scripts/Lorenz"] {
             let _ = fs::remove_file(data.join(old));
         }
         for (relative, contents) in files {
