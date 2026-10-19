@@ -29,5 +29,7 @@ grep -q '^Exec="/usr/bin/metroid-desktop"' /usr/share/applications/metroid.deskt
 # The Qt libraries and platform plugin the package depends on are enough to start.
 QT_QPA_PLATFORM=offscreen metroid-desktop --smoke-test
 remove
-! command -v metroid >/dev/null || { echo 'metroid still installed' >&2; exit 1; }
+for file in /usr/bin/metroid /usr/share/applications/metroid.desktop; do
+    test ! -e "$file" || { echo "removal left $file" >&2; exit 1; }
+done
 echo "OK: $(basename "$package")"
