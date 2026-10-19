@@ -238,8 +238,10 @@ fn office_documents_slides_and_sheets() {
     .unwrap();
     let status = Command::new(engine("soffice").unwrap())
         .arg(format!(
-            "-env:UserInstallation=file://{}/profile",
-            d.path().display()
+            // Windows paths need "file:///C:/..." with forward slashes.
+            "-env:UserInstallation=file://{}{}/profile",
+            if cfg!(windows) { "/" } else { "" },
+            d.path().display().to_string().replace('\\', "/")
         ))
         .args(["--headless", "--convert-to", "pptx", "--outdir"])
         .arg(d.path())
@@ -254,4 +256,24 @@ fn office_documents_slides_and_sheets() {
     assert!(fs::read(pdf).unwrap().starts_with(b"%PDF"));
     let odp = convert(&pptx, "odp", None, None, 180).unwrap();
     assert!(fs::read(odp).unwrap().starts_with(b"PK"));
+}
+
+#[test]
+fn office_document_in_a_deep_folder() {
+    if !have(&["soffice"]) {
+        return;
+    }
+    // LibreOffice on Windows crashes when its profile path passes about 148
+    // characters, so the profile must not be created beside a deep source.
+    let d = tempfile::tempdir().unwrap();
+    let mut dir = d.path().to_path_buf();
+    while dir.as_os_str().len() < 200 {
+        dir.push("a folder with a long name");
+    }
+    fs::create_dir_all(&dir).unwrap();
+    let rtf = dir.join("letter.rtf");
+    fs::write(&rtf, "{\\rtf1\\ansi Hello from a deep folder.\\par}").unwrap();
+    let pdf = convert(&rtf, "pdf", None, None, 180).unwrap();
+    assert_eq!(pdf.parent().unwrap(), metroid::canonical(&dir).unwrap());
+    assert!(fs::read(pdf).unwrap().starts_with(b"%PDF"));
 }
