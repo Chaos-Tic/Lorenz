@@ -85,5 +85,30 @@ int main(int argc,char **argv) {
         advance(260); wheel.trackGlobal(QPointF(wheel.pos())+wheel.itemCenter(4)); advance(300);
         wheel.grab().save(directory+"/actions.png"); wheel.hide();
     }
+    // README demo: open, sweep the pointer around the ring, rest on WebP,
+    // release. Frames every 33 ms plus the pointer path for compositing.
+    if (const auto demo=qEnvironmentVariable("LORENZ_WHEEL_DEMO"); !demo.isEmpty()) {
+        QDir().mkpath(demo);
+        wheel.hide(); wheel.setMode(RadialWheel::Convert);
+        wheel.sourceName="Mountain light.png"; wheel.sourceType="png";
+        wheel.openAt({400,300}); wheel.setFormats({"jpg","webp","avif","pdf","tiff","heic"});
+        QFile log(demo+"/pointer.txt"); log.open(QIODevice::WriteOnly|QIODevice::Text); QTextStream out(&log);
+        const QPointF c=RadialWheel::center(); const double k=RadialWheel::scale, pi=3.14159265358979323846;
+        auto at=[&](double degrees,double radius){ const double a=degrees*pi/180; return c+QPointF(radius*std::sin(a),-radius*std::cos(a))*k; };
+        auto ease=[](double t){ t=qBound(0.0,t,1.0); return t<0.5?4*t*t*t:1-std::pow(-2*t+2,3)/2; };
+        QTimer tick; int frame=0;
+        QObject::connect(&tick,&QTimer::timeout,&app,[&]{
+            QPointF p=c;
+            if (frame>=15 && frame<28) p=c+(at(240,150)-c)*ease((frame-15)/12.0);
+            else if (frame>=28 && frame<=80) p=at(240+180*ease((frame-28)/52.0),150);
+            else if (frame>80) p=at(420,150);
+            if (frame<=102) wheel.trackGlobal(QPointF(wheel.pos())+p);
+            if (frame==103) wheel.dismiss();
+            wheel.grab().save(demo+QString("/demo-%1.png").arg(frame,3,10,QChar('0')));
+            out<<frame<<' '<<p.x()<<' '<<p.y()<<'\n';
+            if (++frame==114) app.quit();
+        });
+        tick.start(33); app.exec(); tick.stop(); out.flush();
+    }
     std::cout<<"Radial wheel hit testing and edge placement passed\n";
 }

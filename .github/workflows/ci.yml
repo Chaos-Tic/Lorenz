@@ -69,6 +69,8 @@ jobs:
             QT_QPA_PLATFORM=offscreen LORENZ_THEME=$look LORENZ_WHEEL_BACKDROP=tests/fixtures/wallpaper-$look.jpg \
               LORENZ_WHEEL_FRAMES=wheel-frames/$look build/lorenz-wheel-test
           done
+          QT_QPA_PLATFORM=offscreen LORENZ_THEME=light LORENZ_WHEEL_BACKDROP=tests/fixtures/demo-backdrop-light.jpg \
+            LORENZ_WHEEL_DEMO=wheel-frames/demo build/lorenz-wheel-test
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: wheel-frames
