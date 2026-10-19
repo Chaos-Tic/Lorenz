@@ -334,11 +334,12 @@ and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 
 ## Roadmap
 
-- Drag gesture for GNOME Shell, wlroots compositors and Windows.
+- Drag gesture for GNOME Shell and wlroots compositors.
 - SVG input through a sandboxed renderer; tools with parameters (crop, trim, quality).
 - PDF to DOCX/EPUB, Apple Pages input, multipage image export options.
 - Content/MIME detection, codec capability probing, progress reporting.
-- Native packages (AUR, COPR, deb, Flatpak), signed Windows installer, license choice.
+- Repository channels (AUR, COPR, Flatpak) and a signed Windows installer.
 
-No redistribution license has been granted yet; a license must be chosen before
-public distribution. See [`packaging/README.md`](packaging/README.md).
+## License
+
+Metroid is free software under the [GNU General Public License v3.0 or later](LICENSE).

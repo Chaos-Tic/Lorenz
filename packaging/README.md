@@ -22,8 +22,8 @@ distribution repository yet.
 - Qt is dynamically linked; distribute its libraries and plugins under their
   applicable licenses. Conversion engines are recommended, never bundled.
 
-Before wider distribution: choose the project license (packages say
-`LicenseRef-Unspecified`), audit engine licenses, sign the Windows installer,
+Metroid is GPL-3.0-or-later; packages install the license text. Before wider
+distribution: audit engine licenses, sign the Windows installer,
 publish the PKGBUILD to the AUR, and test on physical machines. Flatpak requires
 an explicit policy for host engines and permissions; network access must not be
 added for convenience.

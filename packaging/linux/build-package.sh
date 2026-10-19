@@ -30,6 +30,17 @@ deb)
     build
     stage=$(mktemp -d)/metroid
     sh packaging/linux/stage.sh "$stage"
+    install -d "$stage/usr/share/doc/metroid"
+    cat >"$stage/usr/share/doc/metroid/copyright" <<EOF
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Metroid
+Source: $homepage
+
+Files: *
+Copyright: Chaos-Tic
+License: GPL-3.0+
+ On Debian systems, the full text is in /usr/share/common-licenses/GPL-3.
+EOF
     arch=$(dpkg --print-architecture)
     # dpkg-shlibdeps maps the linked libraries to package names and versions;
     # it only needs a control file to exist.
@@ -71,7 +82,7 @@ Name: metroid
 Version: $version
 Release: 1%{?dist}
 Summary: $summary
-License: LicenseRef-Unspecified
+License: GPL-3.0-or-later
 URL: $homepage
 Requires: qt6-qtbase-gui
 Recommends: ffmpeg-free ImageMagick pandoc poppler-utils qpdf ghostscript bsdtar libnotify
@@ -93,6 +104,7 @@ cp -a $stage/. %{buildroot}/
 /usr/share/icons/hicolor/scalable/apps/metroid.svg
 /usr/share/kio/servicemenus/metroid.desktop
 /usr/share/nemo/actions/metroid-*.nemo_action
+%license /usr/share/licenses/metroid/LICENSE
 EOF
     rpmbuild -bb "$top/metroid.spec" --define "_topdir $top" --define "_rpmdir $PWD/dist" \
         --define '_build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm'

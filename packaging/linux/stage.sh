@@ -11,3 +11,4 @@ strip "$dest/usr/bin/metroid" "$dest/usr/bin/metroid-desktop" 2>/dev/null || tru
 # Launcher, Dolphin and Nemo menus, icon; the same entries `metroid integrate`
 # writes for one user, pointing at the system executable.
 "$dest/usr/bin/metroid" integrate --data-dir "$dest/usr/share" --exe /usr/bin/metroid-desktop >/dev/null
+install -Dm644 LICENSE "$dest/usr/share/licenses/metroid/LICENSE"

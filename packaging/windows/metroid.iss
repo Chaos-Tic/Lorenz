@@ -73,6 +73,7 @@ Name: "autostart"; Description: "{cm:TaskAutostart}"; GroupDescription: "{cm:Gro
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 
 [Icons]
 ; Start menu and Send to: right-click files > Send to > Metroid opens the wheels.
