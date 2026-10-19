@@ -25,6 +25,10 @@ cmake --build build --parallel "$(nproc)"
 appdir=build/AppDir
 rm -rf "$appdir"
 install -Dm755 target/release/lorenz "$appdir/usr/bin/lorenz"
+# Lorenz's license, and Qt's (bundled below) with the crates' notices.
+install -Dm644 LICENSE "$appdir/usr/share/licenses/lorenz/LICENSE"
+install -Dm644 packaging/licenses/LGPL-3.0.txt "$appdir/usr/share/licenses/lorenz/LGPL-3.0.txt"
+packaging/licenses/notices.sh "$appdir/usr/share/licenses/lorenz/THIRD-PARTY-NOTICES.txt" >/dev/null
 # The AppImage path changes at every mount, so it ships no file-manager menus.
 cat >build/lorenz.desktop <<'EOF'
 [Desktop Entry]

@@ -94,6 +94,12 @@ jobs:
           $run = Start-Process build/Release/lorenz-desktop.exe --smoke-test -Wait -PassThru
           if ($run.ExitCode) { throw "smoke test failed: $($run.ExitCode)" }
       # The installer people download: Lorenz-Setup-x64.exe.
+      # Qt is bundled under the LGPL: its license and the crates' notices go in.
+      - name: Third-party notices
+        shell: bash
+        run: |
+          mkdir -p dist/Lorenz
+          packaging/licenses/notices.sh dist/Lorenz/THIRD-PARTY-NOTICES.txt x86_64-pc-windows-msvc
       - name: Build the Windows installer
         shell: pwsh
         run: |
@@ -113,7 +119,7 @@ jobs:
           if ($setup.ExitCode) { Get-Content setup.log; throw "setup failed: $($setup.ExitCode)" }
           if (-not (Select-String -Quiet -Path (Join-Path $env:LOCALAPPDATA 'lorenz\lorenz.conf') -Pattern '^Language=fr')) { throw 'the setup language was not passed to the app' }
           $installed = Join-Path $env:LOCALAPPDATA 'Programs\Lorenz'
-          foreach ($file in 'lorenz.exe', 'lorenz-desktop.exe', 'Qt6Core.dll', 'platforms\qwindows.dll', 'unins000.exe') {
+          foreach ($file in 'lorenz.exe', 'lorenz-desktop.exe', 'Qt6Core.dll', 'platforms\qwindows.dll', 'unins000.exe', 'LICENSE.txt', 'LGPL-3.0.txt', 'THIRD-PARTY-NOTICES.txt') {
               if (-not (Test-Path (Join-Path $installed $file))) { throw "missing $file" }
           }
           foreach ($folder in 'SendTo', 'Programs', 'Desktop') {
@@ -226,6 +232,9 @@ jobs:
           QT_QPA_PLATFORM=offscreen dist/Lorenz-x86_64.AppImage --appimage-extract-and-run --smoke-test
           cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/dist/Lorenz-x86_64.AppImage" --appimage-extract >/dev/null
           squashfs-root/usr/bin/lorenz --version
+          for file in LICENSE LGPL-3.0.txt THIRD-PARTY-NOTICES.txt; do
+            test -s "squashfs-root/usr/share/licenses/lorenz/$file"
+          done
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: package-appimage

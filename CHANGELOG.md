@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- The Windows installer and the AppImage bundle Qt: they now also ship Qt's
+  license (LGPL-3.0) and `THIRD-PARTY-NOTICES.txt`, the licenses of the Rust
+  crates linked into Lorenz.
+
 ## 1.1.0 — 2026-10-19
 
 ### Install and updates

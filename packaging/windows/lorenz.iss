@@ -77,6 +77,9 @@ Name: "autostart"; Description: "{cm:TaskAutostart}"; GroupDescription: "{cm:Gro
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
+; Qt is bundled under the LGPL; THIRD-PARTY-NOTICES.txt (in SourceDir) lists it
+; and the crates linked into lorenz.exe (packaging/licenses/notices.sh).
+Source: "..\licenses\LGPL-3.0.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [INI]
 ; The language picked here is the app's language too ("Language" in lorenz.conf;
