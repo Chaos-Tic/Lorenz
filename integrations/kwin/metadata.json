@@ -1,7 +1,7 @@
 {
     "KPlugin": {
-        "Id": "@METROID_PLUGIN_ID@",
-        "Name": "Metroid Shift-drag wheel",
+        "Id": "@LORENZ_PLUGIN_ID@",
+        "Name": "Lorenz Shift-drag wheel",
         "Description": "Show a local conversion wheel when Shift is pressed during a file drag",
         "Version": "0.2.0",
         "EnabledByDefault": false

@@ -185,7 +185,7 @@ public:
         setAttribute(Qt::WA_TranslucentBackground);
         setAttribute(Qt::WA_ShowWithoutActivating);
         setMouseTracking(true); setFixedSize(extent,extent);
-        setWindowTitle("Metroid wheel"); setObjectName("metroid-wheel");
+        setWindowTitle("Lorenz wheel"); setObjectName("lorenz-wheel");
         connect(&reveal,&QVariantAnimation::valueChanged,this,[this](const QVariant &value){ opening=value.toReal(); update(); });
         connect(&reveal,&QVariantAnimation::finished,this,[this]{ if (closing) hide(); });
         connect(&swap,&QVariantAnimation::valueChanged,this,[this](const QVariant &value){ swapping=value.toReal(); update(); });

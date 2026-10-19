@@ -97,7 +97,7 @@ fn run_once(
     timeout: u64,
 ) -> Result<PathBuf> {
     let backend = engine(&tool.backend)
-        .with_context(|| format!("Missing engine: {}. Run metroid doctor.", tool.backend))?;
+        .with_context(|| format!("Missing engine: {}. Run lorenz doctor.", tool.backend))?;
     let first = &inputs[0];
     let extension = match tool.output.as_str() {
         "same" => extension(first),
@@ -115,7 +115,7 @@ fn run_once(
         stem.push(format!("-{}", tool.suffix));
     }
     let workspace = tempfile::Builder::new()
-        .prefix(".metroid-")
+        .prefix(".lorenz-")
         .tempdir_in(directory)?;
     let staging = Staging::new(
         workspace.path(),

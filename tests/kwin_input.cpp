@@ -12,12 +12,12 @@
 #include <QElapsedTimer>
 class TestInput : public KWin::Plugin {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.metroid.TestInput")
+    Q_CLASSINFO("D-Bus Interface", "org.lorenz.TestInput")
     QElapsedTimer time;
 public:
     TestInput() {
         time.start();
-        QDBusConnection::sessionBus().registerObject("/MetroidTestInput",this,QDBusConnection::ExportAllSlots);
+        QDBusConnection::sessionBus().registerObject("/LorenzTestInput",this,QDBusConnection::ExportAllSlots);
         QTimer::singleShot(1000,this,[]{ KWin::waylandServer()->seat()->setHasPointer(true); KWin::waylandServer()->seat()->setHasKeyboard(true); });
     }
 public Q_SLOTS:
@@ -26,11 +26,11 @@ public Q_SLOTS:
     void Key(int key,bool down) { KWin::input()->keyboard()->processKey(key,down?KWin::KeyboardKeyState::Pressed:KWin::KeyboardKeyState::Released,std::chrono::microseconds(time.nsecsElapsed()/1000)); }
     bool Dragging() { return KWin::waylandServer()->seat()->isDragPointer(); }
     bool WheelCenteredAt(int x,int y) {
-        for (auto *w:QApplication::topLevelWidgets()) if (w->objectName()=="metroid-wheel")
+        for (auto *w:QApplication::topLevelWidgets()) if (w->objectName()=="lorenz-wheel")
             return w->mapToGlobal(QPoint(w->width()/2,w->height()/2))==QPoint(x,y);
         return false;
     }
-    bool Snapshot(QString path) { for (auto *w:QApplication::topLevelWidgets()) if (w->objectName()=="metroid-wheel") return w->grab().save(path); return false; }
+    bool Snapshot(QString path) { for (auto *w:QApplication::topLevelWidgets()) if (w->objectName()=="lorenz-wheel") return w->grab().save(path); return false; }
 };
 class TestFactory : public KWin::PluginFactory {
     Q_OBJECT
@@ -38,7 +38,7 @@ class TestFactory : public KWin::PluginFactory {
     Q_INTERFACES(KWin::PluginFactory)
 public:
     std::unique_ptr<KWin::Plugin> create() const override {
-        if (qEnvironmentVariable("METROID_ISOLATED_TEST")!="1") return nullptr;
+        if (qEnvironmentVariable("LORENZ_ISOLATED_TEST")!="1") return nullptr;
         return std::make_unique<TestInput>();
     }
 };

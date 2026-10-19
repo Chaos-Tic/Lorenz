@@ -1,5 +1,5 @@
 //! Real backend tests. Optional engines are tested when installed; CI installs them.
-use metroid::{convert, engine};
+use lorenz::{convert, engine};
 use std::{fs, path::Path, process::Command};
 #[test]
 fn image_roundtrip_with_unusual_filename() {
@@ -54,7 +54,7 @@ fn document_roundtrip() {
 }
 #[test]
 fn cli_reports_errors_as_json() {
-    let output = Command::new(env!("CARGO_BIN_EXE_metroid"))
+    let output = Command::new(env!("CARGO_BIN_EXE_lorenz"))
         .args([
             "convert",
             "--to",
@@ -73,7 +73,7 @@ fn cli_reports_errors_as_json() {
 fn serve_recovers_after_invalid_request() {
     use std::io::Write;
     use std::process::Stdio;
-    let mut child = Command::new(env!("CARGO_BIN_EXE_metroid"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_lorenz"))
         .arg("serve")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -99,7 +99,7 @@ fn backend_cancellation_and_timeout_reap_process() {
     let d = tempfile::tempdir().unwrap();
     // A script written by the test could not be executed while a parallel test
     // forks with its descriptor still open ("text file busy"); use sleep itself.
-    let sleeper = metroid::executable("sleep").unwrap();
+    let sleeper = lorenz::executable("sleep").unwrap();
     let wait = ["20".to_owned()];
     let cancel = d.path().join("cancel");
     std::thread::scope(|s| {
@@ -107,10 +107,10 @@ fn backend_cancellation_and_timeout_reap_process() {
             std::thread::sleep(std::time::Duration::from_millis(200));
             fs::write(&cancel, "").unwrap();
         });
-        let error = metroid::run_backend(&sleeper, &wait, d.path(), Some(&cancel), 10).unwrap_err();
+        let error = lorenz::run_backend(&sleeper, &wait, d.path(), Some(&cancel), 10).unwrap_err();
         assert!(error.to_string().contains("cancelled"));
     });
-    let error = metroid::run_backend(&sleeper, &wait, d.path(), None, 0).unwrap_err();
+    let error = lorenz::run_backend(&sleeper, &wait, d.path(), None, 0).unwrap_err();
     assert!(error.to_string().contains("timed out"));
 }
 
@@ -125,7 +125,7 @@ fn pdf_text_render_and_merge() {
     }
     let d = tempfile::tempdir().unwrap();
     let input = d.path().join("page.pdf");
-    let stream = "BT /F1 18 Tf 30 80 Td (Metroid PDF test) Tj ET\n";
+    let stream = "BT /F1 18 Tf 30 80 Td (Lorenz PDF test) Tj ET\n";
     let objects = [
         "<< /Type /Catalog /Pages 2 0 R >>".to_owned(),
         "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_owned(),
@@ -152,11 +152,11 @@ fn pdf_text_render_and_merge() {
     assert!(
         fs::read_to_string(text)
             .unwrap()
-            .contains("Metroid PDF test")
+            .contains("Lorenz PDF test")
     );
     let image = convert(&input, "png", None, None, 30).unwrap();
     assert!(fs::read(image).unwrap().starts_with(b"\x89PNG"));
-    let merged = metroid::merge_pdf(&[input.clone(), input], d.path()).unwrap();
+    let merged = lorenz::merge_pdf(&[input.clone(), input], d.path()).unwrap();
     let pages = Command::new(engine("qpdf").unwrap())
         .arg("--show-npages")
         .arg(merged)

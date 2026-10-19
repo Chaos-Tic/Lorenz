@@ -2,19 +2,19 @@
 
 [Back to the README](../README.md)
 
-Metroid separates its native desktop from conversion logic. The Rust executable
+Lorenz separates its native desktop from conversion logic. The Rust executable
 can run independently, and the Qt desktop communicates with it through subprocesses.
 No HTTP server or network socket is involved in this interface.
 
 ```mermaid
 flowchart TD
-    KWin[KWin drag + Shift / Ctrl / Alt] -->|metroid menu| CLI[Rust CLI]
+    KWin[KWin drag + Shift / Ctrl / Alt] -->|lorenz menu| CLI[Rust CLI]
     UI[Qt companion, context wheel, batch manager] -->|arguments + JSON Lines| CLI
     Shell[Terminal / file manager / dmenu] --> CLI
     CLI --> Registry[Embedded TOML registries: conversions + tools]
     CLI --> Actions[File actions: clipboard, terminal, copy, move]
     Registry --> Engine[Installed engine]
-    Engine --> Temp[Private .metroid-* directory]
+    Engine --> Temp[Private .lorenz-* directory]
     Temp --> Publish[Atomic publication with a new name]
     Publish --> Result[New file or folder beside the source]
     classDef base fill:#171d23,stroke:#3b4c54,color:#edf3f1
@@ -93,18 +93,18 @@ particularly for engines that emit multiple files.
 
 `integrations/kwin/plugin.cpp` adds the global drag gesture for KWin 6.8 Wayland.
 On a key press during a pointer drag that offers file URIs, the input filter reads
-the URI list through an asynchronous pipe and asks `metroid menu` for the wheel that
-key opens. Keys come from `~/.config/metroid/metroid.conf` (`[Wheels]` `Convert`,
+the URI list through an asynchronous pipe and asks `lorenz menu` for the wheel that
+key opens. Keys come from `~/.config/lorenz/lorenz.conf` (`[Wheels]` `Convert`,
 `Tools`, `Actions`), written by the companion's settings and read again at each drag.
 Another wheel key switches the mode and re-queries the same paths. Arrow keys and
 Enter select from the keyboard; other keys are swallowed while the wheel is open.
 
 On release, the plugin cancels the source drag so the file manager cannot complete a
-move or copy, then starts `metroid-desktop --convert-to`, `--tool`, or `--action` as
+move or copy, then starts `lorenz-desktop --convert-to`, `--tool`, or `--action` as
 a separate process. No engine runs inside KWin. `desktop/radialwheel.h` is shared by
-the compositor, the file-manager context wheel (`metroid-desktop --wheel KIND`), and
+the compositor, the file-manager context wheel (`lorenz-desktop --wheel KIND`), and
 the batch manager.
 
 `tests/kwin_input.cpp` is an isolated-test-only input module, excluded by default and
-never installed. Production installation copies only the production module as `metroid-<revision>.so`. See the
+never installed. Production installation copies only the production module as `lorenz-<revision>.so`. See the
 [KWin guide](../integrations/kwin/README.md) for ABI constraints and test isolation.

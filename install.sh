@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Metroid installer for Linux distributions.
+# Lorenz installer for Linux distributions.
 #
-# Builds Metroid from this source tree and installs it for the current user in
+# Builds Lorenz from this source tree and installs it for the current user in
 # ~/.local. Administrator access is used only to install distribution packages
 # and, on KDE Plasma, the KWin extension. Run ./install.sh --help for options.
 set -euo pipefail
@@ -21,11 +21,11 @@ Without options, the installer asks before each optional step.
       --no-office       Skip LibreOffice
       --kwin            Install the KDE Plasma drag gesture (KWin extension)
       --no-kwin         Skip the KDE Plasma drag gesture
-      --autostart       Start the Metroid companion at login
-      --no-autostart    Do not start Metroid at login
+      --autostart       Start the Lorenz companion at login
+      --no-autostart    Do not start Lorenz at login
   -h, --help            Show this help
 
-Remove Metroid later with ./uninstall.sh.
+Remove Lorenz later with ./uninstall.sh.
 EOF
 }
 
@@ -143,7 +143,7 @@ install_optional() {
     ((${#failed[@]} == 0)) || warn "Not installed (unavailable here): ${failed[*]}"
 }
 
-step "Metroid installer"
+step "Lorenz installer"
 . /etc/os-release 2>/dev/null || true
 note "System: ${PRETTY_NAME:-unknown Linux} · package family: $family"
 note "Session: ${XDG_SESSION_TYPE:-unknown} · desktop: ${XDG_CURRENT_DESKTOP:-unknown}"
@@ -204,22 +204,22 @@ fi
 # ---------------------------------------------------------------------------
 # 2. Build and install for this user
 # ---------------------------------------------------------------------------
-step "Building Metroid"
+step "Building Lorenz"
 cargo build --release --locked
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release >/dev/null
 cmake --build build --parallel "$(nproc 2>/dev/null || echo 2)"
 
 step "Installing in ~/.local"
 # Stop the tray companion (not running conversions) so the new version replaces it.
-companion='.*/metroid-desktop( --background)?'
+companion='.*/lorenz-desktop( --background)?'
 pkill -f -x "$companion" 2>/dev/null && was_running=true || was_running=false
-install -Dm755 target/release/metroid "$HOME/.local/bin/metroid"
-install -Dm755 build/metroid-desktop "$HOME/.local/bin/metroid-desktop"
-"$HOME/.local/bin/metroid" integrate | sed 's/^/    /'
+install -Dm755 target/release/lorenz "$HOME/.local/bin/lorenz"
+install -Dm755 build/lorenz-desktop "$HOME/.local/bin/lorenz-desktop"
+"$HOME/.local/bin/lorenz" integrate | sed 's/^/    /'
 command -v update-desktop-database >/dev/null && update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
-    *) warn "$HOME/.local/bin is not in PATH. Add it to use the metroid command in a terminal." ;;
+    *) warn "$HOME/.local/bin is not in PATH. Add it to use the lorenz command in a terminal." ;;
 esac
 
 # ---------------------------------------------------------------------------
@@ -248,8 +248,8 @@ elif [[ ${XDG_CURRENT_DESKTOP:-} == *KDE* ]]; then
     warn "The drag gesture needs KWin 6.8 (found ${kwin_version:-none}). Other features work."
 else
     note "The global drag gesture is available on KDE Plasma (KWin 6.8, Wayland) only."
-    note "Here, use the file manager context menu (Metroid → Convert, Tools, Actions),"
-    note "or bind a shortcut to: metroid pick FILE --menu fuzzel|wofi|rofi"
+    note "Here, use the file manager context menu (Lorenz → Convert, Tools, Actions),"
+    note "or bind a shortcut to: lorenz pick FILE --menu fuzzel|wofi|rofi"
 fi
 
 # ---------------------------------------------------------------------------
@@ -257,26 +257,26 @@ fi
 # ---------------------------------------------------------------------------
 step "Start at login"
 note "The tray companion gives access to settings and the batch manager."
-if ask "$autostart" "Start Metroid automatically when you log in?" y; then
-    "$HOME/.local/bin/metroid" autostart enable | sed 's/^/    /'
+if ask "$autostart" "Start Lorenz automatically when you log in?" y; then
+    "$HOME/.local/bin/lorenz" autostart enable | sed 's/^/    /'
     if [[ ${XDG_CURRENT_DESKTOP:-} =~ (Hyprland|sway|niri|river) ]]; then
         note "Tiling compositors may ignore XDG autostart. Add to your compositor config:"
-        note "  exec-once = $HOME/.local/bin/metroid-desktop --background   (Hyprland)"
-        note "  exec $HOME/.local/bin/metroid-desktop --background          (Sway)"
+        note "  exec-once = $HOME/.local/bin/lorenz-desktop --background   (Hyprland)"
+        note "  exec $HOME/.local/bin/lorenz-desktop --background          (Sway)"
     fi
     start_now=true
 else
-    "$HOME/.local/bin/metroid" autostart disable >/dev/null
+    "$HOME/.local/bin/lorenz" autostart disable >/dev/null
     start_now=$was_running
 fi
 if $start_now && [[ -n ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]]; then
-    setsid -f "$HOME/.local/bin/metroid-desktop" --background >/dev/null 2>&1 < /dev/null || true
+    setsid -f "$HOME/.local/bin/lorenz-desktop" --background >/dev/null 2>&1 < /dev/null || true
 fi
 
 step "Done"
-"$HOME/.local/bin/metroid" doctor | sed 's/^/    /'
+"$HOME/.local/bin/lorenz" doctor | sed 's/^/    /'
 if $gesture; then
     note "${bold}Drag a file, then tap Shift (convert), Ctrl (tools) or Alt (actions).${reset}"
 fi
-note "Keys and startup can be changed later: Metroid tray icon → Settings…"
+note "Keys and startup can be changed later: Lorenz tray icon → Settings…"
 note "Uninstall: ./uninstall.sh"

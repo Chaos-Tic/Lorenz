@@ -5,10 +5,10 @@
 #   sh packaging/linux/stage.sh DESTDIR
 set -eu
 dest=${1:?usage: packaging/linux/stage.sh DESTDIR}
-install -Dm755 target/release/metroid "$dest/usr/bin/metroid"
-install -Dm755 build/metroid-desktop "$dest/usr/bin/metroid-desktop"
-strip "$dest/usr/bin/metroid" "$dest/usr/bin/metroid-desktop" 2>/dev/null || true
-# Launcher, Dolphin and Nemo menus, icon; the same entries `metroid integrate`
+install -Dm755 target/release/lorenz "$dest/usr/bin/lorenz"
+install -Dm755 build/lorenz-desktop "$dest/usr/bin/lorenz-desktop"
+strip "$dest/usr/bin/lorenz" "$dest/usr/bin/lorenz-desktop" 2>/dev/null || true
+# Launcher, Dolphin and Nemo menus, icon; the same entries `lorenz integrate`
 # writes for one user, pointing at the system executable.
-"$dest/usr/bin/metroid" integrate --data-dir "$dest/usr/share" --exe /usr/bin/metroid-desktop >/dev/null
-install -Dm644 LICENSE "$dest/usr/share/licenses/metroid/LICENSE"
+"$dest/usr/bin/lorenz" integrate --data-dir "$dest/usr/share" --exe /usr/bin/lorenz-desktop >/dev/null
+install -Dm644 LICENSE "$dest/usr/share/licenses/lorenz/LICENSE"

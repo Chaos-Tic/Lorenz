@@ -48,7 +48,7 @@ Releasing the key alone does not cancel. A key with no drag opens nothing, and a
 drag with no key keeps the file manager's normal behavior. A key already held when
 the drag starts is ignored: Ctrl-drag still copies and Shift-drag still moves.
 
-When a wheel opens, Metroid cancels the original drag, so the file manager cannot
+When a wheel opens, Lorenz cancels the original drag, so the file manager cannot
 move or copy the source as a side effect. While an engine runs, a temporary tray icon
 offers **Cancel**; cancellation stops the engine and leaves no partial output.
 
@@ -86,27 +86,27 @@ Actions whose helper is missing are not shown.
 ## Settings and startup
 
 Right-click the tray icon → **Settings…** to choose the key of each wheel (Shift,
-Ctrl, Alt, or Off) and whether Metroid starts when you log in. Each wheel needs its
+Ctrl, Alt, or Off) and whether Lorenz starts when you log in. Each wheel needs its
 own key. Changes apply to the next drag; nothing needs restarting.
 
-![Metroid settings](media/settings.png)
+![Lorenz settings](media/settings.png)
 
-The settings live in `~/.config/metroid/metroid.conf`; startup uses the standard
-`~/.config/autostart/metroid.desktop`. The KWin gesture works even when the tray
+The settings live in `~/.config/lorenz/lorenz.conf`; startup uses the standard
+`~/.config/autostart/lorenz.desktop`. The KWin gesture works even when the tray
 companion is not running.
 
 ## Without the drag gesture
 
-On other desktops, right-click files → **Metroid** → **Convert with Metroid**,
-**Metroid tools** or **Metroid actions** (Dolphin, Nemo; Nautilus lists them under
+On other desktops, right-click files → **Lorenz** → **Convert with Lorenz**,
+**Lorenz tools** or **Lorenz actions** (Dolphin, Nemo; Nautilus lists them under
 **Scripts**). The same wheel opens near the pointer. Click a sector to run it,
 click a tab or press Shift/Ctrl/Alt to switch wheels, use the arrow keys and Enter,
-or press Escape. Windows **Send to → Metroid** uses this path too.
+or press Escape. Windows **Send to → Lorenz** uses this path too.
 
 ## Optional batch manager
 
 The tray menu's **Open batch manager** offers explicit queue management and
-diagnostics. It can also be launched with `metroid-desktop --manager`.
+diagnostics. It can also be launched with `lorenz-desktop --manager`.
 
 <details>
 <summary>View the secondary batch manager</summary>

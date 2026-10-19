@@ -16,5 +16,5 @@ else
     source_dir=/usr/include/kwin/wayland
 fi
 cmake -S integrations/kwin -B build/kwin -DCMAKE_BUILD_TYPE=Release \
-  -DKWIN_SOURCE_INCLUDE="$source_dir" -DMETROID_BUILD_ISOLATED_TEST_DRIVER=OFF
+  -DKWIN_SOURCE_INCLUDE="$source_dir" -DLORENZ_BUILD_ISOLATED_TEST_DRIVER=OFF
 cmake --build build/kwin --parallel 2

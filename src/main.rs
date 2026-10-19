@@ -9,7 +9,7 @@ use std::{
 #[derive(Parser)]
 #[command(
     version,
-    about = "Metroid — local conversion, original files preserved"
+    about = "Lorenz — local conversion, original files preserved"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -105,7 +105,7 @@ enum Task {
         /// packaging) instead of the user's; Nautilus scripts stay per-user
         #[arg(long, requires = "exe")]
         data_dir: Option<PathBuf>,
-        /// Installed path of metroid-desktop that system entries launch
+        /// Installed path of lorenz-desktop that system entries launch
         #[arg(long, requires = "data_dir")]
         exe: Option<PathBuf>,
     },
@@ -134,15 +134,15 @@ fn report(json: bool, input: &std::path::Path, result: &Result<PathBuf>) -> Resu
 }
 fn desktop_executable() -> Result<PathBuf> {
     let name = if cfg!(windows) {
-        "metroid-desktop.exe"
+        "lorenz-desktop.exe"
     } else {
-        "metroid-desktop"
+        "lorenz-desktop"
     };
     let sibling = std::env::current_exe()?.with_file_name(name);
     if sibling.is_file() {
         Ok(sibling)
     } else {
-        metroid::executable("metroid-desktop").context("Desktop missing: install metroid-desktop")
+        lorenz::executable("lorenz-desktop").context("Desktop missing: install lorenz-desktop")
     }
 }
 /// An XDG base directory. Empty or relative values are ignored, as the
@@ -164,18 +164,18 @@ fn autostart(state: &str) -> Result<()> {
         let key = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
         let status = match state {
             "enable" => Command::new("reg")
-                .args(["add", key, "/v", "Metroid", "/t", "REG_SZ", "/f", "/d"])
+                .args(["add", key, "/v", "Lorenz", "/t", "REG_SZ", "/f", "/d"])
                 .arg(format!(
                     "\"{}\" --background",
                     desktop_executable()?.display()
                 ))
                 .status()?,
             "disable" => Command::new("reg")
-                .args(["delete", key, "/v", "Metroid", "/f"])
+                .args(["delete", key, "/v", "Lorenz", "/f"])
                 .stderr(Stdio::null())
                 .status()?,
             _ => Command::new("reg")
-                .args(["query", key, "/v", "Metroid"])
+                .args(["query", key, "/v", "Lorenz"])
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .status()?,
@@ -198,7 +198,7 @@ fn autostart(state: &str) -> Result<()> {
     {
         use std::fs;
         let config = xdg_dir("XDG_CONFIG_HOME", ".config")?;
-        let entry = config.join("autostart/metroid.desktop");
+        let entry = config.join("autostart/lorenz.desktop");
         match state {
             "enable" => {
                 let exe = desktop_executable()?;
@@ -211,7 +211,7 @@ fn autostart(state: &str) -> Result<()> {
                 fs::write(
                     &entry,
                     format!(
-                        "[Desktop Entry]\nType=Application\nName=Metroid\nComment=Shift-drag file conversion companion\nExec=\"{exe}\" --background\nIcon=metroid\nTerminal=false\nX-GNOME-Autostart-enabled=true\nX-KDE-autostart-phase=2\n"
+                        "[Desktop Entry]\nType=Application\nName=Lorenz\nComment=Shift-drag file conversion companion\nExec=\"{exe}\" --background\nIcon=lorenz\nTerminal=false\nX-GNOME-Autostart-enabled=true\nX-KDE-autostart-phase=2\n"
                     ),
                 )?;
                 println!("Enabled: {}", entry.display());
@@ -239,7 +239,7 @@ fn gui(files: &[PathBuf]) -> Result<()> {
     Command::new(desktop_executable()?).args(files).spawn()?;
     Ok(())
 }
-/// `system` is (data directory, installed metroid-desktop) for packages;
+/// `system` is (data directory, installed lorenz-desktop) for packages;
 /// without it, entries go to the user's data directory.
 fn integrate(system: Option<(PathBuf, PathBuf)>) -> Result<()> {
     #[cfg(windows)]
@@ -258,7 +258,7 @@ fn integrate(system: Option<(PathBuf, PathBuf)>) -> Result<()> {
                 (data, exe)
             }
             None => {
-                let exe = std::env::current_exe()?.with_file_name("metroid-desktop");
+                let exe = std::env::current_exe()?.with_file_name("lorenz-desktop");
                 anyhow::ensure!(
                     exe.is_file(),
                     "Install both executables in the same directory first"
@@ -272,23 +272,23 @@ fn integrate(system: Option<(PathBuf, PathBuf)>) -> Result<()> {
             "Unsupported installation path"
         );
         let launcher = format!(
-            "[Desktop Entry]\nType=Application\nName=Metroid\nGenericName=File converter\nComment=Convert files locally\nExec=\"{exe}\" -- %F\nIcon=metroid\nTerminal=false\nCategories=Utility;FileTools;\nActions=manager;\n[Desktop Action manager]\nName=Open batch manager\nExec=\"{exe}\" --manager\n"
+            "[Desktop Entry]\nType=Application\nName=Lorenz\nGenericName=File converter\nComment=Convert files locally\nExec=\"{exe}\" -- %F\nIcon=lorenz\nTerminal=false\nCategories=Utility;FileTools;\nActions=manager;\n[Desktop Action manager]\nName=Open batch manager\nExec=\"{exe}\" --manager\n"
         );
         let wheels = [
-            ("convert", "Convert with Metroid"),
-            ("tools", "Metroid tools"),
-            ("actions", "Metroid actions"),
+            ("convert", "Convert with Lorenz"),
+            ("tools", "Lorenz tools"),
+            ("actions", "Lorenz actions"),
         ];
         let mut files = vec![
-            ("applications/metroid.desktop".to_owned(), launcher),
+            ("applications/lorenz.desktop".to_owned(), launcher),
             (
-                "kio/servicemenus/metroid.desktop".to_owned(),
+                "kio/servicemenus/lorenz.desktop".to_owned(),
                 format!(
-                    "[Desktop Entry]\nType=Service\nMimeType=all/all;\nActions=convert;tools;actions;\nX-KDE-Priority=TopLevel\nX-KDE-Submenu=Metroid\n{}",
+                    "[Desktop Entry]\nType=Service\nMimeType=all/all;\nActions=convert;tools;actions;\nX-KDE-Priority=TopLevel\nX-KDE-Submenu=Lorenz\n{}",
                     wheels
                         .iter()
                         .map(|(id, name)| format!(
-                            "[Desktop Action {id}]\nName={name}\nIcon=metroid\nExec=\"{exe}\" --wheel {id} -- %F\n"
+                            "[Desktop Action {id}]\nName={name}\nIcon=lorenz\nExec=\"{exe}\" --wheel {id} -- %F\n"
                         ))
                         .collect::<String>()
                 ),
@@ -296,9 +296,9 @@ fn integrate(system: Option<(PathBuf, PathBuf)>) -> Result<()> {
         ];
         for (id, name) in wheels {
             files.push((
-                format!("nemo/actions/metroid-{id}.nemo_action"),
+                format!("nemo/actions/lorenz-{id}.nemo_action"),
                 format!(
-                    "[Nemo Action]\nName={name}\nComment=Local file processing\nExec=\"{exe}\" --wheel {id} -- %F\nIcon-Name=metroid\nSelection=Any\nExtensions=any;dir;\nQuote=double\n"
+                    "[Nemo Action]\nName={name}\nComment=Local file processing\nExec=\"{exe}\" --wheel {id} -- %F\nIcon-Name=lorenz\nSelection=Any\nExtensions=any;dir;\nQuote=double\n"
                 ),
             ));
             // Nautilus reads scripts from the user's directory only.
@@ -312,8 +312,8 @@ fn integrate(system: Option<(PathBuf, PathBuf)>) -> Result<()> {
         }
         // Remove entries written by earlier versions.
         for old in [
-            "nemo/actions/metroid.nemo_action",
-            "nautilus/scripts/Metroid",
+            "nemo/actions/lorenz.nemo_action",
+            "nautilus/scripts/Lorenz",
         ] {
             let _ = fs::remove_file(data.join(old));
         }
@@ -326,9 +326,9 @@ fn integrate(system: Option<(PathBuf, PathBuf)>) -> Result<()> {
             }
             println!("Installed: {}", path.display());
         }
-        let icon = data.join("icons/hicolor/scalable/apps/metroid.svg");
+        let icon = data.join("icons/hicolor/scalable/apps/lorenz.svg");
         fs::create_dir_all(icon.parent().unwrap())?;
-        fs::write(icon, include_str!("../assets/metroid.svg"))?;
+        fs::write(icon, include_str!("../assets/lorenz.svg"))?;
         Ok(())
     }
 }
@@ -341,12 +341,12 @@ struct Request {
 fn main() -> Result<()> {
     match Cli::parse().command {
         Task::Doctor { json } => {
-            let d = metroid::doctor();
+            let d = lorenz::doctor();
             if json {
                 print_json(&d)?;
             } else {
                 println!(
-                    "Metroid {} · {} · {} · {}",
+                    "Lorenz {} · {} · {} · {}",
                     d.version, d.os, d.session, d.desktop
                 );
                 for b in d.backends {
@@ -360,7 +360,7 @@ fn main() -> Result<()> {
             }
         }
         Task::Formats { input, json } => {
-            let formats = metroid::formats(&input);
+            let formats = lorenz::formats(&input);
             if json {
                 print_json(&formats)?;
             } else {
@@ -385,7 +385,7 @@ fn main() -> Result<()> {
         } => {
             let mut failed = false;
             for input in inputs {
-                match metroid::convert(
+                match lorenz::convert(
                     &input,
                     &to,
                     output_dir.as_deref(),
@@ -422,10 +422,10 @@ fn main() -> Result<()> {
         }
         Task::Gui { files } => gui(&files)?,
         Task::MergePdf { inputs, output_dir } => {
-            println!("{}", metroid::merge_pdf(&inputs, &output_dir)?.display())
+            println!("{}", lorenz::merge_pdf(&inputs, &output_dir)?.display())
         }
         Task::Pick { input, menu } => {
-            let formats: Vec<_> = metroid::formats(&input)
+            let formats: Vec<_> = lorenz::formats(&input)
                 .into_iter()
                 .filter(|f| f.available)
                 .map(|f| f.target)
@@ -451,14 +451,14 @@ fn main() -> Result<()> {
             anyhow::ensure!(formats.contains(&target), "Unknown selection");
             println!(
                 "{}",
-                metroid::convert(&input, &target, None, None, 3600)?.display()
+                lorenz::convert(&input, &target, None, None, 3600)?.display()
             );
         }
         Task::Serve => {
             for line in io::stdin().lock().lines() {
                 let result = (|| -> Result<PathBuf> {
                     let req: Request = serde_json::from_str(&line?)?;
-                    metroid::convert(&req.input, &req.to, req.output_dir.as_deref(), None, 3600)
+                    lorenz::convert(&req.input, &req.to, req.output_dir.as_deref(), None, 3600)
                 })();
                 match result {
                     Ok(output) => print_json(&serde_json::json!({"ok":true,"output":output}))?,
@@ -470,7 +470,7 @@ fn main() -> Result<()> {
             }
         }
         Task::Menu { kind, paths, json } => {
-            let items = metroid::menu(&kind, &paths)?;
+            let items = lorenz::menu(&kind, &paths)?;
             if json {
                 print_json(&items)?;
             } else {
@@ -487,7 +487,7 @@ fn main() -> Result<()> {
             timeout,
             json,
         } => {
-            let results = metroid::tools::run(
+            let results = lorenz::tools::run(
                 &id,
                 &paths,
                 output_dir.as_deref(),
@@ -511,7 +511,7 @@ fn main() -> Result<()> {
             paths,
             dest,
             json,
-        } => match metroid::actions::run(&id, &paths, dest.as_deref()) {
+        } => match lorenz::actions::run(&id, &paths, dest.as_deref()) {
             Ok(outputs) => {
                 for output in outputs {
                     report(json, &paths[0], &Ok(output))?;

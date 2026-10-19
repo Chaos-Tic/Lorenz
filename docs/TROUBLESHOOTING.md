@@ -4,7 +4,7 @@
 
 ## No output format appears
 
-Open **Diagnostics**. Install the missing engine, then restart Metroid so it sees an
+Open **Diagnostics**. Install the missing engine, then restart Lorenz so it sees an
 updated `PATH`. If engines are present, try one file: mixed input types may have no
 common output. Unknown extensions have no registered routes.
 
@@ -13,7 +13,7 @@ common output. Unknown extensions have no registered routes.
 Hover over **Failed** to read the engine error. Executable availability does not
 certify codecs, delegate permissions, or a valid source file. HEIC/AVIF support and
 FFmpeg codecs vary across packages: Fedora's `ffmpeg-free` cannot encode H.264, so
-**Compress** for video fails there until RPM Fusion's `ffmpeg` is installed. Metroid
+**Compress** for video fails there until RPM Fusion's `ffmpeg` is installed. Lorenz
 uses ImageMagick 7's `magick`, or ImageMagick 6's `convert` when `magick` is absent.
 
 ## Images missing from a converted document
@@ -39,7 +39,7 @@ appears in the Tools wheel when two or more PDFs are selected.
 ## Office, slide or spreadsheet formats are missing
 
 These routes need LibreOffice (`soffice`). Install it, or run `./install.sh --office`.
-Metroid starts LibreOffice with a private temporary profile; a LibreOffice window
+Lorenz starts LibreOffice with a private temporary profile; a LibreOffice window
 that is already open is neither reused nor modified. The first conversion can take
 several seconds while that profile is created.
 
@@ -54,11 +54,11 @@ Wayland compositors control window placement and stacking. The checkbox requests
 this behavior; it cannot override compositor rules. This checkbox belongs to the secondary batch manager. The KWin Shift-drag wheel
 is a separate compositor integration.
 
-## Metroid does not start at login
+## Lorenz does not start at login
 
-Check **Settings → Start Metroid when I log in**, or run `metroid autostart status`.
-The entry is `~/.config/autostart/metroid.desktop`. Hyprland, Sway and similar
-compositors may ignore XDG autostart: add `metroid-desktop --background` to your
+Check **Settings → Start Lorenz when I log in**, or run `lorenz autostart status`.
+The entry is `~/.config/autostart/lorenz.desktop`. Hyprland, Sway and similar
+compositors may ignore XDG autostart: add `lorenz-desktop --background` to your
 compositor's startup commands. The KWin gesture itself does not need the companion.
 
 ## An action is missing from the Actions wheel
@@ -76,13 +76,13 @@ a manually configured custom action. Windows installation creates **Start** and
 
 ## A conversion was interrupted by a crash or power failure
 
-Originals are not modified. A temporary `.metroid-*` directory may remain beside the
-outputs. Ensure no conversion is running before removing it. Restart Metroid and
+Originals are not modified. A temporary `.lorenz-*` directory may remain beside the
+outputs. Ensure no conversion is running before removing it. Restart Lorenz and
 add the files again; the previous queue is not persisted.
 
 ## Reporting a problem
 
-Include the operating system, desktop/session type, Metroid version, input/output
+Include the operating system, desktop/session type, Lorenz version, input/output
 formats, and the engine error. Review diagnostics and screenshots before sharing:
 engine paths, file names, and document content may be personal. Prefer a generated
 sample that reproduces the issue over uploading an original private document.

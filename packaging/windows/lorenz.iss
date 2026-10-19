@@ -1,39 +1,39 @@
-﻿; Metroid installer for Windows (Inno Setup 6). CI builds it with:
-;   iscc /DAppVersion=0.1.0 packaging\windows\metroid.iss
-; dist\Metroid (SourceDir) holds metroid.exe, metroid-desktop.exe and the Qt files from windeployqt.
-; Silent install for scripts: Metroid-Setup-x64.exe /VERYSILENT /TASKS="engines,autostart"
+﻿; Lorenz installer for Windows (Inno Setup 6). CI builds it with:
+;   iscc /DAppVersion=0.1.0 packaging\windows\lorenz.iss
+; dist\Lorenz (SourceDir) holds lorenz.exe, lorenz-desktop.exe and the Qt files from windeployqt.
+; Silent install for scripts: Lorenz-Setup-x64.exe /VERYSILENT /TASKS="engines,autostart"
 #ifndef AppVersion
   #define AppVersion "0.1.0"
 #endif
 #ifndef SourceDir
-  #define SourceDir "..\..\dist\Metroid"
+  #define SourceDir "..\..\dist\Lorenz"
 #endif
 
 [Setup]
 ; Never change AppId: Windows recognises updates and the uninstaller by it.
-AppId={{2930C43E-A3B6-4184-98E4-C2F9AF502F7D}
-AppName=Metroid
+AppId={{3EA054E1-2E93-4DDD-8519-122020F8DE05}
+AppName=Lorenz
 AppVersion={#AppVersion}
 AppPublisher=Chaos-Tic
-AppPublisherURL=https://github.com/Chaos-Tic/Metroid
-AppSupportURL=https://github.com/Chaos-Tic/Metroid/issues
+AppPublisherURL=https://github.com/Chaos-Tic/Lorenz
+AppSupportURL=https://github.com/Chaos-Tic/Lorenz/issues
 ; Per-user, like the earlier script installer: same folder, no administrator rights.
 PrivilegesRequired=lowest
-DefaultDirName={localappdata}\Programs\Metroid
+DefaultDirName={localappdata}\Programs\Lorenz
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 OutputDir=..\..\dist
-OutputBaseFilename=Metroid-Setup-x64
-SetupIconFile=..\..\assets\metroid.ico
-UninstallDisplayIcon={app}\metroid-desktop.exe
-UninstallDisplayName=Metroid
+OutputBaseFilename=Lorenz-Setup-x64
+SetupIconFile=..\..\assets\lorenz.ico
+UninstallDisplayIcon={app}\lorenz-desktop.exe
+UninstallDisplayName=Lorenz
 WizardStyle=modern
 Compression=lzma2/max
 SolidCompression=yes
-; The tray companion keeps metroid-desktop.exe open; close it to replace it.
+; The tray companion keeps lorenz-desktop.exe open; close it to replace it.
 CloseApplications=force
 RestartApplications=no
 
@@ -54,14 +54,14 @@ fr.TaskOffice=LibreOffice pour Word, PowerPoint et les tableurs (environ 350 Mo)
 en.TaskOffice=LibreOffice for Word, PowerPoint and spreadsheets (about 350 MB)
 fr.GroupStartup=Démarrage :
 en.GroupStartup=Startup:
-fr.TaskAutostart=Lancer Metroid à l'ouverture de session
-en.TaskAutostart=Start Metroid when I sign in
+fr.TaskAutostart=Lancer Lorenz à l'ouverture de session
+en.TaskAutostart=Start Lorenz when I sign in
 fr.InstallingEngine=Installation de %1...
 en.InstallingEngine=Installing %1...
 fr.ShortcutComment=Convertir des fichiers localement
 en.ShortcutComment=Convert files locally
-fr.LaunchMetroid=Lancer Metroid
-en.LaunchMetroid=Start Metroid
+fr.LaunchLorenz=Lancer Lorenz
+en.LaunchLorenz=Start Lorenz
 fr.NoWinget=winget est absent : les moteurs de conversion ne seront pas installés. Installez « App Installer » depuis le Microsoft Store, puis relancez ce programme d'installation.
 en.NoWinget=winget is missing, so conversion engines will not be installed. Install "App Installer" from the Microsoft Store, then run this setup again.
 
@@ -76,12 +76,12 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 Source: "..\..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 
 [Icons]
-; Start menu and Send to: right-click files > Send to > Metroid opens the wheels.
-Name: "{userprograms}\Metroid"; Filename: "{app}\metroid-desktop.exe"; WorkingDir: "{app}"
-Name: "{usersendto}\Metroid"; Filename: "{app}\metroid-desktop.exe"; WorkingDir: "{app}"
+; Start menu and Send to: right-click files > Send to > Lorenz opens the wheels.
+Name: "{userprograms}\Lorenz"; Filename: "{app}\lorenz-desktop.exe"; WorkingDir: "{app}"
+Name: "{usersendto}\Lorenz"; Filename: "{app}\lorenz-desktop.exe"; WorkingDir: "{app}"
 ; The desktop icon opens a window (the batch manager): a tray-only start would
 ; look like nothing happened.
-Name: "{userdesktop}\Metroid"; Filename: "{app}\metroid-desktop.exe"; Parameters: "--manager"; WorkingDir: "{app}"; Comment: "{cm:ShortcutComment}"; Tasks: desktopicon
+Name: "{userdesktop}\Lorenz"; Filename: "{app}\lorenz-desktop.exe"; Parameters: "--manager"; WorkingDir: "{app}"; Comment: "{cm:ShortcutComment}"; Tasks: desktopicon
 
 [Run]
 ; Engines one at a time, so a package missing from winget never stops the rest.
@@ -92,15 +92,15 @@ Filename: "{cmd}"; Parameters: "/c winget install --id JohnMacFarlane.Pandoc --e
 Filename: "{cmd}"; Parameters: "/c winget install --id oschwartz10612.Poppler --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"; StatusMsg: "{cm:InstallingEngine,Poppler}"; Flags: runhidden; Tasks: engines; Check: HasWinget
 Filename: "{cmd}"; Parameters: "/c winget install --id QPDF.QPDF --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"; StatusMsg: "{cm:InstallingEngine,qpdf}"; Flags: runhidden; Tasks: engines; Check: HasWinget
 Filename: "{cmd}"; Parameters: "/c winget install --id TheDocumentFoundation.LibreOffice --exact --silent --accept-package-agreements --accept-source-agreements --disable-interactivity"; StatusMsg: "{cm:InstallingEngine,LibreOffice}"; Flags: runhidden; Tasks: office; Check: HasWinget
-Filename: "{app}\metroid.exe"; Parameters: "autostart enable"; Flags: runhidden; Tasks: autostart
-Filename: "{app}\metroid.exe"; Parameters: "autostart disable"; Flags: runhidden; Tasks: not autostart
+Filename: "{app}\lorenz.exe"; Parameters: "autostart enable"; Flags: runhidden; Tasks: autostart
+Filename: "{app}\lorenz.exe"; Parameters: "autostart disable"; Flags: runhidden; Tasks: not autostart
 ; Started through Explorer so it sees the PATH the engine installers just updated,
 ; not the one this setup inherited.
-Filename: "{win}\explorer.exe"; Parameters: """{app}\metroid-desktop.exe"""; Description: "{cm:LaunchMetroid}"; Flags: postinstall nowait skipifsilent
+Filename: "{win}\explorer.exe"; Parameters: """{app}\lorenz-desktop.exe"""; Description: "{cm:LaunchLorenz}"; Flags: postinstall nowait skipifsilent
 
 [UninstallRun]
-Filename: "{app}\metroid.exe"; Parameters: "autostart disable"; Flags: runhidden; RunOnceId: "DisableAutostart"
-Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM metroid-desktop.exe"; Flags: runhidden; RunOnceId: "StopCompanion"
+Filename: "{app}\lorenz.exe"; Parameters: "autostart disable"; Flags: runhidden; RunOnceId: "DisableAutostart"
+Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM lorenz-desktop.exe"; Flags: runhidden; RunOnceId: "StopCompanion"
 
 [Code]
 function HasWinget: Boolean;

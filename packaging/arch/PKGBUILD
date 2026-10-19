@@ -1,12 +1,12 @@
 # Maintainer: Chaos-Tic <58691435+Chaos-Tic@users.noreply.github.com>
 # Built by packaging/linux/build-package.sh arch, which sets pkgver from
 # Cargo.toml. For the AUR, replace SKIP with the release tarball's checksum.
-pkgname=metroid
+pkgname=lorenz
 pkgver=0.1.0
 pkgrel=1
 pkgdesc='Local file conversion with radial wheels'
 arch=('x86_64')
-url='https://github.com/Chaos-Tic/Metroid'
+url='https://github.com/Chaos-Tic/Lorenz'
 license=('GPL-3.0-or-later')
 depends=('qt6-base' 'gcc-libs' 'glibc')
 makedepends=('cargo' 'cmake')
@@ -27,7 +27,7 @@ source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 
 build() {
-    cd "Metroid-$pkgver"
+    cd "Lorenz-$pkgver"
     export CARGO_TARGET_DIR=target
     cargo build --release --locked
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
@@ -35,6 +35,6 @@ build() {
 }
 
 package() {
-    cd "Metroid-$pkgver"
+    cd "Lorenz-$pkgver"
     sh packaging/linux/stage.sh "$pkgdir"
 }

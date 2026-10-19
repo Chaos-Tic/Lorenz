@@ -100,7 +100,7 @@ private:
         wheel.setLoading(true);
         wheel.openAt(QCursor::pos());
     }
-    // Items come from `metroid menu`, read without blocking the wheel.
+    // Items come from `lorenz menu`, read without blocking the wheel.
     void load(RadialWheel::Mode mode, bool force = false) {
         if (mode == wheel.mode && !force) return;
         wheel.setMode(mode);

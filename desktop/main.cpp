@@ -6,7 +6,7 @@
 #endif
 
 static QString corePath() {
-    QString name = "metroid";
+    QString name = "lorenz";
 #ifdef Q_OS_WIN
     name += ".exe";
 #endif
@@ -57,12 +57,12 @@ class Window : public QMainWindow {
     QByteArray response;
 public:
     Window() {
-        setWindowTitle("Metroid · Local file converter"); resize(1060, 820); setMinimumSize(870, 700);
+        setWindowTitle("Lorenz · Local file converter"); resize(1060, 820); setMinimumSize(870, 700);
         auto *root = new QWidget; setCentralWidget(root);
         auto *outer = new QHBoxLayout(root); outer->setContentsMargins(0,0,0,0); outer->setSpacing(0);
         auto *sidebar = new QFrame; sidebar->setObjectName("sidebar"); sidebar->setFixedWidth(190);
         auto *nav = new QVBoxLayout(sidebar); nav->setContentsMargins(22,30,20,24); nav->setSpacing(18);
-        nav->addWidget(label("◉", "brand")); nav->addWidget(label("METROID", "brandName"));
+        nav->addWidget(label("◉", "brand")); nav->addWidget(label("LORENZ", "brandName"));
         nav->addWidget(label("FILE CONVERTER", "eyebrow")); nav->addSpacing(32);
         auto *active = label("▸  Convert", "navActive"); nav->addWidget(active);
         auto *doctor = new QPushButton("Diagnostics"); nav->addWidget(doctor);
@@ -135,7 +135,7 @@ public:
         connect(wheel,&QPushButton::clicked,this,[this]{ showWheel(); });
         auto *shortcut = new QShortcut(QKeySequence("Ctrl+O"),this); connect(shortcut,&QShortcut::activated,browse,&QPushButton::click);
         auto *escape = new QShortcut(QKeySequence(Qt::Key_Escape),this); connect(escape,&QShortcut::activated,this,[this]{ if (stop->isEnabled()) cancel(); });
-        if (corePath().isEmpty()) status->setText("The Metroid core is missing. Reinstall the application.");
+        if (corePath().isEmpty()) status->setText("The Lorenz core is missing. Reinstall the application.");
     }
     QString cancelPath() const { return cancellation.path()+"/cancel"; }
     void testConversion() {
@@ -146,7 +146,7 @@ public:
         connect(timer,&QTimer::timeout,this,[this,timer]{
             if (current >= 0) return;
             timer->stop();
-            const QString path=qEnvironmentVariable("METROID_SCREENSHOT");
+            const QString path=qEnvironmentVariable("LORENZ_SCREENSHOT");
             if (!path.isEmpty()) grab().save(path);
             QCoreApplication::exit(succeeded > 0 && failed == 0 ? 0 : 3);
         });
@@ -200,7 +200,7 @@ public:
         const auto doc=query({"doctor","--json"}).object();
         QDialog dialog(this); dialog.setWindowTitle("Backend diagnostics"); dialog.resize(520,400); auto *l=new QVBoxLayout(&dialog);
         l->addWidget(label("Your local conversion engines", "dropTitle"));
-        if (doc.isEmpty()) l->addWidget(label("Cannot contact the Metroid core."));
+        if (doc.isEmpty()) l->addWidget(label("Cannot contact the Lorenz core."));
         for (const auto &entry : doc["backends"].toArray()) { auto b=entry.toObject(); l->addWidget(label((b["available"].toBool()? "✓  " : "—  ")+b["name"].toString()+(b["available"].toBool()? " · available" : " · not installed"))); }
         l->addWidget(label("Codec support varies by installation. Missing engines disable their conversions. See the README for package details.","muted"));
         auto *close=new QPushButton("Close"); l->addWidget(close); connect(close,&QPushButton::clicked,&dialog,&QDialog::accept); dialog.exec();
@@ -226,7 +226,7 @@ public:
 
 // Wheel keys are shared with the KWin extension, which reads the same file.
 static QString configPath() {
-    return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)+"/metroid/metroid.conf";
+    return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)+"/lorenz/lorenz.conf";
 }
 static const QStringList wheelNames{"Convert","Tools","Actions"};
 static const QStringList kinds{"convert","tools","actions"};
@@ -251,7 +251,7 @@ class SettingsDialog : public QDialog {
     QCheckBox *login;
 public:
     SettingsDialog() {
-        setWindowTitle("Metroid settings"); setFixedWidth(500);
+        setWindowTitle("Lorenz settings"); setFixedWidth(500);
         auto *layout=new QVBoxLayout(this); layout->setSpacing(12); layout->setContentsMargins(26,22,26,20);
         layout->addWidget(label("Wheels","dropTitle"));
         layout->addWidget(label("Start dragging a file, then tap a key. Each key opens its own wheel; tap another key to switch while it is open.","muted"));
@@ -264,7 +264,7 @@ public:
         }
         layout->addLayout(grid);
         layout->addWidget(label("Startup","dropTitle"));
-        login=new QCheckBox("Start Metroid when I log in"); layout->addWidget(login);
+        login=new QCheckBox("Start Lorenz when I log in"); layout->addWidget(login);
         QProcess status; status.start(corePath(),{"autostart","status"}); status.waitForFinished(3000);
         login->setChecked(status.readAllStandardOutput().trimmed()=="enabled");
         layout->addWidget(label("The tray companion shows notifications and gives access to the batch manager. The KWin gesture works without it.","muted"));
@@ -273,7 +273,7 @@ public:
         connect(buttons,&QDialogButtonBox::accepted,this,[this]{
             QStringList chosen; for (auto *box:keys) chosen << box->currentData().toString();
             for (int i=0;i<3;++i) for (int j=i+1;j<3;++j) if (chosen[i]!="None" && chosen[i]==chosen[j]) {
-                QMessageBox::warning(this,"Metroid","Each wheel needs a different key."); return;
+                QMessageBox::warning(this,"Lorenz","Each wheel needs a different key."); return;
             }
             QSettings settings(configPath(),QSettings::IniFormat);
             for (int i=0;i<3;++i) settings.setValue("Wheels/"+wheelNames[i],chosen[i]);
@@ -285,7 +285,7 @@ public:
 };
 
 int main(int argc,char **argv) {
-    QApplication app(argc,argv); app.setApplicationName("Metroid"); app.setOrganizationName("Metroid");
+    QApplication app(argc,argv); app.setApplicationName("Lorenz"); app.setOrganizationName("Lorenz");
     app.setStyle("Fusion"); app.setFont(QFont("DejaVu Sans",10));
     app.setStyleSheet(R"(
         QWidget { color:#edf3f1; background:#171d23; }
@@ -328,10 +328,10 @@ int main(int argc,char **argv) {
       p.setBrush(QColor("#edf3f1")); p.setPen(Qt::NoPen); p.drawEllipse(QPointF(32,32),5,5);
     }
     QSystemTrayIcon tray{QIcon(mark)};
-    tray.setToolTip("Metroid · drag a file, then tap Shift, Ctrl or Alt");
+    tray.setToolTip("Lorenz · drag a file, then tap Shift, Ctrl or Alt");
     auto notify=[&](const QString &title,const QString &message) {
         const QString sender=QStandardPaths::findExecutable("notify-send");
-        if (!sender.isEmpty()) QProcess::startDetached(sender,{"--app-name=Metroid","--icon=metroid",title,message});
+        if (!sender.isEmpty()) QProcess::startDetached(sender,{"--app-name=Lorenz","--icon=lorenz",title,message});
         else if (QSystemTrayIcon::isSystemTrayAvailable()) tray.showMessage(title,message);
     };
     // A background job reports through notifications and can be cancelled from the tray.
@@ -401,14 +401,14 @@ int main(int argc,char **argv) {
     }
     if (flags.contains("--settings")) {
         SettingsDialog dialog;
-        if (const QString path=qEnvironmentVariable("METROID_SCREENSHOT"); !path.isEmpty())
+        if (const QString path=qEnvironmentVariable("LORENZ_SCREENSHOT"); !path.isEmpty())
             QTimer::singleShot(400,&dialog,[&dialog,path]{ dialog.grab().save(path); dialog.reject(); });
         return dialog.exec()==QDialog::Accepted?0:1;
     }
     if (flags.contains("--manager") || flags.contains("--smoke-test") || flags.contains("--test-convert")) {
         Window window; window.addFiles(files); window.show();
         if (flags.contains("--test-convert")) QTimer::singleShot(100,&window,[&]{ window.testConversion(); });
-        if (flags.contains("--smoke-test")) QTimer::singleShot(400,&app,[&]{ const QString path=qEnvironmentVariable("METROID_SCREENSHOT"); if (!path.isEmpty()) window.grab().save(path); app.quit(); });
+        if (flags.contains("--smoke-test")) QTimer::singleShot(400,&app,[&]{ const QString path=qEnvironmentVariable("LORENZ_SCREENSHOT"); if (!path.isEmpty()) window.grab().save(path); app.quit(); });
         return app.exec();
     }
     if (!files.isEmpty()) {
@@ -450,7 +450,7 @@ int main(int argc,char **argv) {
 #endif
     if (!flags.contains("--background")) {
         const QStringList keys=wheelKeys();
-        notify("Metroid",QString("Drag a file, then tap %1 to convert, %2 for tools or %3 for actions.").arg(keyLabel(keys[0]),keyLabel(keys[1]),keyLabel(keys[2])));
+        notify("Lorenz",QString("Drag a file, then tap %1 to convert, %2 for tools or %3 for actions.").arg(keyLabel(keys[0]),keyLabel(keys[1]),keyLabel(keys[2])));
     }
     return app.exec();
 }

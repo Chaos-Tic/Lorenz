@@ -1,16 +1,16 @@
 <p align="center">
-  <img src="docs/media/banner.svg" alt="Metroid — A lighter way to convert." width="100%">
+  <img src="docs/media/banner.svg" alt="Lorenz — A lighter way to convert." width="100%">
 </p>
 
 <p align="center">
-  <a href="https://github.com/Chaos-Tic/Metroid/actions/workflows/ci.yml"><img src="https://github.com/Chaos-Tic/Metroid/actions/workflows/ci.yml/badge.svg" alt="Build and test status"></a>
+  <a href="https://github.com/Chaos-Tic/Lorenz/actions/workflows/ci.yml"><img src="https://github.com/Chaos-Tic/Lorenz/actions/workflows/ci.yml/badge.svg" alt="Build and test status"></a>
 </p>
 
-# Metroid
+# Lorenz
 
 **Drag a file. Tap a key. Drop onto a choice.**
 
-Metroid puts three wheels under your cursor while you drag a file: **Shift** converts
+Lorenz puts three wheels under your cursor while you drag a file: **Shift** converts
 it, **Ctrl** edits it (compress, resize, rotate, split, merge…) and **Alt** acts on it
 (copy, move, share, terminal…). Everything runs locally with the engines installed
 on your computer. Originals are never modified: `photo.png` becomes `photo.webp`,
@@ -23,7 +23,7 @@ Windows from **Send to**. This is an independent implementation inspired by the
 interaction of Tangerine for Mac; it contains no Tangerine code and is not affiliated
 with Tangerine or with any namesake franchise. **Status: under development.**
 
-[Install](#install-on-linux) · [The three wheels](#three-wheels) · [Formats and tools](#what-metroid-can-do) · [Desktop guide](docs/USER_GUIDE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
+[Install](#install-on-linux) · [The three wheels](#three-wheels) · [Formats and tools](#what-lorenz-can-do) · [Desktop guide](docs/USER_GUIDE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 <p align="center">
   <img src="docs/media/three-wheels.png" alt="The Convert, Tools and Actions wheels captured in a KWin session" width="100%">
@@ -63,16 +63,16 @@ Download the file for your distribution from the **Releases** page:
 
 | Distribution | File | Install |
 | --- | --- | --- |
-| Debian 12+, Ubuntu 24.04+, Mint 22+ | `metroid_VERSION_amd64.deb` | `sudo apt install ./metroid_*.deb` |
-| Fedora (current release) | `metroid-VERSION-1.fcNN.x86_64.rpm` | `sudo dnf install ./metroid-*.rpm` |
-| Arch, EndeavourOS, CachyOS | `metroid-VERSION-1-x86_64.pkg.tar.zst` | `sudo pacman -U metroid-*.pkg.tar.zst` |
-| Any other (glibc 2.35+) | `Metroid-x86_64.AppImage` | `chmod +x Metroid-*.AppImage`, then run it |
+| Debian 12+, Ubuntu 24.04+, Mint 22+ | `lorenz_VERSION_amd64.deb` | `sudo apt install ./lorenz_*.deb` |
+| Fedora (current release) | `lorenz-VERSION-1.fcNN.x86_64.rpm` | `sudo dnf install ./lorenz-*.rpm` |
+| Arch, EndeavourOS, CachyOS | `lorenz-VERSION-1-x86_64.pkg.tar.zst` | `sudo pacman -U lorenz-*.pkg.tar.zst` |
+| Any other (glibc 2.35+) | `Lorenz-x86_64.AppImage` | `chmod +x Lorenz-*.AppImage`, then run it |
 
-Packages install Metroid for every user, with its application-menu entry and the
+Packages install Lorenz for every user, with its application-menu entry and the
 Dolphin and Nemo context menus, and recommend the conversion engines (apt and dnf
 install recommended packages by default; on Arch, pick them from the optional
-dependencies). Nautilus users run `metroid integrate` once for the GNOME Files
-scripts; `metroid autostart enable` starts the tray companion at login. The
+dependencies). Nautilus users run `lorenz integrate` once for the GNOME Files
+scripts; `lorenz autostart enable` starts the tray companion at login. The
 AppImage bundles Qt but no engines and adds no file-manager menus. The KDE drag
 gesture is not packaged: it must be built against your exact KWin version
 (`./scripts/install-kwin.sh`).
@@ -80,12 +80,12 @@ gesture is not packaged: it must be built against your exact KWin version
 ### From source
 
 ```sh
-git clone https://github.com/Chaos-Tic/Metroid.git
-cd Metroid
+git clone https://github.com/Chaos-Tic/Lorenz.git
+cd Lorenz
 ./install.sh
 ```
 
-The installer detects your distribution, builds Metroid from source, and installs it
+The installer detects your distribution, builds Lorenz from source, and installs it
 **for your user only** in `~/.local`. It asks before each optional step:
 
 | Question | Default | What happens |
@@ -94,10 +94,10 @@ The installer detects your distribution, builds Metroid from source, and install
 | Install conversion engines? | Yes | FFmpeg, ImageMagick, Pandoc, Poppler, qpdf, Ghostscript, libarchive, clipboard tools. Unavailable packages are skipped, not fatal. |
 | Install LibreOffice? | No | Adds Word/ODT → PDF, PowerPoint and spreadsheet routes (large download). |
 | Install the KWin extension? | Yes, on KDE Plasma 6.8 | Builds the drag gesture against your KWin version and loads it without restarting the session (asks for your password). |
-| **Start Metroid when you log in?** | Yes | Adds the tray companion to your session's autostart. Answer *No* to start it only from the application menu. |
+| **Start Lorenz when you log in?** | Yes | Adds the tray companion to your session's autostart. Answer *No* to start it only from the application menu. |
 
 You can change the startup choice and the keys later from the tray icon → **Settings…**,
-or with `metroid autostart enable` / `metroid autostart disable`.
+or with `lorenz autostart enable` / `lorenz autostart disable`.
 
 ### Supported distributions
 
@@ -159,7 +159,7 @@ vulkan-devel` (openSUSE).
 
 ```sh
 git pull && ./install.sh     # rebuilds and replaces the installed version
-./uninstall.sh               # removes Metroid, its menus, autostart and the KWin extension
+./uninstall.sh               # removes Lorenz, its menus, autostart and the KWin extension
 ```
 
 Rebuild after every KWin update: the extension is tied to the compositor version.
@@ -170,16 +170,16 @@ Uninstalling never touches your files.
 | Desktop | How to open the wheels |
 | --- | --- |
 | KDE Plasma 6.8, Wayland | Drag a file and tap Shift / Ctrl / Alt anywhere |
-| KDE (other versions), GNOME, Cinnamon | Right-click → **Metroid** (Dolphin, Nautilus scripts, Nemo) |
-| XFCE (Thunar) | Add a custom action: `metroid-desktop --wheel convert %F` |
-| Hyprland, Sway, niri | Bind a key to `metroid pick FILE --menu fuzzel` (or `wofi`, `rofi`) |
-| Any | `metroid` command line, or the batch manager from the tray icon |
+| KDE (other versions), GNOME, Cinnamon | Right-click → **Lorenz** (Dolphin, Nautilus scripts, Nemo) |
+| XFCE (Thunar) | Add a custom action: `lorenz-desktop --wheel convert %F` |
+| Hyprland, Sway, niri | Bind a key to `lorenz pick FILE --menu fuzzel` (or `wofi`, `rofi`) |
+| Any | `lorenz` command line, or the batch manager from the tray icon |
 
 ## Install on Windows
 
 Windows 10 (1809 or later) or Windows 11, no build tools needed:
 
-1. Download **Metroid-Setup-x64.exe** from the repository's **Releases** page (or
+1. Download **Lorenz-Setup-x64.exe** from the repository's **Releases** page (or
    the *package-windows* artifact of the latest successful **Build and test** run).
 2. Double-click it. The installer is not signed yet: if Windows SmartScreen warns,
    choose *More info → Run anyway*.
@@ -188,28 +188,28 @@ Windows 10 (1809 or later) or Windows 11, no build tools needed:
    - the conversion engines through winget (ImageMagick, FFmpeg, Pandoc, Poppler,
      qpdf), recommended;
    - LibreOffice for Word, PowerPoint and spreadsheet files (large, optional);
-   - start Metroid when you sign in.
+   - start Lorenz when you sign in.
 
-Metroid is installed for your account only, in `%LOCALAPPDATA%\Programs\Metroid`,
+Lorenz is installed for your account only, in `%LOCALAPPDATA%\Programs\Lorenz`,
 without administrator rights, and added to **Start** and **Send to**.
 
-**Drag gesture:** while the Metroid companion runs (tray icon), drag files from
+**Drag gesture:** while the Lorenz companion runs (tray icon), drag files from
 Explorer or any app, tap **Shift** (convert), **Ctrl** (tools) or **Alt**
 (actions), and release over a sector of the wheel that opens under the pointer.
 Tap another key, or point at a tab, to switch wheels; release elsewhere or press
 Esc to drop normally. The wheel always takes a *copy*, so a drag that would move
-files never removes the originals. Right-click files → **Send to → Metroid**
+files never removes the originals. Right-click files → **Send to → Lorenz**
 opens the same wheels without dragging. Archives use the
 `tar` included with Windows; *Compress PDF* needs Ghostscript, which is not on
 winget (install it from ghostscript.com if needed). Engine installers may ask for
-administrator rights; Metroid itself does not.
+administrator rights; Lorenz itself does not.
 
 To update, run a newer installer over the old one. To uninstall: **Settings → Apps
-→ Metroid → Uninstall**; engines stay installed (`winget uninstall` removes them).
+→ Lorenz → Uninstall**; engines stay installed (`winget uninstall` removes them).
 Unattended install, choosing the tasks:
 
 ```powershell
-Metroid-Setup-x64.exe /VERYSILENT /TASKS="desktopicon,engines,autostart"
+Lorenz-Setup-x64.exe /VERYSILENT /TASKS="desktopicon,engines,autostart"
 ```
 
 **From source** (developers): with Rust, MSVC C++ build tools, CMake and Qt 6
@@ -220,7 +220,7 @@ CI builds the installer, installs and uninstalls it silently on Windows, tests t
 wheel's copy-only drops and runs real conversions there; interactive validation of
 the drag gesture on Windows 10/11 is in progress.
 
-## What Metroid can do
+## What Lorenz can do
 
 ### Convert (Shift)
 
@@ -282,17 +282,17 @@ updated and be careful with files from untrusted sources:
 ## Command line
 
 ```sh
-metroid doctor                                   # installed engines and session
-metroid menu convert photo.png                   # what each wheel offers
-metroid menu tools photo.png --json
-metroid convert photo.png --to webp
-metroid convert movie.mov --to mp4 --output-dir ./exports
-metroid tool compress photo.jpg holiday.png      # photo-compressed.jpg, holiday-compressed.png
-metroid tool merge part1.pdf part2.pdf           # Merged.pdf
-metroid action copy-to --dest ~/Backup report.pdf
-metroid autostart enable                         # start the tray companion at login
-metroid pick photo.png --menu fuzzel             # dmenu-style picker for tiling desktops
-metroid-desktop --wheel tools photo.png          # open a wheel without dragging
+lorenz doctor                                   # installed engines and session
+lorenz menu convert photo.png                   # what each wheel offers
+lorenz menu tools photo.png --json
+lorenz convert photo.png --to webp
+lorenz convert movie.mov --to mp4 --output-dir ./exports
+lorenz tool compress photo.jpg holiday.png      # photo-compressed.jpg, holiday-compressed.png
+lorenz tool merge part1.pdf part2.pdf           # Merged.pdf
+lorenz action copy-to --dest ~/Backup report.pdf
+lorenz autostart enable                         # start the tray companion at login
+lorenz pick photo.png --menu fuzzel             # dmenu-style picker for tiling desktops
+lorenz-desktop --wheel tools photo.png          # open a wheel without dragging
 ```
 
 `--json` prints one JSON line per result with `ok`, `input`, and `output` or `error`;
@@ -300,7 +300,7 @@ the exit status is 1 if anything fails. `--timeout` limits an engine run (3600 s
 default) and `--cancel-file` stops it as soon as that file appears. `serve` is a
 sequential JSON Lines worker on stdin/stdout with no network socket.
 
-Outputs are written to a hidden `.metroid-*` folder beside the destination, then
+Outputs are written to a hidden `.lorenz-*` folder beside the destination, then
 published atomically with a hard link, which FAT/exFAT do not support. After a power
 failure, such folders can be deleted once no conversion is running.
 
@@ -342,7 +342,7 @@ and runs the installer in clean Debian, Ubuntu, Fedora and Arch containers.
 
 ## License
 
-Metroid is free software under the [GNU General Public License v3.0 or later](LICENSE).
+Lorenz is free software under the [GNU General Public License v3.0 or later](LICENSE).
 
 ## Code signing policy
 
@@ -356,7 +356,7 @@ GitHub Actions workflow from tagged commits are submitted for signing.
 
 ### Privacy
 
-Metroid converts files on your computer. It does not transfer any information to
+Lorenz converts files on your computer. It does not transfer any information to
 other networked systems unless specifically requested by the user or the person
 installing or operating it: the Windows installer downloads conversion engines
 through winget only when you tick that option.

@@ -1,5 +1,5 @@
 //! Real tool, office and archive tests. Optional engines are skipped when absent.
-use metroid::{convert, engine, menu, tools};
+use lorenz::{convert, engine, menu, tools};
 use std::{fs, path::Path, path::PathBuf, process::Command};
 
 fn have(names: &[&str]) -> bool {
@@ -274,6 +274,6 @@ fn office_document_in_a_deep_folder() {
     let rtf = dir.join("letter.rtf");
     fs::write(&rtf, "{\\rtf1\\ansi Hello from a deep folder.\\par}").unwrap();
     let pdf = convert(&rtf, "pdf", None, None, 180).unwrap();
-    assert_eq!(pdf.parent().unwrap(), metroid::canonical(&dir).unwrap());
+    assert_eq!(pdf.parent().unwrap(), lorenz::canonical(&dir).unwrap());
     assert!(fs::read(pdf).unwrap().starts_with(b"%PDF"));
 }

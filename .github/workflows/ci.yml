@@ -27,8 +27,8 @@ jobs:
         with:
           name: core-${{ matrix.os }}
           path: |
-            target/release/metroid
-            target/release/metroid.exe
+            target/release/lorenz
+            target/release/lorenz.exe
   linux-families:
     runs-on: ubuntu-latest
     strategy:
@@ -62,7 +62,7 @@ jobs:
       - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build --parallel 2
       - run: ctest --test-dir build --output-on-failure
-      - run: QT_QPA_PLATFORM=offscreen build/metroid-desktop --smoke-test
+      - run: QT_QPA_PLATFORM=offscreen build/lorenz-desktop --smoke-test
   desktop-windows:
     runs-on: windows-latest
     steps:
@@ -74,51 +74,51 @@ jobs:
       - run: cmake -S . -B build
       - run: cmake --build build --config Release
       - run: ctest --test-dir build -C Release --output-on-failure
-      # metroid-desktop is a windowed program: PowerShell does not wait for it.
+      # lorenz-desktop is a windowed program: PowerShell does not wait for it.
       - shell: pwsh
         run: |
-          windeployqt --release build/Release/metroid-desktop.exe
+          windeployqt --release build/Release/lorenz-desktop.exe
           $env:QT_QPA_PLATFORM = 'offscreen'
-          $run = Start-Process build/Release/metroid-desktop.exe --smoke-test -Wait -PassThru
+          $run = Start-Process build/Release/lorenz-desktop.exe --smoke-test -Wait -PassThru
           if ($run.ExitCode) { throw "smoke test failed: $($run.ExitCode)" }
-      # The installer people download: Metroid-Setup-x64.exe.
+      # The installer people download: Lorenz-Setup-x64.exe.
       - name: Build the Windows installer
         shell: pwsh
         run: |
           cargo build --release --locked
-          $root = 'dist/Metroid'
+          $root = 'dist/Lorenz'
           New-Item -ItemType Directory -Force $root | Out-Null
-          Copy-Item target/release/metroid.exe, build/Release/metroid-desktop.exe $root
-          windeployqt --release --no-translations "$root/metroid-desktop.exe"
+          Copy-Item target/release/lorenz.exe, build/Release/lorenz-desktop.exe $root
+          windeployqt --release --no-translations "$root/lorenz-desktop.exe"
           $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
           choco install -y --no-progress innosetup
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q "/DAppVersion=$version" packaging/windows/metroid.iss
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q "/DAppVersion=$version" packaging/windows/lorenz.iss
           if ($LASTEXITCODE) { throw 'Inno Setup failed' }
       - name: Install and uninstall silently
         shell: pwsh
         run: |
-          $setup = Start-Process dist/Metroid-Setup-x64.exe -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=desktopicon', '/LOG=setup.log'
+          $setup = Start-Process dist/Lorenz-Setup-x64.exe -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=desktopicon', '/LOG=setup.log'
           if ($setup.ExitCode) { Get-Content setup.log; throw "setup failed: $($setup.ExitCode)" }
-          $installed = Join-Path $env:LOCALAPPDATA 'Programs\Metroid'
-          foreach ($file in 'metroid.exe', 'metroid-desktop.exe', 'Qt6Core.dll', 'platforms\qwindows.dll', 'unins000.exe') {
+          $installed = Join-Path $env:LOCALAPPDATA 'Programs\Lorenz'
+          foreach ($file in 'lorenz.exe', 'lorenz-desktop.exe', 'Qt6Core.dll', 'platforms\qwindows.dll', 'unins000.exe') {
               if (-not (Test-Path (Join-Path $installed $file))) { throw "missing $file" }
           }
           foreach ($folder in 'SendTo', 'Programs', 'Desktop') {
-              $link = Join-Path ([Environment]::GetFolderPath($folder)) 'Metroid.lnk'
+              $link = Join-Path ([Environment]::GetFolderPath($folder)) 'Lorenz.lnk'
               if (-not (Test-Path $link)) { throw "missing $link" }
           }
-          if ((& "$installed\metroid.exe" autostart status) -ne 'disabled') { throw 'autostart enabled without its task' }
-          & "$installed\metroid.exe" doctor
+          if ((& "$installed\lorenz.exe" autostart status) -ne 'disabled') { throw 'autostart enabled without its task' }
+          & "$installed\lorenz.exe" doctor
           if ($LASTEXITCODE) { throw 'doctor failed' }
           # The uninstaller restarts itself from a temporary copy and returns at once.
           Start-Process "$installed\unins000.exe" -Wait -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES'
-          for ($i = 0; $i -lt 60 -and (Test-Path "$installed\metroid.exe"); $i++) { Start-Sleep 1 }
-          if (Test-Path "$installed\metroid.exe") { throw 'uninstall left files' }
-          if (Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Metroid.lnk')) { throw 'uninstall left the desktop shortcut' }
+          for ($i = 0; $i -lt 60 -and (Test-Path "$installed\lorenz.exe"); $i++) { Start-Sleep 1 }
+          if (Test-Path "$installed\lorenz.exe") { throw 'uninstall left files' }
+          if (Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Lorenz.lnk')) { throw 'uninstall left the desktop shortcut' }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: package-windows
-          path: dist/Metroid-Setup-x64.exe
+          path: dist/Lorenz-Setup-x64.exe
 
   # Each package is built in the distribution it targets, then installed in
   # clean containers by linux-package-install.
@@ -174,13 +174,13 @@ jobs:
           libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
       - run: bash packaging/linux/build-appimage.sh
       - run: |
-          QT_QPA_PLATFORM=offscreen dist/Metroid-x86_64.AppImage --appimage-extract-and-run --smoke-test
-          cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/dist/Metroid-x86_64.AppImage" --appimage-extract >/dev/null
-          squashfs-root/usr/bin/metroid --version
+          QT_QPA_PLATFORM=offscreen dist/Lorenz-x86_64.AppImage --appimage-extract-and-run --smoke-test
+          cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/dist/Lorenz-x86_64.AppImage" --appimage-extract >/dev/null
+          squashfs-root/usr/bin/lorenz --version
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: package-appimage
-          path: dist/Metroid-x86_64.AppImage
+          path: dist/Lorenz-x86_64.AppImage
 
   # Only this job may write, and it runs no build code: it publishes the
   # packages that the jobs above built and tested.

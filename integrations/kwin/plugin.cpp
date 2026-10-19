@@ -26,7 +26,7 @@
 namespace {
 QString executable(const QString &name) {
     // Isolated tests point at freshly built binaries; desktop sessions leave it unset.
-    if (const auto dir=qEnvironmentVariable("METROID_BIN_DIR"); !dir.isEmpty()) return dir+"/"+name;
+    if (const auto dir=qEnvironmentVariable("LORENZ_BIN_DIR"); !dir.isEmpty()) return dir+"/"+name;
     const auto local=QDir::homePath()+"/.local/bin/"+name;
     if (QFileInfo(local).isExecutable()) return local;
     return QStandardPaths::findExecutable(name);
@@ -35,7 +35,7 @@ QString executable(const QString &name) {
 // change applies to the next drag without reloading the extension.
 struct WheelKey { Qt::Key key; Qt::KeyboardModifier modifier; QString label; };
 QVector<WheelKey> wheelKeys() {
-    QSettings settings(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)+"/metroid/metroid.conf",QSettings::IniFormat);
+    QSettings settings(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)+"/lorenz/lorenz.conf",QSettings::IniFormat);
     const QStringList names{"Convert","Tools","Actions"}, defaults{"Shift","Control","Alt"};
     QVector<WheelKey> keys;
     for (int i=0;i<3;++i) {
@@ -58,9 +58,9 @@ KWin::Item *dragIconItem(KWin::Item *item) {
 }
 }
 
-class MetroidPlugin : public KWin::Plugin, public KWin::InputEventFilter {
+class LorenzPlugin : public KWin::Plugin, public KWin::InputEventFilter {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "org.metroid.KWin")
+    Q_CLASSINFO("D-Bus Interface", "org.lorenz.KWin")
     RadialWheel wheel;
     QTimer deadline;
     QProcess probe;
@@ -75,7 +75,7 @@ class MetroidPlugin : public KWin::Plugin, public KWin::InputEventFilter {
     QVector<WheelKey> keys=wheelKeys();
     RadialWheel::Mode mode=RadialWheel::Convert;
 public:
-    MetroidPlugin() : InputEventFilter(KWin::InputFilterOrder::ScreenEdge) {
+    LorenzPlugin() : InputEventFilter(KWin::InputFilterOrder::ScreenEdge) {
         // Runs after the lock-screen filter but before normal drag-and-drop.
         KWin::input()->installInputEventFilter(this);
         deadline.setSingleShot(true); deadline.setInterval(5000);
@@ -94,15 +94,15 @@ public:
             wheel.setItems(items);
         });
         connect(&probe,&QProcess::errorOccurred,this,[this](QProcess::ProcessError e){ if (e==QProcess::FailedToStart) abort(); });
-        QDBusConnection::sessionBus().registerObject("/Metroid",this,QDBusConnection::ExportAllSlots|QDBusConnection::ExportAllProperties);
+        QDBusConnection::sessionBus().registerObject("/Lorenz",this,QDBusConnection::ExportAllSlots|QDBusConnection::ExportAllProperties);
     }
-    ~MetroidPlugin() override {
-        QDBusConnection::sessionBus().unregisterObject("/Metroid");
+    ~LorenzPlugin() override {
+        QDBusConnection::sessionBus().unregisterObject("/Lorenz");
         abort();
     }
     Q_PROPERTY(QString BuildId READ buildId)
     Q_PROPERTY(int WheelSize READ wheelSize)
-    QString buildId() const { return QStringLiteral(METROID_PLUGIN_ID); }
+    QString buildId() const { return QStringLiteral(LORENZ_PLUGIN_ID); }
     int wheelSize() const { return wheel.width(); }
     Q_PROPERTY(bool Active READ isActive)
     Q_PROPERTY(QStringList Formats READ formatList)
@@ -161,7 +161,7 @@ private:
         if (!KWin::input()->pointer()->buttons().testFlag(Qt::LeftButton)) return;
         auto *candidate=seat->dragSource();
         if (!candidate || !candidate->mimeTypes().contains("text/uri-list")) return;
-        if (executable("metroid").isEmpty() || executable("metroid-desktop").isEmpty()) return;
+        if (executable("lorenz").isEmpty() || executable("lorenz-desktop").isEmpty()) return;
         int pipeFd[2]; if (pipe2(pipeFd,O_CLOEXEC)!=0) return;
         fcntl(pipeFd[0],F_SETFL,O_NONBLOCK);
         source=candidate; active=true; payload.clear(); files.clear(); mode=wanted;
@@ -188,7 +188,7 @@ private:
         abort();
         if (id.isEmpty() || paths.isEmpty()) return;
         static const QStringList flags{"--convert-to","--tool","--action"};
-        QProcess::startDetached(executable("metroid-desktop"),QStringList{flags[chosen],id,"--"}+paths);
+        QProcess::startDetached(executable("lorenz-desktop"),QStringList{flags[chosen],id,"--"}+paths);
     }
     void closePipe() {
         if (reader) { reader->setEnabled(false); reader->deleteLater(); reader=nullptr; }
@@ -223,7 +223,7 @@ private:
             }
         }
     }
-    void query() { deadline.start(); probe.start(executable("metroid"),QStringList{"menu",kinds[mode],"--json","--"}+files); }
+    void query() { deadline.start(); probe.start(executable("lorenz"),QStringList{"menu",kinds[mode],"--json","--"}+files); }
     void hideDragIcon() {
         auto *scene=KWin::kwinApp()->scene(); if (!scene) return;
         auto *icon=dragIconItem(scene->overlayItem()); if (!icon) icon=dragIconItem(scene->containerItem());
@@ -242,11 +242,11 @@ private:
     }
 };
 
-class MetroidFactory : public KWin::PluginFactory {
+class LorenzFactory : public KWin::PluginFactory {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID PluginFactory_iid FILE "metroid-metadata.json")
+    Q_PLUGIN_METADATA(IID PluginFactory_iid FILE "lorenz-metadata.json")
     Q_INTERFACES(KWin::PluginFactory)
 public:
-    std::unique_ptr<KWin::Plugin> create() const override { return std::make_unique<MetroidPlugin>(); }
+    std::unique_ptr<KWin::Plugin> create() const override { return std::make_unique<LorenzPlugin>(); }
 };
 #include "plugin.moc"

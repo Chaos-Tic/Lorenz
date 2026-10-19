@@ -475,7 +475,7 @@ pub fn expand(args: &[String], values: &Expansion) -> Vec<String> {
 /// metadata fields, and no raw HTML in EPUB (whose writer also embeds files
 /// named by raw `<img>` tags).
 const PANDOC_FILTER: &str = r#"
-local media = os.getenv("METROID_MEDIA") or "\0"
+local media = os.getenv("LORENZ_MEDIA") or "\0"
 local embeds = FORMAT:match("docx") or FORMAT:match("odt") or FORMAT:match("epub") or FORMAT:match("pptx")
 -- Exact paths of the files the sandboxed reader extracted. Escapes are refused
 -- outright: the writer could decode them into another path.
@@ -577,7 +577,7 @@ impl Staging {
     pub fn new(workspace: &Path, extension: &str) -> Result<Self> {
         let output_dir = workspace.join("result");
         fs::create_dir(&output_dir)?;
-        let office = tempfile::Builder::new().prefix("metroid-").tempdir()?;
+        let office = tempfile::Builder::new().prefix("lorenz-").tempdir()?;
         let profile = office.path().join("profile");
         harden(workspace, &profile)?;
         Ok(Self {
@@ -625,7 +625,7 @@ pub fn run_backend(
     if policy.is_dir() {
         command.env("MAGICK_CONFIGURE_PATH", &policy);
     }
-    command.env("METROID_MEDIA", log_dir.join("media"));
+    command.env("LORENZ_MEDIA", log_dir.join("media"));
     let mut child = command
         .args(args)
         .stdin(Stdio::null())
@@ -683,10 +683,10 @@ pub fn convert(
         "The file is already in this format"
     );
     let backend = engine(&rule.backend)
-        .with_context(|| format!("Missing engine: {}. Run metroid doctor.", rule.backend))?;
+        .with_context(|| format!("Missing engine: {}. Run lorenz doctor.", rule.backend))?;
     let directory = output_directory(&input, directory)?;
     let workspace = tempfile::Builder::new()
-        .prefix(".metroid-")
+        .prefix(".lorenz-")
         .tempdir_in(&directory)?;
     let staging = Staging::new(workspace.path(), &target)?;
     let inputs = [input.clone()];
@@ -718,7 +718,7 @@ pub fn merge_pdf(inputs: &[PathBuf], directory: &Path) -> Result<PathBuf> {
     ensure!(inputs.len() >= 2, "Select at least two PDF files");
     let directory = canonical(directory)?;
     let workspace = tempfile::Builder::new()
-        .prefix(".metroid-")
+        .prefix(".lorenz-")
         .tempdir_in(&directory)?;
     let output = workspace.path().join("merged.pdf");
     let mut args = vec!["--empty".into(), "--pages".into()];

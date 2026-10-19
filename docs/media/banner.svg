@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
-<title id="title">Metroid — A lighter way to convert.</title>
+<title id="title">Lorenz — A lighter way to convert.</title>
 <desc id="desc">Graphite and mint identity with a floating conversion orbit.</desc>
 <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#26343b"/><stop offset="1" stop-color="#141c23"/></linearGradient><radialGradient id="glow"><stop stop-color="#7ec7b0" stop-opacity=".16"/><stop offset="1" stop-color="#7ec7b0" stop-opacity="0"/></radialGradient></defs>
 <rect width="1200" height="300" rx="24" fill="url(#bg)"/>
@@ -7,7 +7,7 @@
 <g fill="none" stroke="#b6e8d6" stroke-width="15" stroke-linecap="round"><path d="M1056 125A62 62 0 0 0 988 79"/><path d="M950 103A62 62 0 0 0 956 191"/><path d="M983 205A62 62 0 0 0 1057 154"/></g><circle cx="998" cy="143" r="17" fill="#edf3f1"/>
 <g font-family="Inter,DejaVu Sans,Arial,sans-serif">
 <text x="54" y="62" fill="#b6e8d6" font-size="12" letter-spacing="3">AT YOUR CURSOR. IN YOUR FLOW.</text>
-<text x="50" y="142" fill="#edf3f1" font-size="62" font-weight="600" letter-spacing="-2">Metroid</text>
+<text x="50" y="142" fill="#edf3f1" font-size="62" font-weight="600" letter-spacing="-2">Lorenz</text>
 <text x="54" y="187" fill="#b8c9cd" font-size="22">A lighter way to convert.</text>
 <text x="54" y="248" fill="#8fa8af" font-size="14">Drag a file. Tap Shift. Drop onto a format.</text>
 </g></svg>

@@ -4,10 +4,10 @@ class Source : public QWidget {
     QPoint origin;
     QStringList paths;
 public:
-    explicit Source(QStringList files) : paths(std::move(files)) { setWindowTitle("Metroid isolated drag test"); setAcceptDrops(true); }
+    explicit Source(QStringList files) : paths(std::move(files)) { setWindowTitle("Lorenz isolated drag test"); setAcceptDrops(true); }
     void paintEvent(QPaintEvent *) override {
         QPainter p(this); p.fillRect(rect(),QColor("#202530"));
-        p.setPen(Qt::white); p.setFont(QFont("DejaVu Sans",20)); p.drawText(QRect(40,40,850,100),"Metroid interaction test — isolated compositor");
+        p.setPen(Qt::white); p.setFont(QFont("DejaVu Sans",20)); p.drawText(QRect(40,40,850,100),"Lorenz interaction test — isolated compositor");
         p.setBrush(QColor("#ff5454")); p.setPen(Qt::NoPen); p.drawRoundedRect(QRect(160,160,100,100),10,10);
         p.setPen(Qt::white); p.setFont(QFont("DejaVu Sans",12)); p.drawText(QRect(100,280,300,60),Qt::AlignCenter,"sample.png\nDrag, tap Shift, release on WebP");
     }

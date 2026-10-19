@@ -20,13 +20,13 @@ three seconds. The primary wheel captures are 384 × 384; the animation uses nat
 README. Keep future captures in English and avoid decorative motion outside the demo.
 
 To refresh the visuals on Linux, build and install the current app, generate a PNG
-in a disposable directory, then set `METROID_SCREENSHOT` to an absolute destination:
+in a disposable directory, then set `LORENZ_SCREENSHOT` to an absolute destination:
 
 ```sh
-QT_QPA_PLATFORM=offscreen METROID_SCREENSHOT=/absolute/path/desktop-ready.png \
-  metroid-desktop --smoke-test
-QT_QPA_PLATFORM=offscreen METROID_SCREENSHOT=/absolute/path/desktop-converted.png \
-  metroid-desktop --test-convert /absolute/path/sample.png
+QT_QPA_PLATFORM=offscreen LORENZ_SCREENSHOT=/absolute/path/desktop-ready.png \
+  lorenz-desktop --smoke-test
+QT_QPA_PLATFORM=offscreen LORENZ_SCREENSHOT=/absolute/path/desktop-converted.png \
+  lorenz-desktop --test-convert /absolute/path/sample.png
 ```
 
 The second command performs a real conversion and leaves a converted file beside the
@@ -36,7 +36,7 @@ before publishing. The SVG is editable source; no external font or image fetch i
 Wheel captures come from the isolated KWin interaction test (`wheel.png`, `tools.png`,
 `actions.png` in its evidence folder). The input driver captures only the wheel widget,
 avoiding unrelated desktop content. The settings capture uses
-`METROID_SCREENSHOT=/absolute/path/settings.png metroid-desktop --settings`.
+`LORENZ_SCREENSHOT=/absolute/path/settings.png lorenz-desktop --settings`.
 
 To capture the wheel animation frames: `QT_QPA_PLATFORM=offscreen
-METROID_WHEEL_FRAMES=/absolute/path/frames build/metroid-wheel-test`.
+LORENZ_WHEEL_FRAMES=/absolute/path/frames build/lorenz-wheel-test`.

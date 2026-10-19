@@ -22,11 +22,11 @@ The headless Qt smoke test verifies window construction and shutdown.
 A desktop integration test selects WebP and clicks the real conversion button:
 
 ```sh
-QT_QPA_PLATFORM=offscreen metroid-desktop --test-convert /path/to/test.png
+QT_QPA_PLATFORM=offscreen lorenz-desktop --test-convert /path/to/test.png
 ```
 
 Use a disposable input directory. The test creates a real output, returns a nonzero
-exit code on failure, and leaves the input unchanged. `METROID_SCREENSHOT` optionally
+exit code on failure, and leaves the input unchanged. `LORENZ_SCREENSHOT` optionally
 sets an absolute screenshot destination for either desktop test mode.
 
 ## Manual checklist per platform
@@ -51,7 +51,7 @@ Run `scripts/test-kwin-isolated.sh` to exercise real Wayland drags in a private 
 session with freshly built binaries: Shift conversion by mouse, Ctrl tools by keyboard,
 Alt/Shift switching, a held Ctrl ignored, Escape and center cancellation, and plugin
 reload. See the [integration guide](../integrations/kwin/README.md). Set
-`METROID_TEST_TRACE=1` to trace each step.
+`LORENZ_TEST_TRACE=1` to trace each step.
 
 ## Installer
 

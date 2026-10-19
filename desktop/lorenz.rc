@@ -1,0 +1,2 @@
+// Icon of lorenz-desktop.exe, shown by Explorer and the Windows shortcuts.
+IDI_ICON1 ICON "../assets/lorenz.ico"

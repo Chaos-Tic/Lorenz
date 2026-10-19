@@ -1,8 +1,8 @@
 # Drag gesture for KDE Plasma (Wayland)
 
-[Back to Metroid](../../README.md)
+[Back to Lorenz](../../README.md)
 
-This compositor extension is the primary Metroid interaction: **drag local files,
+This compositor extension is the primary Lorenz interaction: **drag local files,
 tap Shift (convert), Ctrl (tools) or Alt (actions), and release over a sector of the
 wheel at the cursor**. Releasing the key does not close the wheel; tapping another
 wheel key switches wheels in place. The batch window is optional.
@@ -18,7 +18,7 @@ wheel key switches wheels in place. The batch window is optional.
   Mixed selections show common items only. Batches are limited to 128 paths and
   256 KiB of URI data.
 - Keys are configurable per wheel (Shift, Ctrl, Alt or off) in the companion's
-  settings, stored in `~/.config/metroid/metroid.conf` and read at each drag.
+  settings, stored in `~/.config/lorenz/lorenz.conf` and read at each drag.
 
 ## Install and remove
 
@@ -34,7 +34,7 @@ vulkan-headers` on Fedora.
 
 The production module is installed in Qt's `kwin/plugins` directory using `sudo`.
 The installer loads it through KWin's plugin interface and enables
-`metroid-<revision>Enabled` in the user's `kwinrc`. No compositor restart is required.
+`lorenz-<revision>Enabled` in the user's `kwinrc`. No compositor restart is required.
 
 ```sh
 ./scripts/uninstall-kwin.sh
@@ -54,7 +54,7 @@ source is not copied into this repository.
 The input filter runs after screen-lock handling and before normal drag-and-drop.
 It activates only on a configured key *press* during an active left-button pointer
 drag offering file URIs; a modifier held before the drag keeps its normal copy/move
-meaning. It reads the URI payload asynchronously, asks `metroid menu` for the wheel's
+meaning. It reads the URI payload asynchronously, asks `lorenz menu` for the wheel's
 items, and anchors the internal Qt wheel to the compositor pointer position at the
 key press. The anchor stays fixed while selecting; screen-edge placement keeps the wheel
 visible. It does not use the Wayland seat position, which can be stale during a drag. It never records typed text.
@@ -88,7 +88,7 @@ center cancellation, and plugin unload/reload.
 The test driver is **not installed** by any installation script. Its factory refuses
 to load without the isolated-test environment flag. The test requires a working
 virtual KWin rendering backend; it builds the core and desktop from the working tree
-and points the extension at them with `METROID_BIN_DIR`. It is separate from the CI
+and points the extension at them with `LORENZ_BIN_DIR`. It is separate from the CI
 build check. The Qt wheel's geometry and segment hit testing also run through CTest.
 
 ### Live updates
@@ -99,7 +99,7 @@ the new identity, verifies its `BuildId` over D-Bus, and disables older revision
 for future logins. It never restarts the compositor or closes desktop applications.
 Old libraries may remain mapped until logout; they no longer have active input filters.
 
-Inspect the running version with `qdbus6 org.kde.KWin /Metroid org.metroid.KWin.BuildId`.
-`org.metroid.KWin.WheelSize` reports the actual loaded wheel size (384 pixels, including
+Inspect the running version with `qdbus6 org.kde.KWin /Lorenz org.lorenz.KWin.BuildId`.
+`org.lorenz.KWin.WheelSize` reports the actual loaded wheel size (384 pixels, including
 transparent margins and the wheel tabs). `Mode` and `Formats` report the open wheel and
 its item identifiers.

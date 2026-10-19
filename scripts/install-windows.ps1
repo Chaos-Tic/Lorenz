@@ -1,13 +1,13 @@
-# Installs Metroid for the current user in %LOCALAPPDATA%\Programs\Metroid.
+# Installs Lorenz for the current user in %LOCALAPPDATA%\Programs\Lorenz.
 #
-# Most people should use Metroid-Setup-x64.exe from the Releases page instead.
+# Most people should use Lorenz-Setup-x64.exe from the Releases page instead.
 # This script builds from a source checkout and needs Rust, MSVC C++ build tools, CMake and Qt 6
 # (CMAKE_PREFIX_PATH set to Qt, windeployqt on PATH).
 #
 # Without options, each step asks first. Options answer in advance:
 #   -Engines / -NoEngines     conversion engines through winget
 #   -Office / -NoOffice       LibreOffice (Word, PowerPoint, spreadsheets)
-#   -Autostart / -NoAutostart start Metroid when you sign in
+#   -Autostart / -NoAutostart start Lorenz when you sign in
 #   -Yes                      accept every default (engines, no office, autostart)
 param(
     [switch]$Engines, [switch]$NoEngines,
@@ -33,9 +33,9 @@ function Decide([bool]$on, [bool]$off, [string]$question, [bool]$default) {
 
 # 1. Binaries: shipped beside this script, or built from the checkout.
 $package = Join-Path $PSScriptRoot 'bin'
-if (-not (Test-Path (Join-Path $package 'metroid-desktop.exe'))) {
+if (-not (Test-Path (Join-Path $package 'lorenz-desktop.exe'))) {
     $root = Split-Path $PSScriptRoot -Parent
-    if (-not (Test-Path (Join-Path $root 'Cargo.toml'))) { throw 'Metroid binaries not found next to this script.' }
+    if (-not (Test-Path (Join-Path $root 'Cargo.toml'))) { throw 'Lorenz binaries not found next to this script.' }
     Push-Location $root
     try {
         cargo build --release --locked
@@ -46,30 +46,30 @@ if (-not (Test-Path (Join-Path $package 'metroid-desktop.exe'))) {
         if ($LASTEXITCODE) { throw 'Qt build failed' }
         $package = Join-Path $root 'build/package'
         New-Item -ItemType Directory -Force $package | Out-Null
-        Copy-Item target/release/metroid.exe, build/Release/metroid-desktop.exe $package
-        windeployqt --release --no-translations (Join-Path $package 'metroid-desktop.exe')
+        Copy-Item target/release/lorenz.exe, build/Release/lorenz-desktop.exe $package
+        windeployqt --release --no-translations (Join-Path $package 'lorenz-desktop.exe')
         if ($LASTEXITCODE) { throw 'Qt deployment failed' }
     } finally { Pop-Location }
 }
 
-$destination = Join-Path $env:LOCALAPPDATA 'Programs\Metroid'
-Get-Process metroid-desktop -ErrorAction SilentlyContinue |
+$destination = Join-Path $env:LOCALAPPDATA 'Programs\Lorenz'
+Get-Process lorenz-desktop -ErrorAction SilentlyContinue |
     Where-Object { $_.Path -like "$destination*" } | Stop-Process -Force
 New-Item -ItemType Directory -Force $destination | Out-Null
 Copy-Item (Join-Path $package '*') $destination -Recurse -Force
 # A downloaded package carries the "from the Internet" mark; the user chose to install it.
 Get-ChildItem $destination -Recurse -File | Unblock-File
-$desktop = Join-Path $destination 'metroid-desktop.exe'
-$core = Join-Path $destination 'metroid.exe'
+$desktop = Join-Path $destination 'lorenz-desktop.exe'
+$core = Join-Path $destination 'lorenz.exe'
 
 $shell = New-Object -ComObject WScript.Shell
 foreach ($folder in @([Environment]::GetFolderPath('Programs'), [Environment]::GetFolderPath('SendTo'))) {
-    $shortcut = $shell.CreateShortcut((Join-Path $folder 'Metroid.lnk'))
+    $shortcut = $shell.CreateShortcut((Join-Path $folder 'Lorenz.lnk'))
     $shortcut.TargetPath = $desktop
     $shortcut.WorkingDirectory = $destination
     $shortcut.Save()
 }
-Write-Host "Metroid is installed in $destination, in Start and in Send to."
+Write-Host "Lorenz is installed in $destination, in Start and in Send to."
 
 # 2. Conversion engines, one at a time: a missing package never stops the rest.
 $engineIds = [ordered]@{
@@ -102,10 +102,10 @@ Write-Host 'Archives use the tar included with Windows. PDF compression needs Gh
 & $core doctor
 
 # 3. Start at sign-in.
-if (Decide $Autostart $NoAutostart 'Start Metroid automatically when you sign in?' $true) {
+if (Decide $Autostart $NoAutostart 'Start Lorenz automatically when you sign in?' $true) {
     & $core autostart enable
 } else {
     & $core autostart disable | Out-Null
 }
 Start-Process $desktop -ArgumentList '--background'
-Write-Host 'Done. Right-click files > Send to > Metroid. Settings: Metroid tray icon > Settings.'
+Write-Host 'Done. Right-click files > Send to > Lorenz. Settings: Lorenz tray icon > Settings.'

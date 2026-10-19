@@ -286,7 +286,7 @@ fn transfer(source: &Path, destination: &Path, remove: bool) -> Result<PathBuf> 
             };
         }
         let workspace = tempfile::Builder::new()
-            .prefix(".metroid-")
+            .prefix(".lorenz-")
             .tempdir_in(destination)?;
         let staged = workspace.path().join("result");
         copy_tree(source, &staged)?;
@@ -308,7 +308,7 @@ fn transfer(source: &Path, destination: &Path, remove: bool) -> Result<PathBuf> 
         }
     }
     let workspace = tempfile::Builder::new()
-        .prefix(".metroid-")
+        .prefix(".lorenz-")
         .tempdir_in(destination)?;
     let staged = workspace.path().join("copy");
     fs::copy(source, &staged)?;

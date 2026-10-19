@@ -12,16 +12,16 @@ mkdir /work && tar -C /src --exclude=./target --exclude=./build --exclude=./.loc
 cd /work
 ./install.sh --yes --no-office --no-kwin --no-autostart
 export PATH="$HOME/.local/bin:$PATH"
-metroid doctor
+lorenz doctor
 magick -size 40x30 xc:red /tmp/sample.png 2>/dev/null || convert -size 40x30 xc:red /tmp/sample.png
-metroid menu tools /tmp/sample.png | grep -q "^compress"
-metroid convert /tmp/sample.png --to webp
-metroid tool rotate-right /tmp/sample.png
-metroid tool zip /tmp/sample.png
+lorenz menu tools /tmp/sample.png | grep -q "^compress"
+lorenz convert /tmp/sample.png --to webp
+lorenz tool rotate-right /tmp/sample.png
+lorenz tool zip /tmp/sample.png
 test -s /tmp/sample.webp && test -s /tmp/sample-rotated.png && test -s /tmp/sample.zip
-test -f "$HOME/.local/share/kio/servicemenus/metroid.desktop"
-QT_QPA_PLATFORM=offscreen metroid-desktop --smoke-test
-metroid autostart enable && test -f "$HOME/.config/autostart/metroid.desktop"
-./uninstall.sh && test ! -e "$HOME/.local/bin/metroid"
+test -f "$HOME/.local/share/kio/servicemenus/lorenz.desktop"
+QT_QPA_PLATFORM=offscreen lorenz-desktop --smoke-test
+lorenz autostart enable && test -f "$HOME/.config/autostart/lorenz.desktop"
+./uninstall.sh && test ! -e "$HOME/.local/bin/lorenz"
 echo "INSTALLER OK: '"$image"'"
 '

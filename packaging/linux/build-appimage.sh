@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds Metroid-x86_64.AppImage with Qt bundled, from the repository root.
+# Builds Lorenz-x86_64.AppImage with Qt bundled, from the repository root.
 # Needs Qt 6 in QT_ROOT_DIR (install-qt-action sets it) and the oldest system
 # the AppImage should run on: it runs on newer distributions, never on older.
 # Engines are not bundled; the AppImage uses those installed on the system.
@@ -24,24 +24,24 @@ cmake --build build --parallel "$(nproc)"
 
 appdir=build/AppDir
 rm -rf "$appdir"
-install -Dm755 target/release/metroid "$appdir/usr/bin/metroid"
+install -Dm755 target/release/lorenz "$appdir/usr/bin/lorenz"
 # The AppImage path changes at every mount, so it ships no file-manager menus.
-cat >build/metroid.desktop <<'EOF'
+cat >build/lorenz.desktop <<'EOF'
 [Desktop Entry]
 Type=Application
-Name=Metroid
+Name=Lorenz
 GenericName=File converter
 Comment=Convert files locally
-Exec=metroid-desktop %F
-Icon=metroid
+Exec=lorenz-desktop %F
+Icon=lorenz
 Terminal=false
 Categories=Utility;
 EOF
 mkdir -p dist
 export PATH="$QT_ROOT_DIR/bin:$tools:$PATH" QMAKE="$QT_ROOT_DIR/bin/qmake"
 # xcb runs under X11 and XWayland; offscreen serves the CI smoke test.
-export EXTRA_PLATFORM_PLUGINS=libqoffscreen.so OUTPUT=dist/Metroid-x86_64.AppImage
+export EXTRA_PLATFORM_PLUGINS=libqoffscreen.so OUTPUT=dist/Lorenz-x86_64.AppImage
 APPIMAGE_EXTRACT_AND_RUN=1 linuxdeploy-x86_64.AppImage --appdir "$appdir" \
-    --executable build/metroid-desktop --desktop-file build/metroid.desktop \
-    --icon-file assets/metroid.svg --plugin qt --output appimage
+    --executable build/lorenz-desktop --desktop-file build/lorenz.desktop \
+    --icon-file assets/lorenz.svg --plugin qt --output appimage
 ls -l dist

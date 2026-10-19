@@ -53,7 +53,7 @@ int main(int argc,char **argv) {
     wheel.setMode(RadialWheel::Convert); wheel.modeRequested=nullptr;
     wheel.setFormats({"avif","bmp","jpg","pdf","tiff","webp"});
     wheel.hide();
-    if (const auto directory=qEnvironmentVariable("METROID_WHEEL_FRAMES"); !directory.isEmpty()) {
+    if (const auto directory=qEnvironmentVariable("LORENZ_WHEEL_FRAMES"); !directory.isEmpty()) {
         QDir().mkpath(directory);
         wheel.openAt({400,400});
         QTimer capture;
