@@ -13,14 +13,25 @@ install from the AUR (`yay -S lorenz`).
   `scripts/install-windows.ps1` builds and installs from a checkout.
 - Linux: `linux/build-package.sh deb|rpm|arch` builds a package in a container of
   the target family (`debian:12`, `fedora:latest`, `archlinux:latest`);
-  `linux/test-package.sh` installs, checks and removes it. `linux/stage.sh` lays
-  out the files every format shares (`/usr/bin`, launcher, icon, Dolphin and
-  Nemo menus written by `lorenz integrate --data-dir`). `arch/PKGBUILD` is
+  `linux/test-package.sh` installs, checks and removes it. The standard
+  `cmake --install` rule lays out the files every format shares (`/usr/bin`,
+  launcher, icon, Dolphin and Nemo menus). `linux/stage.sh` remains a wrapper
+  for older packaging commands. `arch/PKGBUILD` is
   published on the AUR as `lorenz`. `linux/build-appimage.sh` bundles Qt on
   Ubuntu 22.04. `./install.sh` still builds from source for one user.
 - Keep the core and desktop executables in the same directory.
 - Qt is dynamically linked; distribute its libraries and plugins under their
   applicable licenses. Conversion engines are recommended, never bundled.
+
+For a staged distro install after building the Rust and Qt executables:
+
+```sh
+DESTDIR="$pkgdir" cmake --install build --prefix /usr
+```
+
+The CMake install rule copies the Rust binary, the Qt desktop executable and
+license, then runs `lorenz integrate` against the staged data directory. The
+generated launcher points at `/usr/bin/lorenz-desktop` after installation.
 
 ## Package repositories
 

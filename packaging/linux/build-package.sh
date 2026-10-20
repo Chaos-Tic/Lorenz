@@ -29,7 +29,7 @@ deb)
     . "$HOME/.cargo/env"
     build
     stage=$(mktemp -d)/lorenz
-    sh packaging/linux/stage.sh "$stage"
+    DESTDIR="$stage" cmake --install build --prefix /usr --strip
     install -d "$stage/usr/share/doc/lorenz"
     cat >"$stage/usr/share/doc/lorenz/copyright" <<EOF
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
@@ -73,7 +73,7 @@ rpm)
     dnf install -y gcc-c++ cmake qt6-qtbase-devel cargo rust rpm-build
     build
     stage=$(mktemp -d)/lorenz
-    sh packaging/linux/stage.sh "$stage"
+    DESTDIR="$stage" cmake --install build --prefix /usr --strip
     top=$(mktemp -d)
     # Library requirements are generated from the executables by rpmbuild.
     cat >"$top/lorenz.spec" <<EOF

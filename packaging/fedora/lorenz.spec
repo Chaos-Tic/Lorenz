@@ -66,23 +66,18 @@ the applications menu. Missing engines only hide the formats that need them.
 %if %{with vendor}
 %cargo_vendor_manifest
 %endif
-%cmake -DBUILD_TESTING=OFF
+%cmake -DBUILD_TESTING=OFF -DLORENZ_CLI_BINARY="$PWD/target/rpm/lorenz"
 %cmake_build
 
 %install
-install -Dpm755 target/rpm/lorenz %{buildroot}%{_bindir}/lorenz
-install -Dpm755 %{__cmake_builddir}/lorenz-desktop %{buildroot}%{_bindir}/lorenz-desktop
-# The launcher, icon and Dolphin and Nemo menus `lorenz integrate` writes for
-# one user, here for the system executable.
-%{buildroot}%{_bindir}/lorenz integrate --data-dir %{buildroot}%{_datadir} \
-    --exe %{_bindir}/lorenz-desktop >/dev/null
+%cmake_install
 
 %check
 desktop-file-validate %{buildroot}%{_datadir}/applications/lorenz.desktop
 %cargo_test
 
 %files
-%license LICENSE LICENSE.dependencies
+%license %{_datadir}/licenses/lorenz/LICENSE LICENSE.dependencies
 %if %{with vendor}
 %license cargo-vendor.txt
 %endif

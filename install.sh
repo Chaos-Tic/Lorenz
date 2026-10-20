@@ -213,9 +213,7 @@ step "Installing in ~/.local"
 # Stop the tray companion (not running conversions) so the new version replaces it.
 companion='.*/lorenz-desktop( --background)?'
 pkill -f -x "$companion" 2>/dev/null && was_running=true || was_running=false
-install -Dm755 target/release/lorenz "$HOME/.local/bin/lorenz"
-install -Dm755 build/lorenz-desktop "$HOME/.local/bin/lorenz-desktop"
-"$HOME/.local/bin/lorenz" integrate | sed 's/^/    /'
+cmake --install build --prefix "$HOME/.local" >/dev/null
 command -v update-desktop-database >/dev/null && update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;

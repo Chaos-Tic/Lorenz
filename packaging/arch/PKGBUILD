@@ -36,5 +36,5 @@ build() {
 
 package() {
     cd "Lorenz-$pkgver"
-    sh packaging/linux/stage.sh "$pkgdir"
+    DESTDIR="$pkgdir" cmake --install build --prefix /usr --strip
 }

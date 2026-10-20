@@ -27,12 +27,6 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	cargo test --release --frozen
 endif
 
-override_dh_auto_install:
-	install -Dm755 target/release/lorenz debian/lorenz/usr/bin/lorenz
-	install -Dm755 debian/build/lorenz-desktop debian/lorenz/usr/bin/lorenz-desktop
-	debian/lorenz/usr/bin/lorenz integrate --data-dir debian/lorenz/usr/share \
-		--exe /usr/bin/lorenz-desktop >/dev/null
-
 # dh_clean deletes *.orig files, but cargo checks the crates' Cargo.toml.orig.
 override_dh_clean:
 	dh_clean -XCargo.toml.orig

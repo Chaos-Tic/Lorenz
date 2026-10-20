@@ -1,0 +1,20 @@
+# Run after both executables have been installed. DESTDIR is used by distro
+# builders; the launcher itself must point at the final, un-staged path.
+set(_bindir "@CMAKE_INSTALL_BINDIR@")
+set(_datadir "@CMAKE_INSTALL_DATADIR@")
+if(NOT IS_ABSOLUTE "${_bindir}")
+    set(_bindir "${CMAKE_INSTALL_PREFIX}/${_bindir}")
+endif()
+if(NOT IS_ABSOLUTE "${_datadir}")
+    set(_datadir "${CMAKE_INSTALL_PREFIX}/${_datadir}")
+endif()
+execute_process(
+    COMMAND "$ENV{DESTDIR}${_bindir}/lorenz" integrate
+        --data-dir "$ENV{DESTDIR}${_datadir}"
+        --exe "${_bindir}/lorenz-desktop"
+    RESULT_VARIABLE _result
+    OUTPUT_VARIABLE _output
+    ERROR_VARIABLE _error)
+if(NOT _result EQUAL 0)
+    message(FATAL_ERROR "Lorenz integration failed: ${_error}")
+endif()

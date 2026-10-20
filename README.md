@@ -208,6 +208,20 @@ vulkan-devel` (openSUSE).
 
 </details>
 
+To install just the core app and desktop integration from a source checkout,
+without the interactive helper:
+
+```sh
+cargo build --release --locked
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+cmake --build build
+cmake --install build --prefix "$HOME/.local"
+```
+
+Distribution packages use the same CMake install rule with `DESTDIR` and a
+`/usr` prefix. `install.sh` additionally offers conversion engines, the KWin
+gesture and autostart.
+
 ### Update and uninstall
 
 ```sh
