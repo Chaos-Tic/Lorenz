@@ -1,13 +1,20 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 — 2026-10-20
 
+- The batch manager, settings and diagnostics take the Liquid Glass look of the
+  wheels: a soft peach, blue and lilac backdrop, glass surfaces and capsule
+  buttons, light or dark with the system.
 - Lorenz checks GitHub once a day for a newer release and shows how to update
   for the way it was installed (package manager, winget, AppImage, source),
   from the tray and the batch manager. One anonymous request; turn it off in
   Settings.
 - New icon matching the frosted-glass wheel of the README and the app: the
   window, the sidebar, the installed icon and the Windows installer use it.
+- Standard `cmake --install` rules install the core, the window, the launcher,
+  the icon, the license and the KWin pieces; every package uses them.
+- `TRADEMARKS.md` and `CONTRIBUTING.md` state how the name and logo may be used
+  and how to contribute.
 - The Windows installer and the AppImage bundle Qt: they now also ship Qt's
   license (LGPL-3.0) and `THIRD-PARTY-NOTICES.txt`, the licenses of the Rust
   crates linked into Lorenz.

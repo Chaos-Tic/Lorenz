@@ -3,6 +3,7 @@
 #include "radialwheel.h"
 #include "logo.h"
 #include "update.h"
+#include "style.h"
 #ifdef Q_OS_WIN
 #include "windowsgesture.h"
 #endif
@@ -88,7 +89,7 @@ class Window : public QMainWindow {
 public:
     Window() {
         setWindowTitle(L("Lorenz · Local file converter")); resize(1060, 820); setMinimumSize(870, 700);
-        auto *root = new QWidget; setCentralWidget(root);
+        auto *root = new style::Backdrop; setCentralWidget(root);
         auto *outer = new QHBoxLayout(root); outer->setContentsMargins(0,0,0,0); outer->setSpacing(0);
         auto *sidebar = new QFrame; sidebar->setObjectName("sidebar"); sidebar->setFixedWidth(190);
         auto *nav = new QVBoxLayout(sidebar); nav->setContentsMargins(22,30,20,24); nav->setSpacing(18);
@@ -160,7 +161,7 @@ public:
             const bool ok = code == 0 && result["ok"].toBool();
             auto *item = table->item(current,2);
             item->setText(ok ? L("Done") : cancelling ? L("Cancelled") : L("Failed"));
-            item->setForeground(QColor(ok ? "#9bd7bc" : "#ff9299"));
+            item->setForeground(ok ? style::colors().ok : style::colors().failed);
             const QString error = result["error"].toString(QString::fromUtf8(worker.readAllStandardError()));
             item->setToolTip(ok ? result["output"].toString() : error);
             if (ok) { ++succeeded; lastOutput = result["output"].toString(); } else { ++failed; if (!cancelling) status->setText(error.left(180)); }
@@ -203,7 +204,7 @@ public:
             if (cancelling) for (int i=current;i<table->rowCount();++i) table->item(i,2)->setText(L("Not processed"));
             status->setText(L("%1 completed · %2 failed%3").arg(succeeded).arg(failed).arg(cancelling ? L(" · queue stopped") : "")); setBusy(false); return;
         }
-        response.clear(); table->item(current,2)->setText(L("Conversion…")); table->item(current,2)->setForeground(QColor("#edc16e"));
+        response.clear(); table->item(current,2)->setText(L("Conversion…")); table->item(current,2)->setForeground(style::colors().busy);
         status->setText(L("Processing %1 / %2").arg(current+1).arg(table->rowCount()));
         QStringList args {"convert", "--to", format->currentData().toString(), "--json", "--cancel-file", cancelPath()};
         if (!outputDir.isEmpty()) args << "--output-dir" << outputDir;
@@ -336,38 +337,7 @@ int main(int argc,char **argv) {
     QApplication app(argc,argv); app.setApplicationName("Lorenz"); app.setOrganizationName("Lorenz");
     app.setWindowIcon(lorenzIcon());
     app.setStyle("Fusion"); app.setFont(QFont("DejaVu Sans",10));
-    app.setStyleSheet(R"(
-        QWidget { color:#edf3f1; background:#171d23; }
-        QFrame#sidebar { background:#13191f; border-right:1px solid #2e3e44; }
-        QLabel { background:transparent; }
-        QLabel#brand { color:#b6e8d6; font-size:42px; font-weight:500; }
-        QLabel#brandName { font-size:17px; font-weight:600; letter-spacing:2px; }
-        QLabel#hero { font-size:30px; font-weight:600; }
-        QLabel#eyebrow { color:#8fa2ab; font-size:10px; letter-spacing:2px; }
-        QLabel#muted { color:#a9b9be; font-size:12px; }
-        QLabel#local { color:#9bd7bc; font-size:10px; }
-        QLabel#navActive { background:#293f3d; border-radius:9px; padding:12px; }
-        QFrame#dropZone { background:#1d262d; border:1px dashed #496f68; border-radius:18px; }
-        QLabel#dropSymbol { color:#b6e8d6; font-size:34px; }
-        QLabel#dropTitle { font-size:17px; font-weight:600; }
-        QPushButton { background:#273139; border:1px solid #3b4c54; padding:10px 12px; border-radius:9px; }
-        QPushButton:hover { background:#33453f; border-color:#b6e8d6; }
-        QPushButton:focus, QComboBox:focus { border:1px solid #b6e8d6; }
-        QPushButton:disabled { color:#6b7c84; border-color:#2d3a42; }
-        QPushButton#primary { color:#183c32; background:#b6e8d6; border-color:#b6e8d6; font-weight:700; padding:12px 25px; }
-        QPushButton#primary:disabled { color:#6b7c84; background:#293f3d; border-color:#2e3e44; }
-        QComboBox { background:#1d262d; border:1px solid #3b4c54; padding:10px; border-radius:9px; }
-        QComboBox QAbstractItemView { background:#1d262d; selection-background-color:#496f68; }
-        QComboBox::drop-down { border:0; width:30px; }
-        QComboBox::down-arrow { image:url(:/chevron.png); width:12px; height:8px; }
-        QCheckBox { spacing:10px; } QCheckBox::indicator { width:18px; height:18px; border-radius:5px; border:1px solid #496f68; background:#1d262d; }
-        QCheckBox::indicator:checked { background:#b6e8d6; border-color:#b6e8d6; }
-        QTableWidget { background:#1d262d; border:1px solid #2d3a42; selection-background-color:#293f3d; }
-        QHeaderView::section { background:#273139; color:#8fa2ab; border:0; padding:10px; font-size:10px; }
-        QProgressBar { border:0; background:#2d3a42; } QProgressBar::chunk { background:#b6e8d6; }
-        QToolTip { background:#33453f; color:#edf3f1; border:1px solid #496f68; }
-        QMenu { background:#1d262d; border:1px solid #3b4c54; } QMenu::item { padding:10px; } QMenu::item:selected { background:#496f68; }
-    )");
+    app.setStyleSheet(style::sheet());
     const auto args=app.arguments();
     QSystemTrayIcon tray{lorenzIcon()};
     tray.setToolTip(L("Lorenz · drag a file, then tap Shift, Ctrl or Alt"));

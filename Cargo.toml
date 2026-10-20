@@ -1,6 +1,6 @@
 [package]
 name = "lorenz"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2024"
 description = "Local file conversion for Linux and Windows"
 rust-version = "1.85"

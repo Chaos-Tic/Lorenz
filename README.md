@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
-    <img src="docs/media/banner.svg" alt="Lorenz — A lighter way to convert." width="100%">
-  </picture>
+  <img src="docs/media/banner.svg" alt="Lorenz — A lighter way to convert." width="100%">
 </p>
 
 <p align="center">
@@ -42,10 +39,7 @@ what is verified and what is not yet done are listed in
 [Install](#install-on-linux) · [The three wheels](#three-wheels) · [Formats and tools](#what-lorenz-can-do) · [Desktop guide](docs/USER_GUIDE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/media/three-wheels-dark.png">
-    <img src="docs/media/three-wheels.png" alt="The Convert, Tools and Actions wheels in frosted glass, each with one choice magnified" width="100%">
-  </picture>
+  <img src="docs/media/three-wheels.png" alt="The Convert, Tools and Actions wheels in frosted glass, each with one choice magnified" width="100%">
 </p>
 
 *Real wheels captured during a Wayland file drag in an isolated KWin session.*
@@ -73,6 +67,22 @@ moves in your file manager. The keys can be changed in **Settings** (tray icon).
 ![Opening the wheel, hovering WebP, then switching to Tools and Actions](docs/media/shift-drag.gif)
 
 </details>
+
+## Batch manager
+
+<p align="center">
+  <img src="docs/media/workflow.gif" alt="The Lorenz window in frosted glass over a soft peach, blue and lilac backdrop: a photo is added, WebP is chosen as the output format, and after converting the file list shows Done with 1 completed and 0 failed." width="760">
+</p>
+
+For many files at once, open **Lorenz** from the applications menu (or the tray
+icon): drop files or folders, pick one output format for all of them, choose
+where to save, and convert. Each file shows its result; originals are never
+modified. The window follows your light or dark theme, and tells you when a new
+version of Lorenz is available.
+
+<p align="center">
+  <img src="docs/media/settings.png" alt="Lorenz settings: the keys that open the Convert, Tools and Actions wheels, start at login, check for updates once a day, and the interface language." width="420">
+</p>
 
 ## Install on Linux
 
@@ -446,7 +456,12 @@ franchise.
 
 ## License
 
-Lorenz is free software under the [GNU General Public License v3.0 or later](LICENSE).
+Copyright (c) 2026 Chaos-Tic. Lorenz is free software under the GNU General
+Public License v3.0 or later ([LICENSE](LICENSE)): anyone who redistributes it,
+modified or not, must keep this notice and publish the source under the same
+license. The name and the logo identify the official project and may not be
+used for a fork ([TRADEMARKS.md](TRADEMARKS.md)). Issues are welcome; see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Code signing
 
