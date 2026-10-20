@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Lorenz checks GitHub once a day for a newer release and shows how to update
+  for the way it was installed (package manager, winget, AppImage, source),
+  from the tray and the batch manager. One anonymous request; turn it off in
+  Settings.
 - New icon matching the frosted-glass wheel of the README and the app: the
   window, the sidebar, the installed icon and the Windows installer use it.
 - The Windows installer and the AppImage bundle Qt: they now also ship Qt's

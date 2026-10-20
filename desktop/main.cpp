@@ -2,6 +2,7 @@
 #include <cmath>
 #include "radialwheel.h"
 #include "logo.h"
+#include "update.h"
 #ifdef Q_OS_WIN
 #include "windowsgesture.h"
 #endif
@@ -44,7 +45,35 @@ public:
     }
 };
 
+// How to update, for the way Lorenz was installed; nothing is downloaded or
+// run without the user.
+static void showUpdate(QWidget *parent, const QString &version, const QString &page) {
+    const update::Method m = update::method();
+    QDialog d(parent); d.setWindowTitle(L("Update Lorenz")); d.setMinimumWidth(480);
+    auto *layout = new QVBoxLayout(&d); layout->setSpacing(12); layout->setContentsMargins(26, 22, 26, 20);
+    layout->addWidget(label(L("Lorenz %1 is available. You have %2.").arg(version, LORENZ_VERSION), "dropTitle"));
+    layout->addWidget(label(m.how, "muted"));
+    if (!m.command.isEmpty()) {
+        auto *cmd = label(m.command); cmd->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+        cmd->setTextInteractionFlags(Qt::TextSelectableByMouse); layout->addWidget(cmd);
+    }
+    auto *keep = new QCheckBox(L("Check for updates once a day")); keep->setChecked(update::enabled());
+    QObject::connect(keep, &QCheckBox::toggled, [](bool on) { update::setEnabled(on); });
+    layout->addWidget(keep);
+    auto *buttons = new QDialogButtonBox; layout->addWidget(buttons);
+    if (!m.command.isEmpty()) {
+        auto *copy = buttons->addButton(L("Copy the command"), QDialogButtonBox::ActionRole);
+        QObject::connect(copy, &QPushButton::clicked, [m] { QGuiApplication::clipboard()->setText(m.command); });
+    }
+    auto *open = buttons->addButton(L("Open the release page"), QDialogButtonBox::ActionRole);
+    QObject::connect(open, &QPushButton::clicked, [page] { QDesktopServices::openUrl(QUrl(page)); });
+    auto *close = buttons->addButton(L("Close"), QDialogButtonBox::RejectRole);
+    QObject::connect(close, &QPushButton::clicked, &d, &QDialog::reject);
+    d.exec();
+}
+
 class Window : public QMainWindow {
+    update::Checker checker;
     QTableWidget *table;
     QComboBox *format;
     QLabel *summary, *destination, *status;
@@ -72,6 +101,13 @@ public:
         auto *pin = new QCheckBox(L("Always on top")); pin->setToolTip(L("Subject to your desktop / compositor rules")); nav->addWidget(pin);
         nav->addStretch(); nav->addWidget(label(L("●  LOCAL PROCESSING"), "local"));
         nav->addWidget(label(L("Your files stay\non your computer."), "muted")); nav->addWidget(label("VERSION " LORENZ_VERSION, "eyebrow"));
+        auto *newer = new QPushButton; newer->hide(); nav->addWidget(newer);
+        checker.found = [this, newer](const QString &version, const QString &page) {
+            newer->setText(L("Update to %1").arg(version)); newer->show();
+            newer->disconnect();
+            connect(newer, &QPushButton::clicked, this, [this, version, page] { showUpdate(this, version, page); });
+        };
+        checker.check(LORENZ_VERSION);
         outer->addWidget(sidebar);
         auto *main = new QVBoxLayout; main->setContentsMargins(32,28,32,24); main->setSpacing(15); outer->addLayout(main,1);
         main->addWidget(label(L("YOUR DESKTOP. YOUR FILES."), "eyebrow"));
@@ -251,7 +287,7 @@ static QVector<RadialWheel::Item> menuItems(const QString &kind,const QStringLis
 
 class SettingsDialog : public QDialog {
     QList<QComboBox*> keys;
-    QCheckBox *login;
+    QCheckBox *login, *updates;
     QComboBox *language;
 public:
     SettingsDialog() {
@@ -269,6 +305,7 @@ public:
         layout->addLayout(grid);
         layout->addWidget(label(L("Startup"),"dropTitle"));
         login=new QCheckBox(L("Start Lorenz when I log in")); layout->addWidget(login);
+        updates=new QCheckBox(L("Check for updates once a day")); updates->setChecked(update::enabled()); layout->addWidget(updates);
         QProcess status; status.start(corePath(),{"autostart","status"}); status.waitForFinished(3000);
         login->setChecked(status.readAllStandardOutput().trimmed()=="enabled");
         layout->addWidget(label(L("The tray companion shows notifications and gives access to the batch manager. The KWin gesture works without it."),"muted"));
@@ -287,6 +324,7 @@ public:
             QSettings settings(configPath(),QSettings::IniFormat);
             for (int i=0;i<3;++i) settings.setValue("Wheels/"+wheelNames[i],chosen[i]);
             settings.setValue("Language",language->currentData().toString());
+            update::setEnabled(updates->isChecked());
             settings.sync();
             QProcess::execute(corePath(),{"autostart",login->isChecked()?"enable":"disable"});
             accept();
@@ -331,14 +369,7 @@ int main(int argc,char **argv) {
         QMenu { background:#1d262d; border:1px solid #3b4c54; } QMenu::item { padding:10px; } QMenu::item:selected { background:#496f68; }
     )");
     const auto args=app.arguments();
-    QPixmap mark(64,64); mark.fill(Qt::transparent);
-    { QPainter p(&mark); p.setRenderHint(QPainter::Antialiasing);
-      p.setBrush(QColor("#1d262d")); p.setPen(Qt::NoPen); p.drawRoundedRect(QRectF(2,2,60,60),16,16);
-      p.setPen(QPen(QColor("#b6e8d6"),6,Qt::SolidLine,Qt::RoundCap));
-      for (int i=0;i<3;++i) p.drawArc(QRectF(14,14,36,36),(20+i*120)*16,88*16);
-      p.setBrush(QColor("#edf3f1")); p.setPen(Qt::NoPen); p.drawEllipse(QPointF(32,32),5,5);
-    }
-    QSystemTrayIcon tray{QIcon(mark)};
+    QSystemTrayIcon tray{lorenzIcon()};
     tray.setToolTip(L("Lorenz · drag a file, then tap Shift, Ctrl or Alt"));
     auto notify=[&](const QString &title,const QString &message) {
         const QString sender=QStandardPaths::findExecutable("notify-send");
@@ -450,8 +481,18 @@ int main(int argc,char **argv) {
     QObject::connect(settings,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--settings"}); });
     auto *manager=menu.addAction(L("Open batch manager"));
     QObject::connect(manager,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--manager"}); });
+    auto *newer=menu.addAction(QString()); newer->setVisible(false);
     menu.addSeparator(); auto *quit=menu.addAction(L("Quit tray companion")); QObject::connect(quit,&QAction::triggered,&app,&QApplication::quit);
     tray.setContextMenu(&menu); tray.show();
+    // A newer release: one notification, and an entry in the tray menu.
+    update::Checker checker;
+    checker.found=[&](const QString &version,const QString &page){
+        newer->setText(L("Update to %1…").arg(version)); newer->setVisible(true);
+        QObject::disconnect(newer,nullptr,nullptr,nullptr);
+        QObject::connect(newer,&QAction::triggered,&app,[version,page]{ showUpdate(nullptr,version,page); });
+        notify(L("Lorenz %1 is available").arg(version),update::method().how);
+    };
+    checker.check(LORENZ_VERSION);
 #ifdef Q_OS_WIN
     // The companion hosts the drag gesture on Windows, as KWin does on Plasma.
     WindowsGesture gesture(corePath(),wheelKeys,keyLabel,[&](RadialWheel::Mode mode,const QString &id,const QStringList &paths){

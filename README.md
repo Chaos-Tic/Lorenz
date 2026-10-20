@@ -27,7 +27,9 @@ it, **Ctrl** edits it (compress, resize, rotate, split, merge…) and **Alt** ac
 (copy, move, share, terminal…). Everything runs locally with the engines installed
 on your computer. Originals are never modified: `photo.png` becomes `photo.webp`,
 and a tool produces `photo-compressed.png`. A number is added only when a name is
-already taken. No account, server, or cloud service is involved.
+already taken. No account, server, or cloud service is involved; the only network
+use is a once-a-day check for a newer release on GitHub, which you can turn off
+in Settings.
 
 The global drag gesture works on **Windows 10 and 11** and on **KDE Plasma 6.8
 (Wayland)**. Every other Linux desktop gets the same wheels from the file manager's

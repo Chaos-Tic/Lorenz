@@ -34,6 +34,16 @@ a flaw Lorenz exposes. Lorenz reduces what an engine can be made to do:
 - **Time limit and cancellation** stop the engine and every process it
   started (its process group on Linux, its process tree on Windows).
 
+## Update check
+
+At most once a day, the desktop (tray companion and window) makes one anonymous
+HTTPS request to `api.github.com/repos/Chaos-Tic/Lorenz/releases/latest`. It
+sends no identifier, cookie, file name or content; GitHub sees the address of
+the request, as with any download. When a newer release exists, Lorenz shows
+how to update (package manager, winget, or the release page); nothing is
+downloaded or run automatically. Turn it off in **Settings → Check for
+updates once a day**. Conversions and the `lorenz` core never use the network.
+
 ## Known limits
 
 - Engines run as your user, without further confinement (no bubblewrap,

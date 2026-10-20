@@ -24,6 +24,18 @@ inline bool french() {
 inline QString L(const QString &english) {
     if (!french()) return english;
     static const QHash<QString, QString> fr{
+        // Updates
+        {"Update Lorenz", "Mettre à jour Lorenz"}, {"Lorenz %1 is available. You have %2.", "Lorenz %1 est disponible. Vous avez la %2."},
+        {"Lorenz %1 is available", "Lorenz %1 est disponible"}, {"Update to %1", "Mettre à jour vers %1"},
+        {"Update to %1…", "Mettre à jour vers %1…"}, {"Copy the command", "Copier la commande"},
+        {"Open the release page", "Ouvrir la page de la version"},
+        {"Check for updates once a day", "Vérifier les mises à jour une fois par jour"},
+        {"Update with your package manager.", "Mettez à jour avec votre gestionnaire de paquets."},
+        {"Download the new AppImage and replace this one.", "Téléchargez la nouvelle AppImage et remplacez celle-ci."},
+        {"Update with winget, or download the new installer.", "Mettez à jour avec winget, ou téléchargez le nouvel installateur."},
+        {"Lorenz was built from source: update the checkout and install it again.",
+         "Lorenz a été compilé depuis les sources : mettez à jour le dépôt et réinstallez-le."},
+        {"Download the new version from GitHub.", "Téléchargez la nouvelle version sur GitHub."},
         // Wheel
         {"Convert", "Convertir"}, {"Tools", "Outils"}, {"Actions", "Actions"},
         {"Release to convert", "Relâcher pour convertir"}, {"Release to apply", "Relâcher pour appliquer"},
