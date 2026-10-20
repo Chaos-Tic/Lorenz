@@ -77,7 +77,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lorenz.desktop
 %cargo_test
 
 %files
-%license %{_datadir}/licenses/lorenz/LICENSE LICENSE.dependencies
+%license %{_datadir}/licenses/lorenz/LICENSE
+%license LICENSE.dependencies
 %if %{with vendor}
 %license cargo-vendor.txt
 %endif
