@@ -20,6 +20,8 @@ git clone -q ssh://aur@aur.archlinux.org/lorenz.git "$work/aur"
 sed -e "s/^pkgver=.*/pkgver=$version/" -e 's/^pkgrel=.*/pkgrel=1/' packaging/arch/PKGBUILD >"$work/aur/PKGBUILD"
 id builder >/dev/null 2>&1 || useradd -m builder
 chown -R builder "$work"
+# Git refuses to work as root in a folder owned by builder unless told it is safe.
+git config --global --add safe.directory "$work/aur"
 (cd "$work/aur" && runuser -u builder -- updpkgsums && runuser -u builder -- makepkg --printsrcinfo >.SRCINFO)
 cd "$work/aur"
 git add PKGBUILD .SRCINFO

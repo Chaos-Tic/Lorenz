@@ -42,7 +42,10 @@ cd "$out"
 [ -f "lorenz_$version.orig-vendor.tar.xz" ] ||
     curl -fsSL -o "lorenz_$version.orig-vendor.tar.xz" "$url/releases/download/v$version/lorenz-$version-vendor.tar.xz"
 
+# PPA_ORIG_UPLOADED=1: Launchpad already has this version's orig tarballs (an
+# earlier series went through), so every series refers to them.
 first=1
+[ -n "${PPA_ORIG_UPLOADED:-}" ] && first=0
 for s in "${series[@]}"; do
     case $s in
     noble) number=24.04 rust='cargo-1.85, rustc-1.85' ;;
