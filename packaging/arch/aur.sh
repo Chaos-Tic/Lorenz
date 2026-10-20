@@ -12,7 +12,9 @@ printf '%s\n' "${AUR_SSH_KEY:?set AUR_SSH_KEY}" >~/.ssh/aur && chmod 600 ~/.ssh/
 cat >>~/.ssh/known_hosts <<'KEYS'
 aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN
 KEYS
-export GIT_SSH_COMMAND='ssh -i ~/.ssh/aur -o IdentitiesOnly=yes'
+# ssh reads the home folder of the user database, not $HOME (they differ in CI
+# containers): name the key and the known hosts file explicitly.
+export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/aur -o IdentitiesOnly=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
 work=$(mktemp -d)
 git clone -q ssh://aur@aur.archlinux.org/lorenz.git "$work/aur"
 sed -e "s/^pkgver=.*/pkgver=$version/" -e 's/^pkgrel=.*/pkgrel=1/' packaging/arch/PKGBUILD >"$work/aur/PKGBUILD"

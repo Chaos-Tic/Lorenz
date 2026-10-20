@@ -78,6 +78,14 @@ EOF
     rm -rf "$work"
     echo "built lorenz_${full}_source.changes"
     if [ "${PPA_UPLOAD:-1}" = 1 ]; then
-        dput "ppa:$ppa" "lorenz_${full}_source.changes"
+        # Launchpad's FTP sometimes answers "550 internal server error" right
+        # after another upload: try again after a pause, forcing the re-upload.
+        for try in 1 2 3 4; do
+            force=; [ "$try" = 1 ] || force=-f
+            dput $force "ppa:$ppa" "lorenz_${full}_source.changes" && break
+            [ "$try" = 4 ] && exit 1
+            echo "Upload failed (attempt $try); retrying in 90 s" >&2
+            sleep 90
+        done
     fi
 done
