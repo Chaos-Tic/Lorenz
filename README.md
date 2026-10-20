@@ -218,9 +218,12 @@ cmake --build build
 cmake --install build --prefix "$HOME/.local"
 ```
 
-Distribution packages use the same CMake install rule with `DESTDIR` and a
-`/usr` prefix. `install.sh` additionally offers conversion engines, the KWin
-gesture and autostart.
+Cargo builds the Rust command; CMake builds the Qt interface and installs both,
+with the launcher, menus, icon and license, through one standard install rule.
+Distribution packages run `DESTDIR="$pkgdir" cmake --install build --prefix /usr`
+to stage those files without changing the live system. `install.sh` uses the
+same rule and additionally offers conversion engines, the KWin gesture and
+autostart.
 
 ### Update and uninstall
 
