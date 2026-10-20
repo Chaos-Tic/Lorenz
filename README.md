@@ -434,7 +434,7 @@ Not done yet, in rough order of priority:
   [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) says so (GNOME, Windows 10/11
   and other desktops wait for a dated check).
 - **Windows signing.** Installers are unsigned (see
-  [Code signing](#code-signing)); a winget package is not published yet.
+  [Code signing](#code-signing)); the winget package is [awaiting Microsoft's review](https://github.com/microsoft/winget-pkgs/pull/457389).
 - **Official distribution archives.** Lorenz is in the AUR, a Fedora COPR, an
   Ubuntu PPA and its own apt repository, not in the official Debian, Ubuntu or
   Fedora archives (they require a sponsor and every Rust crate packaged
