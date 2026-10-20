@@ -1,6 +1,7 @@
 #include <QtWidgets>
 #include <cmath>
 #include "radialwheel.h"
+#include "logo.h"
 #ifdef Q_OS_WIN
 #include "windowsgesture.h"
 #endif
@@ -62,7 +63,9 @@ public:
         auto *outer = new QHBoxLayout(root); outer->setContentsMargins(0,0,0,0); outer->setSpacing(0);
         auto *sidebar = new QFrame; sidebar->setObjectName("sidebar"); sidebar->setFixedWidth(190);
         auto *nav = new QVBoxLayout(sidebar); nav->setContentsMargins(22,30,20,24); nav->setSpacing(18);
-        nav->addWidget(label("◉", "brand")); nav->addWidget(label("LORENZ", "brandName"));
+        auto *brand = new QLabel; brand->setObjectName("brand"); brand->setAccessibleName("Lorenz");
+        brand->setPixmap(lorenzLogoPixmap(52, devicePixelRatioF()));
+        nav->addWidget(brand); nav->addWidget(label("LORENZ", "brandName"));
         nav->addWidget(label(L("FILE CONVERTER"), "eyebrow")); nav->addSpacing(32);
         auto *active = label(L("▸  Convert"), "navActive"); nav->addWidget(active);
         auto *doctor = new QPushButton(L("Diagnostics")); nav->addWidget(doctor);
@@ -293,6 +296,7 @@ public:
 
 int main(int argc,char **argv) {
     QApplication app(argc,argv); app.setApplicationName("Lorenz"); app.setOrganizationName("Lorenz");
+    app.setWindowIcon(lorenzIcon());
     app.setStyle("Fusion"); app.setFont(QFont("DejaVu Sans",10));
     app.setStyleSheet(R"(
         QWidget { color:#edf3f1; background:#171d23; }
