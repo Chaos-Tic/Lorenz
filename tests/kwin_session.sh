@@ -59,7 +59,7 @@ formats=$(qdbus6 org.kde.KWin /Lorenz org.lorenz.KWin.Formats)
 # The dragged file's icon must not cover the lower sectors.
 [[ "$(qdbus6 org.kde.KWin /Lorenz org.lorenz.KWin.DragIconHidden)" == true ]] || { echo "Drag icon still drawn over the wheel" >&2; exit 1; }
 # WebP is the right-hand sector for this registry and sample.
-call Move 772 420
+call Move 772 350
 [[ "$(call WheelCenteredAt 650 420)" == true ]] || { echo "Wheel is not centered at the Shift press position" >&2; exit 1; }
 sleep 0.3
 call Snapshot "$LORENZ_TEST_RUN/wheel.png"

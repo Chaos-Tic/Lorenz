@@ -9,8 +9,9 @@ wheel key switches wheels in place. The batch window is optional.
 
 ## Supported scope
 
-- Implemented and locally tested with KWin **6.8.0**, Wayland pointer drags, and local
-  `text/uri-list` files. The build script currently accepts the 6.8 release series.
+- Implemented and locally tested with KWin **6.8.0** and **6.8.1**, Wayland pointer
+  drags, and local `text/uri-list` files. The build script accepts the KWin 6 release
+  series.
 - XWayland source apps, touch/tablet drags, GNOME and other compositors are not
   validated or implemented by this extension. Windows has its own gesture in the
   tray companion (`desktop/windowsgesture.h`).
@@ -22,18 +23,22 @@ wheel key switches wheels in place. The batch window is optional.
 
 ## Install and remove
 
-`./install.sh` offers this step automatically on KDE Plasma 6.8. To run it by hand,
-install the core and desktop first, then KWin headers and build files through your
-distribution: `kwin extra-cmake-modules vulkan-headers` on Arch, `kwin-dev
-extra-cmake-modules libvulkan-dev` on Debian/Ubuntu, `kwin-devel extra-cmake-modules
-vulkan-headers` on Fedora.
+`./install.sh` offers this step automatically on KDE Plasma 6. Package installations
+also place the sources and scripts in `/usr/share/lorenz`. On Arch Linux, the Pacman
+hook `/usr/share/libalpm/hooks/90-lorenz-kwin.hook` rebuilds the extension
+automatically whenever `kwin` or `lorenz` is upgraded. To run it by hand (or via
+**Diagnostics → Enable KWin drag gesture**), install KWin headers and build files
+through your distribution: `kwin extra-cmake-modules vulkan-headers` on Arch,
+`kwin-dev extra-cmake-modules libvulkan-dev` on Debian/Ubuntu, `kwin-devel
+extra-cmake-modules vulkan-headers` on Fedora.
 
 ```sh
 ./scripts/install-kwin.sh
 ```
 
-The production module is installed in Qt's `kwin/plugins` directory using `sudo`.
-The installer loads it through KWin's plugin interface and enables
+The production module is installed in Qt's `kwin/plugins` directory using `sudo` (or
+`pkexec` from the graphical interface) and obsolete revisions are removed. The
+installer loads it through KWin's plugin interface and enables
 `lorenz-<revision>Enabled` in the user's `kwinrc`. No compositor restart is required.
 
 ```sh

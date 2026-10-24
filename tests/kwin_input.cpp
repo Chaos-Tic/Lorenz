@@ -10,6 +10,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QElapsedTimer>
+#include "../desktop/radialwheel.h"
 class TestInput : public KWin::Plugin {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.lorenz.TestInput")
@@ -27,7 +28,7 @@ public Q_SLOTS:
     bool Dragging() { return KWin::waylandServer()->seat()->isDragPointer(); }
     bool WheelCenteredAt(int x,int y) {
         for (auto *w:QApplication::topLevelWidgets()) if (w->objectName()=="lorenz-wheel")
-            return w->mapToGlobal(QPoint(w->width()/2,w->height()/2))==QPoint(x,y);
+            return w->mapToGlobal(RadialWheel::center().toPoint())==QPoint(x,y);
         return false;
     }
     bool Snapshot(QString path) { for (auto *w:QApplication::topLevelWidgets()) if (w->objectName()=="lorenz-wheel") return w->grab().save(path); return false; }

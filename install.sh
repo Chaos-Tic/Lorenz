@@ -153,7 +153,7 @@ note "Session: ${XDG_SESSION_TYPE:-unknown} · desktop: ${XDG_CURRENT_DESKTOP:-u
 # ---------------------------------------------------------------------------
 rust_ok() {
     command -v cargo >/dev/null && command -v rustc >/dev/null || return 1
-    local version; version=$(rustc --version | awk '{print $2}')
+    local version; version=$(rustc --version | sed -n 's/^rustc \([^ ]*\).*/\1/p')
     # Edition 2024 requires Rust 1.85 or newer.
     [[ "$(printf '%s\n1.85.0\n' "$version" | sort -V | head -n1)" == 1.85.0 ]]
 }
@@ -227,10 +227,10 @@ step "Drag gesture"
 kwin_header=/usr/include/kwin/config-kwin.h
 kwin_version=$(sed -n 's/^#define KWIN_PLUGIN_VERSION_STRING "\([0-9.]*\)"/\1/p' "$kwin_header" 2>/dev/null || true)
 if [[ -z $kwin_version ]] && command -v kwin_wayland >/dev/null; then
-    kwin_version=$(kwin_wayland --version 2>/dev/null | awk '{print $2}')
+    kwin_version=$(kwin_wayland --version 2>/dev/null | sed -n 's/^kwin \([^ ]*\).*/\1/p')
 fi
 gesture=false
-if [[ ${XDG_CURRENT_DESKTOP:-} == *KDE* && $kwin_version == 6.8.* ]]; then
+if [[ ${XDG_CURRENT_DESKTOP:-} == *KDE* && $kwin_version == 6.* ]]; then
     note "KDE Plasma with KWin $kwin_version: drag a file, then tap Shift, Ctrl or Alt."
     if ask "$kwin" "Install the KWin extension for the drag gesture (needs administrator access)?" y; then
         if [[ $deps != no && ! -f $kwin_header ]] && ((${#kwin_pkgs[@]})); then
@@ -243,9 +243,9 @@ if [[ ${XDG_CURRENT_DESKTOP:-} == *KDE* && $kwin_version == 6.8.* ]]; then
         fi
     fi
 elif [[ ${XDG_CURRENT_DESKTOP:-} == *KDE* ]]; then
-    warn "The drag gesture needs KWin 6.8 (found ${kwin_version:-none}). Other features work."
+    warn "The drag gesture needs KWin 6 (found ${kwin_version:-none}). Other features work."
 else
-    note "The global drag gesture is available on KDE Plasma (KWin 6.8, Wayland) only."
+    note "The global drag gesture is available on KDE Plasma (KWin 6, Wayland) only."
     note "Here, use the file manager context menu (Lorenz → Convert, Tools, Actions),"
     note "or bind a shortcut to: lorenz pick FILE --menu fuzzel|wofi|rofi"
 fi

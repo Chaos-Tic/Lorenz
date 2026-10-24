@@ -22,6 +22,7 @@ esac
 lorenz --version
 lorenz doctor
 for file in /usr/share/applications/lorenz.desktop /usr/share/icons/hicolor/scalable/apps/lorenz.svg \
+    /usr/share/lorenz/scripts/install-kwin.sh /usr/share/lorenz/integrations/kwin/plugin.cpp \
     /usr/share/kio/servicemenus/lorenz.desktop /usr/share/nemo/actions/lorenz-convert.nemo_action; do
     test -f "$file" || { echo "missing $file" >&2; exit 1; }
 done

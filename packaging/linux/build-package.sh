@@ -102,6 +102,7 @@ cp -a $stage/. %{buildroot}/
 /usr/bin/lorenz-desktop
 /usr/share/applications/lorenz.desktop
 /usr/share/icons/hicolor/scalable/apps/lorenz.svg
+/usr/share/lorenz
 /usr/share/kio/servicemenus/lorenz.desktop
 /usr/share/nemo/actions/lorenz-*.nemo_action
 %license /usr/share/licenses/lorenz/LICENSE

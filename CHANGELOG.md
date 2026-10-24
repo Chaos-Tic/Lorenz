@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.1 — 2026-10-24
+
+- Keep the KDE Plasma Wayland drag gesture working across KWin updates:
+  - Package installations include the KWin extension sources and scripts in
+    `/usr/share/lorenz`, and `scripts/install-kwin.sh` works with system-wide
+    (`/usr/bin`) as well as user (`~/.local/bin`) installations.
+  - On Arch Linux and derivatives, a Pacman hook
+    (`/usr/share/libalpm/hooks/90-lorenz-kwin.hook`) automatically rebuilds and
+    reloads the KWin extension whenever `kwin` or `lorenz` is upgraded.
+  - On KDE Plasma Wayland, the tray companion automatically loads a newly built
+    extension revision into KWin, and **Diagnostics** (plus the tray menu)
+    reports the KWin gesture state with a one-click **Enable KWin drag gesture**
+    action when a rebuild is needed.
+  - Remove the redundant `Id` field from `integrations/kwin/metadata.json` so
+    KWin 6 loads the plugin without metadata warnings, and clean up obsolete
+    `lorenz-*.so` plugin revisions on update.
+
 ## 1.2.0 — 2026-10-20
 
 - The batch manager, settings and diagnostics take the Liquid Glass look of the

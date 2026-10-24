@@ -102,18 +102,25 @@ public:
     }
     Q_PROPERTY(QString BuildId READ buildId)
     Q_PROPERTY(int WheelSize READ wheelSize)
-    QString buildId() const { return QStringLiteral(LORENZ_PLUGIN_ID); }
-    int wheelSize() const { return wheel.width(); }
+    Q_INVOKABLE QString buildId() const { return QStringLiteral(LORENZ_PLUGIN_ID); }
+    Q_INVOKABLE int wheelSize() const { return wheel.width(); }
     Q_PROPERTY(bool Active READ isActive)
     Q_PROPERTY(QStringList Formats READ formatList)
     Q_PROPERTY(QPoint WheelPosition READ wheelPosition)
     Q_PROPERTY(QString Mode READ modeName)
     Q_PROPERTY(bool DragIconHidden READ dragIconHidden)
-    bool dragIconHidden() const { return hiddenIcon && !hiddenIcon->isVisible(); }
-    QString modeName() const { return kinds[mode]; }
-    bool isActive() const { return active; }
-    QStringList formatList() const { return wheel.formats; }
-    QPoint wheelPosition() const { return wheel.pos(); }
+    Q_INVOKABLE bool dragIconHidden() const { return hiddenIcon && !hiddenIcon->isVisible(); }
+    Q_INVOKABLE QString modeName() const { return kinds[mode]; }
+    Q_INVOKABLE bool isActive() const { return active; }
+    Q_INVOKABLE QStringList formatList() const { return wheel.formats; }
+    Q_INVOKABLE QPoint wheelPosition() const { return wheel.pos(); }
+    Q_INVOKABLE QString BuildId() const { return buildId(); }
+    Q_INVOKABLE int WheelSize() const { return wheelSize(); }
+    Q_INVOKABLE bool Active() const { return isActive(); }
+    Q_INVOKABLE QStringList Formats() const { return formatList(); }
+    Q_INVOKABLE QPoint WheelPosition() const { return wheelPosition(); }
+    Q_INVOKABLE QString Mode() const { return modeName(); }
+    Q_INVOKABLE bool DragIconHidden() const { return dragIconHidden(); }
     bool pointerMotion(KWin::PointerMotionEvent *event) override {
         if (!active) return false;
         wheel.trackGlobal(event->position); return true;

@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = kwin
+Target = lorenz
+
+[Action]
+Description = Rebuilding Lorenz KWin drag gesture extension...
+When = PostTransaction
+Exec = /usr/share/lorenz/scripts/kwin-hook.sh

@@ -4,6 +4,7 @@
 #include "logo.h"
 #include "update.h"
 #include "style.h"
+#include "kwin.h"
 #ifdef Q_OS_WIN
 #include "windowsgesture.h"
 #endif
@@ -238,10 +239,30 @@ public:
     }
     void showDoctor() {
         const auto doc=query({"doctor","--json"}).object();
-        QDialog dialog(this); dialog.setWindowTitle(L("Backend diagnostics")); dialog.resize(520,400); auto *l=new QVBoxLayout(&dialog);
+        QDialog dialog(this); dialog.setWindowTitle(L("Backend diagnostics")); dialog.resize(520,420); auto *l=new QVBoxLayout(&dialog);
         l->addWidget(label(L("Your local conversion engines"), "dropTitle"));
         if (doc.isEmpty()) l->addWidget(label(L("Cannot contact the Lorenz core.")));
         for (const auto &entry : doc["backends"].toArray()) { auto b=entry.toObject(); l->addWidget(label((b["available"].toBool()? "✓  " : "—  ")+b["name"].toString()+(b["available"].toBool()? L(" · available") : L(" · not installed")))); }
+        if (kwin::isKdeWayland()) {
+            const QString id=kwin::ensureLoaded();
+            auto *kwinLabel=label((!id.isEmpty()? "✓  " : "—  ")+L("KWin drag gesture")+(!id.isEmpty()? L(" · active") : L(" · inactive (update needed for this KWin version)")));
+            l->addWidget(kwinLabel);
+            const QString script=kwin::installScriptPath();
+            if (id.isEmpty() && !script.isEmpty()) {
+                auto *fix=new QPushButton(L("Enable KWin drag gesture")); l->addWidget(fix);
+                connect(fix,&QPushButton::clicked,&dialog,[fix,kwinLabel,script,&dialog]{
+                    fix->setEnabled(false); fix->setText(L("Updating KWin extension…"));
+                    auto *proc=new QProcess(&dialog);
+                    connect(proc,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),&dialog,[fix,kwinLabel,proc](int,QProcess::ExitStatus){
+                        proc->deleteLater();
+                        const bool ok=!kwin::ensureLoaded().isEmpty();
+                        kwinLabel->setText((ok? "✓  " : "—  ")+L("KWin drag gesture")+(ok? L(" · active") : L(" · inactive (update needed for this KWin version)")));
+                        fix->setVisible(!ok); fix->setEnabled(true); fix->setText(L("Enable KWin drag gesture"));
+                    });
+                    proc->start(script,QStringList{});
+                });
+            }
+        }
         l->addWidget(label(L("Codec support varies by installation. Missing engines disable their conversions. See the README for package details."),"muted"));
         auto *close=new QPushButton(L("Close")); l->addWidget(close); connect(close,&QPushButton::clicked,&dialog,&QDialog::accept); dialog.exec();
     }
@@ -451,9 +472,32 @@ int main(int argc,char **argv) {
     QObject::connect(settings,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--settings"}); });
     auto *manager=menu.addAction(L("Open batch manager"));
     QObject::connect(manager,&QAction::triggered,&app,[&]{ QProcess::startDetached(app.applicationFilePath(),{"--manager"}); });
+    auto *kwinAction=menu.addAction(L("Enable KWin drag gesture…")); kwinAction->setVisible(false);
     auto *newer=menu.addAction(QString()); newer->setVisible(false);
     menu.addSeparator(); auto *quit=menu.addAction(L("Quit tray companion")); QObject::connect(quit,&QAction::triggered,&app,&QApplication::quit);
     tray.setContextMenu(&menu); tray.show();
+    QFileSystemWatcher kwinWatcher;
+    if (kwin::isKdeWayland()) {
+        auto syncKwin=[&]{
+            const bool active=!kwin::ensureLoaded().isEmpty();
+            kwinAction->setVisible(!active && !kwin::installScriptPath().isEmpty());
+        };
+        syncKwin();
+        if (QDir(kwin::pluginDirectory()).exists()) kwinWatcher.addPath(kwin::pluginDirectory());
+        QObject::connect(&kwinWatcher,&QFileSystemWatcher::directoryChanged,&app,[&]{ syncKwin(); });
+        QObject::connect(kwinAction,&QAction::triggered,&app,[&]{
+            const QString script=kwin::installScriptPath(); if (script.isEmpty()) return;
+            kwinAction->setEnabled(false);
+            auto *proc=new QProcess(&app);
+            QObject::connect(proc,qOverload<int,QProcess::ExitStatus>(&QProcess::finished),&app,[&,proc](int code,QProcess::ExitStatus){
+                const QByteArray err=proc->readAllStandardError(); proc->deleteLater();
+                kwinAction->setEnabled(true); syncKwin();
+                if (code==0 && !kwin::activeBuildId().isEmpty()) notify("Lorenz",L("KWin drag gesture enabled"));
+                else notify(L("KWin extension failed"),QString::fromUtf8(err).trimmed().left(300));
+            });
+            proc->start(script,QStringList{});
+        });
+    }
     // A newer release: one notification, and an entry in the tray menu.
     update::Checker checker;
     checker.found=[&](const QString &version,const QString &page){

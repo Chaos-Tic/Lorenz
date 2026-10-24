@@ -91,13 +91,16 @@ sample that reproduces the issue over uploading an original private document.
 
 ## No wheel opens during dragging
 
-The global gesture needs the KWin 6.8 Wayland integration, not merely the standalone
-app. Start dragging first, then **tap** the key while still holding the mouse button:
-a key held before the drag starts is deliberately ignored. Check the keys in
-**Settings** (a wheel can be set to *Off*). No wheel is expected for text-only drags
-or a key without a drag.
+The global gesture on Linux needs the KWin 6 Wayland integration, not merely the
+standalone app. Start dragging first, then **tap** the key while still holding the
+mouse button: a key held before the drag starts is deliberately ignored. Check the
+keys in **Settings** (a wheel can be set to *Off*). No wheel is expected for
+text-only drags or a key without a drag.
 
-After a KWin update, rebuild and reinstall the matching extension. Other compositors
-and Windows do not yet have global Shift-drag integration; use a context action there.
+Because KWin checks the exact compositor version embedded in binary plugins, a KWin
+upgrade requires a matching rebuild. On Arch Linux, the installed Pacman hook
+rebuilds the extension automatically when `kwin` updates; on any distribution, you
+can also click **Enable KWin drag gesture** in **Diagnostics** (or the tray menu), or
+run `/usr/share/lorenz/scripts/install-kwin.sh`.
 Opening the application menu entry shows a tray companion, not the old batch window.
 The batch manager remains available from its tray menu.

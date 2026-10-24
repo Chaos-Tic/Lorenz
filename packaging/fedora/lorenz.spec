@@ -4,7 +4,7 @@
 %bcond vendor 1
 
 Name:           lorenz
-Version:        1.2.0
+Version:        1.2.1
 Release:        1%{?dist}
 Summary:        Local file conversion with radial wheels
 
@@ -87,6 +87,7 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lorenz.desktop
 %{_bindir}/lorenz-desktop
 %{_datadir}/applications/lorenz.desktop
 %{_datadir}/icons/hicolor/scalable/apps/lorenz.svg
+%{_datadir}/lorenz
 # Dolphin and Nemo read these; neither is required.
 %dir %{_datadir}/kio
 %dir %{_datadir}/kio/servicemenus
@@ -96,6 +97,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lorenz.desktop
 %{_datadir}/nemo/actions/lorenz-*.nemo_action
 
 %changelog
+* Sat Oct 24 2026 Chaos-Tic <58691435+Chaos-Tic@users.noreply.github.com> - 1.2.1-1
+- Rebuild KWin extension across KWin updates and diagnose gesture state
+
 * Tue Oct 20 2026 Chaos-Tic <58691435+Chaos-Tic@users.noreply.github.com> - 1.2.0-1
 - Liquid Glass window, new icon, update offers, standard CMake install rules
 

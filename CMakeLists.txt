@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(Lorenz VERSION 1.2.0 LANGUAGES CXX)
+project(Lorenz VERSION 1.2.1 LANGUAGES CXX)
 include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,6 +19,11 @@ if(UNIX AND NOT APPLE)
         "Path to the separately built Rust CLI")
     install(PROGRAMS "${LORENZ_CLI_BINARY}" DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/lorenz)
+    install(FILES desktop/radialwheel.h desktop/i18n.h DESTINATION ${CMAKE_INSTALL_DATADIR}/lorenz/desktop)
+    install(FILES integrations/kwin/CMakeLists.txt integrations/kwin/plugin.cpp integrations/kwin/metadata.json
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/lorenz/integrations/kwin)
+    install(PROGRAMS scripts/build-kwin.sh scripts/install-kwin.sh scripts/uninstall-kwin.sh scripts/kwin-hook.sh
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/lorenz/scripts)
     configure_file(packaging/linux/install-integration.cmake.in
         "${CMAKE_CURRENT_BINARY_DIR}/install-integration.cmake" @ONLY)
     install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/install-integration.cmake")
