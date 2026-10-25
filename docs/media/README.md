@@ -38,9 +38,11 @@ script composes the GIFs (ffmpeg), the stills (ImageMagick) and the banners
 (Inkscape flattens the Geist text to paths; librsvg is used for previews).
 
 The banners need the Geist font (OFL-1.1) only at render time, to vectorise the
-text. The script fetches the static TTFs once into a scratch directory; set
-`GEIST_DIR=/path/to/geist` to render fully offline from a local copy. The font is
-never installed on the host and never shipped in the repository.
+text. The weights are vendored in [`scripts/fonts/`](../../scripts/fonts/) with
+their `OFL.txt` licence, so the render is fully offline and reproducible with no
+network access; set `GEIST_DIR=/path/to/geist` to use a different local copy. The
+font is never installed on the host and never shipped in the published README or
+packages — only the vectorised paths are.
 
 Inspect new captures for layout, filenames and any accidental personal
 information before publishing. Keep captures in English.

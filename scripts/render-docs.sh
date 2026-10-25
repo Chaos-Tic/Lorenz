@@ -34,24 +34,18 @@ if [[ ! -x build/lorenz-wheel-test || ! -x build/lorenz-desktop ]]; then
     exit 1
 fi
 
-# Geist for the banners. Vendored static TTFs (OFL-1.1, github.com/vercel/geist-font)
-# are used only to flatten the banner text to paths; nothing is installed on the
-# host and nothing is fetched when the README is viewed. Point GEIST_DIR at a
-# folder holding Geist-Regular/SemiBold.ttf and GeistMono-Regular.ttf to render
-# offline; otherwise they are downloaded once into the scratch directory.
-geist_src=${GEIST_DIR:-}
+# Geist for the banners, vendored in the repository (OFL-1.1, scripts/fonts/,
+# with OFL.txt alongside). It is used only to flatten the banner text to paths:
+# nothing is installed on the host, nothing is fetched at render time, and the
+# README ships no font. The render is fully offline and reproducible. Set
+# GEIST_DIR to render from a different local copy of the same weights.
+geist_src=${GEIST_DIR:-scripts/fonts}
 fontdir="$work/fonts"
 mkdir -p "$fontdir"
-geist_base=https://github.com/vercel/geist-font/raw/main/packages/next/dist/fonts
-if [[ -n "$geist_src" ]]; then
-    cp "$geist_src"/Geist-Regular.ttf "$geist_src"/Geist-SemiBold.ttf \
-       "$geist_src"/GeistMono-Regular.ttf "$fontdir"/
-else
-    echo "render-docs: fetching Geist (OFL-1.1) into the scratch directory…"
-    curl -fsSL -o "$fontdir/Geist-Regular.ttf"     "$geist_base/geist-sans/Geist-Regular.ttf"
-    curl -fsSL -o "$fontdir/Geist-SemiBold.ttf"    "$geist_base/geist-sans/Geist-SemiBold.ttf"
-    curl -fsSL -o "$fontdir/GeistMono-Regular.ttf" "$geist_base/geist-mono/GeistMono-Regular.ttf"
-fi
+for f in Geist-Regular.ttf Geist-SemiBold.ttf GeistMono-Regular.ttf; do
+    [[ -f "$geist_src/$f" ]] || { echo "render-docs: missing vendored font $geist_src/$f" >&2; exit 1; }
+    cp "$geist_src/$f" "$fontdir/"
+done
 
 export QT_QPA_PLATFORM=offscreen
 
