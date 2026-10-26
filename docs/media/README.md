@@ -2,43 +2,47 @@
 
 [Back to the project README](../../README.md)
 
-| Asset | Purpose |
+Every file here is regenerated from canned demo data by
+[`scripts/render-docs.sh`](../../scripts/render-docs.sh); no real file, window or
+path is ever shown. Following the Chaos-Tic Liquid Glass art direction, the hero
+visuals and the key captures ship in two matching variants — light and dark —
+that share the same accents (Convert blue `#40baf0`, Tools amber `#ffa840`,
+Actions violet `#ce6cf0`) and only flip the surface. The README and the
+interaction guide pick the variant with `<picture>` and `prefers-color-scheme`.
+
+| Asset (light · dark) | Purpose |
 | --- | --- |
-| `shift-drag-wheel.png`, `ctrl-drag-tools.png`, `alt-drag-actions.png` | The Convert, Tools and Actions wheels rendered by the app, one choice magnified |
-| `three-wheels.png` | The three wheels side by side (light; `three-wheels-dark.png` is kept for other uses) |
-| `demo.gif` | README hero: a photo is dragged, Shift is tapped, the wheel (native frames from the CI demo run, `LORENZ_WHEEL_DEMO`) opens over `tests/fixtures/demo-scene-light.jpg`, the photo is released on WebP and the new file appears with a notification. Composed with ImageMagick at 30 fps |
-| `shift-drag.gif` | Native wheel frames every 40 ms: opening, magnifying, switching to Tools and Actions, dismissal |
-| `settings.png` | Actual settings dialog (wheel keys, start at login, update check, language), light theme |
-| `banner.svg` | Vector header: a glass wheel over a dawn backdrop (`banner-dark.svg` is a dusk variant, not used by the README) |
-| `desktop-ready.png` | Actual native Qt window before adding files |
-| `desktop-converted.png` | Actual successful PNG-to-WebP conversion using generated sample data |
-| `workflow.gif` | Two-state slideshow of those screenshots, not a real-time recording (README, batch manager) |
+| `banner.svg` · `banner-dark.svg` | Vector header: the three wheels over a dawn / dusk backdrop. Text is set in Geist and flattened to paths, so GitHub needs no font. |
+| `three-wheels.gif` · `three-wheels-dark.gif` | README hero: the whole gesture in one loop — open Convert (blue), magnify WebP, switch to Tools (amber), then Actions (violet), then dismiss. 600 px, 16 fps. |
+| `three-wheels.png` · `three-wheels-dark.png` | The three wheels side by side (Convert · Tools · Actions), each with one choice magnified. |
+| `workflow.gif` · `workflow-dark.gif` | Batch manager: a two-state slideshow (empty list, then a finished WebP conversion), not a real-time recording. |
+| `settings.png` · `settings-dark.png` | The actual settings dialog (wheel keys, start at login, update check, language). |
+| `shift-drag-wheel.png`, `ctrl-drag-tools.png`, `alt-drag-actions.png` | Each wheel on its own, light theme, for the interaction guide. |
+| `desktop-converted.png` | The batch window after one sample conversion, light theme, for the interaction guide. |
 
-Screenshots contain generated demonstration data, no private documents or personal
-paths. The batch screenshots are 1060 × 820 and their slideshow holds each state for
-three seconds. The primary wheel captures are 384 × 384; the animation uses native widget frames at 20 ms intervals. A still image is available beside the optional animation in the main
-README. Keep future captures in English and avoid decorative motion outside the demo.
+## Regenerating
 
-To refresh the visuals on Linux, build and install the current app, generate a PNG
-in a disposable directory, then set `LORENZ_SCREENSHOT` to an absolute destination:
+Build the desktop, then run the script:
 
 ```sh
-QT_QPA_PLATFORM=offscreen LORENZ_THEME=light LORENZ_SCREENSHOT=/absolute/path/desktop-ready.png \
-  lorenz-desktop --smoke-test
-QT_QPA_PLATFORM=offscreen LORENZ_THEME=light LORENZ_SCREENSHOT=/absolute/path/desktop-converted.png \
-  lorenz-desktop --test-convert /absolute/path/sample.png
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
+./scripts/render-docs.sh
 ```
 
-The second command performs a real conversion and leaves a converted file beside the
-sample. Inspect captures for layout, filenames, and accidental personal information
-before publishing. The SVG is editable source; no external font or image fetch is needed.
+The wheels, the batch window and the settings dialog are rendered head-less
+(`QT_QPA_PLATFORM=offscreen`) by `build/lorenz-wheel-test` and
+`build/lorenz-desktop` — the same mechanism as CI's `wheel-frames` job — so no
+graphical session is needed and the output is reproducible. `build/lorenz-wheel-test`
+cycles the three wheels into `frame-000…frame-119` and drops clean stills, and the
+script composes the GIFs (ffmpeg), the stills (ImageMagick) and the banners
+(Inkscape flattens the Geist text to paths; librsvg is used for previews).
 
-The wheel images come from CI (the `wheel-frames` artifact of the desktop-linux job): the wheel test renders its frames with `LORENZ_THEME=light|dark` over `tests/fixtures/wallpaper-*.jpg` (`LORENZ_WHEEL_BACKDROP`), then each frame is laid over the same wallpaper and given rounded corners with ImageMagick. The batch window and settings captures show the Liquid Glass interface in the light theme (`LORENZ_THEME=light`); README visuals are always light.
+The banners need the Geist font (OFL-1.1) only at render time, to vectorise the
+text. The weights are vendored in [`scripts/fonts/`](../../scripts/fonts/) with
+their `OFL.txt` licence, so the render is fully offline and reproducible with no
+network access; set `GEIST_DIR=/path/to/geist` to use a different local copy. The
+font is never installed on the host and never shipped in the published README or
+packages — only the vectorised paths are.
 
-Earlier wheel captures came from the isolated KWin interaction test (`wheel.png`, `tools.png`,
-`actions.png` in its evidence folder). The input driver captures only the wheel widget,
-avoiding unrelated desktop content. The settings capture uses
-`LORENZ_SCREENSHOT=/absolute/path/settings.png lorenz-desktop --settings`.
-
-To capture the wheel animation frames: `QT_QPA_PLATFORM=offscreen
-LORENZ_WHEEL_FRAMES=/absolute/path/frames build/lorenz-wheel-test`.
+Inspect new captures for layout, filenames and any accidental personal
+information before publishing. Keep captures in English.

@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/media/banner.svg" alt="Lorenz — A lighter way to convert." width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
+    <img src="docs/media/banner.svg" alt="Lorenz — A lighter way to convert. Three frosted-glass wheels: Convert in blue, Tools in amber, Actions in violet." width="100%">
+  </picture>
 </p>
 
 <p align="center">
@@ -16,7 +19,10 @@
 > small gesture, a whole file transformed.
 
 <p align="center">
-  <img src="docs/media/demo.gif" alt="A photo is dragged across the desktop, Shift is tapped, the frosted-glass wheel opens and magnifies each format under the pointer, the photo is released on WebP, and Mountain light.webp appears beside the original with a notification" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/three-wheels-dark.gif">
+    <img src="docs/media/three-wheels.gif" alt="The three Lorenz wheels in turn: the blue Convert wheel opens and magnifies WebP, Ctrl switches to the amber Tools wheel (compress, resize, rotate…), then Alt switches to the violet Actions wheel (copy, move, terminal, share), before the wheel closes." width="600">
+  </picture>
 </p>
 
 Lorenz puts three wheels under your cursor while you drag a file: **Shift** converts
@@ -39,10 +45,13 @@ what is verified and what is not yet done are listed in
 [Install](#install-on-linux) · [The three wheels](#three-wheels) · [Formats and tools](#what-lorenz-can-do) · [Desktop guide](docs/USER_GUIDE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 <p align="center">
-  <img src="docs/media/three-wheels.png" alt="The Convert, Tools and Actions wheels in frosted glass, each with one choice magnified" width="100%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/three-wheels-dark.png">
+    <img src="docs/media/three-wheels.png" alt="The Convert, Tools and Actions wheels side by side in frosted glass: Convert magnifies WebP in blue, Tools magnifies Rotate right in amber, Actions magnifies Terminal in violet." width="100%">
+  </picture>
 </p>
 
-*Real wheels captured during a Wayland file drag in an isolated KWin session.*
+*Real wheels, captured frame by frame from the running desktop (light and dark).*
 
 ## Three wheels
 
@@ -59,19 +68,16 @@ what is verified and what is not yet done are listed in
 
 Escape, the center, or the outside of the wheel cancels. A key already held *before*
 the drag starts keeps its usual meaning, so Ctrl-drag still copies and Shift-drag still
-moves in your file manager. The keys can be changed in **Settings** (tray icon).
-
-<details>
-<summary>Watch the wheels switch</summary>
-
-![Opening the wheel, hovering WebP, then switching to Tools and Actions](docs/media/shift-drag.gif)
-
-</details>
+moves in your file manager. The keys can be changed in **Settings** (tray icon). The
+hero animation at the top shows the same open, hover and switch across all three wheels.
 
 ## Batch manager
 
 <p align="center">
-  <img src="docs/media/workflow.gif" alt="The Lorenz window in frosted glass over a soft peach, blue and lilac backdrop: a photo is added, WebP is chosen as the output format, and after converting the file list shows Done with 1 completed and 0 failed." width="760">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/workflow-dark.gif">
+    <img src="docs/media/workflow.gif" alt="The Lorenz window in frosted glass over a soft peach, blue and lilac backdrop: a photo is added, WebP is chosen as the output format, and after converting the file list shows Done with 1 completed and 0 failed." width="760">
+  </picture>
 </p>
 
 For many files at once, open **Lorenz** from the applications menu (or the tray
@@ -81,7 +87,10 @@ modified. The window follows your light or dark theme, and tells you when a new
 version of Lorenz is available.
 
 <p align="center">
-  <img src="docs/media/settings.png" alt="Lorenz settings: the keys that open the Convert, Tools and Actions wheels, start at login, check for updates once a day, and the interface language." width="420">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/settings-dark.png">
+    <img src="docs/media/settings.png" alt="Lorenz settings: the keys that open the Convert, Tools and Actions wheels, start at login, check for updates once a day, and the interface language." width="420">
+  </picture>
 </p>
 
 ## Install on Linux
