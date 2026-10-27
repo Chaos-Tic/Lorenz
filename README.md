@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.svg">
-    <img src="docs/media/banner.svg" alt="Lorenz — A lighter way to convert. Three frosted-glass wheels: Convert in blue, Tools in amber, Actions in violet." width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/banner-dark.png">
+    <img src="docs/media/banner.png" alt="Lorenz — A lighter way to convert. Three frosted-glass wheels: Convert in blue, Tools in amber, Actions in violet." width="100%">
   </picture>
 </p>
 
@@ -20,8 +20,8 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/media/three-wheels-dark.gif">
-    <img src="docs/media/three-wheels.gif" alt="The three Lorenz wheels in turn: the blue Convert wheel opens and magnifies WebP, Ctrl switches to the amber Tools wheel (compress, resize, rotate…), then Alt switches to the violet Actions wheel (copy, move, terminal, share), before the wheel closes." width="600">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/media/hero-dark.gif">
+    <img src="docs/media/hero.gif" alt="The three Lorenz wheels in turn: the blue Convert wheel opens and magnifies WebP, Ctrl switches to the amber Tools wheel (compress, resize, rotate…), then Alt switches to the violet Actions wheel (copy, move, terminal, share), before the wheel closes." width="100%">
   </picture>
 </p>
 
