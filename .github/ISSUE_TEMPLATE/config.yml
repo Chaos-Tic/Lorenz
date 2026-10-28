@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/Chaos-Tic/Lorenz/security/advisories/new
+    about: Please do not disclose unpatched vulnerabilities in a public issue.
+  - name: Contribution policy
+    url: https://github.com/Chaos-Tic/Lorenz/blob/main/CONTRIBUTING.md
+    about: Read the contribution and licensing policy before submitting code.
