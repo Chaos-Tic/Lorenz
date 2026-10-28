@@ -1,11 +1,31 @@
 name: Build and test
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+    tags: ['**']
+  pull_request:
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
 permissions:
   contents: read
 jobs:
+  changes:
+    name: Determine change scope
+    runs-on: ubuntu-latest
+    outputs:
+      full: ${{ steps.scope.outputs.full }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - id: scope
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: bash scripts/ci-classify-changes.sh
   rust:
     strategy:
       fail-fast: false
@@ -33,6 +53,8 @@ jobs:
             target/release/lorenz
             target/release/lorenz.exe
   linux-families:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -145,6 +167,8 @@ jobs:
   # Each package is built in the distribution it targets, then installed in
   # clean containers by linux-package-install.
   linux-package:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -162,7 +186,8 @@ jobs:
           name: package-${{ matrix.format }}
           path: dist/*
   linux-package-install:
-    needs: linux-package
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') && needs.linux-package.result == 'success' }}
+    needs: [changes, linux-package]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -184,6 +209,8 @@ jobs:
   # The crates for offline builds from source: Fedora COPR and the Ubuntu PPA
   # download this archive from the release.
   vendor:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -197,7 +224,8 @@ jobs:
           path: dist/lorenz-*-vendor.tar.xz
   # packaging/fedora/lorenz.spec, as COPR builds it: from the sources, offline.
   fedora-spec:
-    needs: vendor
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') && needs.vendor.result == 'success' }}
+    needs: [changes, vendor]
     runs-on: ubuntu-latest
     container: fedora:latest
     steps:
@@ -219,6 +247,8 @@ jobs:
           bash packaging/linux/test-package.sh ~/rpmbuild/RPMS/x86_64/lorenz-$version-*.x86_64.rpm
   # Built on the oldest supported base: an AppImage runs on newer systems only.
   appimage:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -294,6 +324,8 @@ jobs:
         run: bash packaging/arch/aur.sh "${TAG#v}"
 
   installer:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -304,6 +336,8 @@ jobs:
       - run: ./scripts/test-install-container.sh ${{ matrix.image }}
 
   kwin-extension:
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') }}
     runs-on: ubuntu-latest
     container: archlinux:latest
     steps:
