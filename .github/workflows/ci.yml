@@ -315,4 +315,3 @@ jobs:
       - run: pacman -Syu --noconfirm --needed base-devel cmake git curl kwin extra-cmake-modules vulkan-headers
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: ./scripts/build-kwin.sh
-
