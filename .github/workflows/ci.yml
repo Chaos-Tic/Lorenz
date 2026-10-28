@@ -26,7 +26,7 @@ jobs:
         run: choco install -y --no-progress pandoc imagemagick ffmpeg
       - run: cargo test --locked
       - run: cargo build --release --locked
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: core-${{ matrix.os }}
           path: |
@@ -74,7 +74,7 @@ jobs:
           done
           QT_QPA_PLATFORM=offscreen LORENZ_THEME=light LORENZ_WHEEL_BACKDROP=tests/fixtures/demo-backdrop-light.jpg \
             LORENZ_WHEEL_DEMO=wheel-frames/demo build/lorenz-wheel-test
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheel-frames
           path: wheel-frames
@@ -137,7 +137,7 @@ jobs:
           for ($i = 0; $i -lt 60 -and (Test-Path "$installed\lorenz.exe"); $i++) { Start-Sleep 1 }
           if (Test-Path "$installed\lorenz.exe") { throw 'uninstall left files' }
           if (Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Lorenz.lnk')) { throw 'uninstall left the desktop shortcut' }
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-windows
           path: dist/Lorenz-Setup-x64.exe
@@ -157,7 +157,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: bash packaging/linux/build-package.sh ${{ matrix.format }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-${{ matrix.format }}
           path: dist/*
@@ -191,7 +191,7 @@ jobs:
         with:
           toolchain: stable
       - run: sh packaging/linux/vendor.sh
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-vendor
           path: dist/lorenz-*-vendor.tar.xz
@@ -238,7 +238,7 @@ jobs:
           for file in LICENSE LGPL-3.0.txt THIRD-PARTY-NOTICES.txt; do
             test -s "squashfs-root/usr/share/licenses/lorenz/$file"
           done
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-appimage
           path: dist/Lorenz-x86_64.AppImage
