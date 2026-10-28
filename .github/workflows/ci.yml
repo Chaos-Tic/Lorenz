@@ -1,5 +1,10 @@
 name: Build and test
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
@@ -310,3 +315,4 @@ jobs:
       - run: pacman -Syu --noconfirm --needed base-devel cmake git curl kwin extra-cmake-modules vulkan-headers
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: ./scripts/build-kwin.sh
+
