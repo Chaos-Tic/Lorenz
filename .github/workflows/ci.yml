@@ -326,6 +326,40 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: bash packaging/arch/aur.sh "${TAG#v}"
 
+  # winget follows each release once the package is in microsoft/winget-pkgs
+  # (the first version is submitted by hand). Komac updates the manifests of
+  # the previous version with the new installers and opens the pull request
+  # from the Chaos-Tic fork. WINGET_TOKEN is a classic personal access token
+  # with the public_repo scope; without it the job only prints a notice.
+  winget:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          IDENTIFIER: ChaosTic.Lorenz
+        run: |
+          if [ -z "$WINGET_TOKEN" ]; then
+            echo "::notice::WINGET_TOKEN not configured; skipping winget."
+            exit 0
+          fi
+          path="manifests/c/${IDENTIFIER%%.*}/${IDENTIFIER#*.}"
+          if ! gh api "repos/microsoft/winget-pkgs/contents/$path" --silent 2>/dev/null; then
+            echo "::notice::$IDENTIFIER is not in winget-pkgs yet: submit the first version by hand, later releases follow automatically."
+            exit 0
+          fi
+          version=${TAG#v}
+          curl -fsSL -o komac.tar.gz https://github.com/russellbanks/Komac/releases/download/v2.17.1/komac-2.17.1-x86_64-unknown-linux-gnu.tar.gz
+          echo "e694e79cd451afabf47bead66ed34586fef4814f7b94e4b61a098f419978d5d7  komac.tar.gz" | sha256sum -c -
+          tar -xzf komac.tar.gz komac
+          download="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          GITHUB_TOKEN=$WINGET_TOKEN ./komac update "$IDENTIFIER" --version "$version" --submit \
+            --release-notes-url "https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG" \
+            --urls "$download/Lorenz-Setup-x64.exe"
+
+
   installer:
     needs: changes
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.full != 'false') }}
