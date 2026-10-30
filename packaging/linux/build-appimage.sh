@@ -45,7 +45,11 @@ mkdir -p dist
 export PATH="$QT_ROOT_DIR/bin:$tools:$PATH" QMAKE="$QT_ROOT_DIR/bin/qmake"
 # xcb runs under X11 and XWayland; offscreen serves the CI smoke test.
 export EXTRA_PLATFORM_PLUGINS=libqoffscreen.so OUTPUT=dist/Lorenz-x86_64.AppImage
+export UPDATE_INFORMATION="gh-releases-zsync|Chaos-Tic|Lorenz|latest|Lorenz-*x86_64.AppImage.zsync"
 APPIMAGE_EXTRACT_AND_RUN=1 linuxdeploy-x86_64.AppImage --appdir "$appdir" \
     --executable build/lorenz-desktop --desktop-file build/lorenz.desktop \
     --icon-file assets/lorenz.svg --plugin qt --output appimage
+# zsyncmake writes the .zsync next to the working directory, not next to the
+# AppImage: move it beside the AppImage, where the release publishes it.
+[ -f dist/Lorenz-x86_64.AppImage.zsync ] || mv Lorenz-x86_64.AppImage.zsync dist/
 ls -l dist

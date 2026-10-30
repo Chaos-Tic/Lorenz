@@ -268,10 +268,13 @@ jobs:
           for file in LICENSE LGPL-3.0.txt THIRD-PARTY-NOTICES.txt; do
             test -s "squashfs-root/usr/share/licenses/lorenz/$file"
           done
+          test -s "$GITHUB_WORKSPACE/dist/Lorenz-x86_64.AppImage.zsync"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-appimage
-          path: dist/Lorenz-x86_64.AppImage
+          path: |
+            dist/Lorenz-x86_64.AppImage
+            dist/Lorenz-x86_64.AppImage.zsync
 
   # Only this job may write, and it runs no build code: it publishes the
   # packages that the jobs above built and tested.
