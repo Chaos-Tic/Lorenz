@@ -49,4 +49,7 @@ export UPDATE_INFORMATION="gh-releases-zsync|Chaos-Tic|Lorenz|latest|Lorenz-*x86
 APPIMAGE_EXTRACT_AND_RUN=1 linuxdeploy-x86_64.AppImage --appdir "$appdir" \
     --executable build/lorenz-desktop --desktop-file build/lorenz.desktop \
     --icon-file assets/lorenz.svg --plugin qt --output appimage
+# zsyncmake writes the .zsync next to the working directory, not next to the
+# AppImage: move it beside the AppImage, where the release publishes it.
+[ -f dist/Lorenz-x86_64.AppImage.zsync ] || mv Lorenz-x86_64.AppImage.zsync dist/
 ls -l dist
