@@ -21,7 +21,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/media/hero-dark.gif">
-    <img src="docs/media/hero.gif" alt="The three Lorenz wheels in turn: the blue Convert wheel opens and magnifies WebP, Ctrl switches to the amber Tools wheel (compress, resize, rotate…), then Alt switches to the violet Actions wheel (copy, move, terminal, share), before the wheel closes." width="100%">
+    <img src="docs/media/hero.gif" alt="A file is dragged out of a folder. Tapping Shift opens the blue Convert wheel under the cursor and WebP lights up; Ctrl switches to the amber Tools wheel (Rotate right), Alt to the violet Actions wheel (Terminal). Back on Convert, the file is released on WebP: photo.webp appears next to the untouched original." width="100%">
   </picture>
 </p>
 
