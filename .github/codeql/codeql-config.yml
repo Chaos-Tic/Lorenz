@@ -1,0 +1,7 @@
+name: "Lorenz CodeQL config"
+
+# Analyse product code only. Keeping the test tree out of analysis stops test
+# fixtures from surfacing as false positives; it does not weaken analysis of the
+# shipped application.
+paths-ignore:
+  - tests
