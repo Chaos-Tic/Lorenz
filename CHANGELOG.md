@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.2 — 2026-11-02
+
+- The AppImage updates itself with AppImageUpdate and compatible tools: it
+  embeds its update information, and each release publishes
+  `Lorenz-x86_64.AppImage.zsync` next to it.
+- The AppImage ships AppStream metadata (description, links and screenshots),
+  shown by software catalogs such as AppImageHub.
+- The README opens with a light and dark hero animation of the three wheels.
+
 ## 1.2.1 — 2026-10-24
 
 - Keep the KDE Plasma Wayland drag gesture working across KWin updates:
