@@ -29,6 +29,8 @@ install -Dm755 target/release/lorenz "$appdir/usr/bin/lorenz"
 install -Dm644 LICENSE "$appdir/usr/share/licenses/lorenz/LICENSE"
 install -Dm644 packaging/licenses/LGPL-3.0.txt "$appdir/usr/share/licenses/lorenz/LGPL-3.0.txt"
 packaging/licenses/notices.sh "$appdir/usr/share/licenses/lorenz/THIRD-PARTY-NOTICES.txt" >/dev/null
+# AppStream metadata: the description and screenshots shown by software catalogs.
+packaging/linux/metainfo.sh "$appdir/usr/share/metainfo/io.github.chaos_tic.Lorenz.metainfo.xml"
 # The AppImage path changes at every mount, so it ships no file-manager menus.
 cat >build/lorenz.desktop <<'EOF'
 [Desktop Entry]
