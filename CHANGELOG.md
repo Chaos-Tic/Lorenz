@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.3 — 2026-11-02
+
+- The AppImage names its AppStream metadata `.appdata.xml`, so AppImageHub
+  shows the summary and the description of Lorenz as well as its screenshots.
+
 ## 1.2.2 — 2026-11-02
 
 - The AppImage updates itself with AppImageUpdate and compatible tools: it

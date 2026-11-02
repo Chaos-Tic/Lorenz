@@ -4,7 +4,7 @@
 %bcond vendor 1
 
 Name:           lorenz
-Version:        1.2.2
+Version:        1.2.3
 Release:        1%{?dist}
 Summary:        Local file conversion with radial wheels
 
@@ -97,6 +97,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lorenz.desktop
 %{_datadir}/nemo/actions/lorenz-*.nemo_action
 
 %changelog
+* Mon Nov 02 2026 Chaos-Tic <58691435+Chaos-Tic@users.noreply.github.com> - 1.2.3-1
+- Name the AppImage AppStream file .appdata.xml
+
 * Mon Nov 02 2026 Chaos-Tic <58691435+Chaos-Tic@users.noreply.github.com> - 1.2.2-1
 - AppImage update information and AppStream metadata
 
