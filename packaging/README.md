@@ -20,7 +20,8 @@ install from the AUR (`yay -S lorenz`).
   published on the AUR as `lorenz`. `linux/build-appimage.sh` bundles Qt on
   Ubuntu 22.04 and ships the AppStream metadata that `linux/metainfo.sh` builds
   from `linux/lorenz.metainfo.xml.in`, with one release per `CHANGELOG.md`
-  heading. `./install.sh` still builds from source for one user.
+  heading. The AppImage names it `.appdata.xml`, the only name from which
+  AppImageHub reads the summary and the description. `./install.sh` still builds from source for one user.
 - Keep the core and desktop executables in the same directory.
 - Qt is dynamically linked; distribute its libraries and plugins under their
   applicable licenses. Conversion engines are recommended, never bundled.
