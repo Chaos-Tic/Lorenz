@@ -27,6 +27,20 @@ Ltd. and other contributors, used under the GNU Lesser General Public License
 v3.0 (LGPL-3.0.txt, which refers to the GPL v3.0 in LICENSE.txt). They are
 linked dynamically: you may replace them with your own build of the same Qt
 version. Qt's source code: https://download.qt.io/official_releases/qt/
+EOF
+    case $target in
+    *-windows-msvc)
+        cat <<'EOF'
+
+Microsoft Visual C++ runtime
+----------------------------
+The msvcp*.dll, vcruntime*.dll and related libraries next to the programs are
+the Microsoft Visual C++ Redistributable, (C) Microsoft Corporation, shipped
+unmodified under the Visual Studio license terms for redistributable code.
+EOF
+        ;;
+    esac
+    cat <<'EOF'
 
 Rust crates linked into lorenz
 ------------------------------

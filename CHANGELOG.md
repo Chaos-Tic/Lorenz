@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.4 — 2026-11-10
+
+- Windows: the installer ships the Visual C++ runtime next to Lorenz, so it
+  starts on a Windows that never had the runtime installed (it stopped there
+  with a missing-library error). The release check refuses an installer that
+  misses a runtime library.
+
 ## 1.2.3 — 2026-11-02
 
 - The AppImage names its AppStream metadata `.appdata.xml`, so AppImageHub
