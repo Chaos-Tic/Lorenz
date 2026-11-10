@@ -150,7 +150,14 @@ jobs:
       - name: Install and uninstall silently
         shell: pwsh
         run: |
-          $setup = Start-Process dist/Lorenz-Setup-x64.exe -Wait -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=desktopicon', '/LANG=fr', '/LOG=setup.log'
+          $setup = Start-Process dist/Lorenz-Setup-x64.exe -PassThru -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=desktopicon', '/LANG=fr', '/LOG=setup.log'
+          # A setup that waits for an answer nobody gives stops here, not hours later.
+          $null = $setup.Handle
+          if (-not $setup.WaitForExit(300000)) {
+              Stop-Process -Id $setup.Id -Force
+              Get-Content setup.log -Tail 30 -ErrorAction SilentlyContinue
+              throw 'the setup did not finish in 5 minutes'
+          }
           if ($setup.ExitCode) { Get-Content setup.log; throw "setup failed: $($setup.ExitCode)" }
           if (-not (Select-String -Quiet -Path (Join-Path $env:LOCALAPPDATA 'lorenz\lorenz.conf') -Pattern '^Language=fr')) { throw 'the setup language was not passed to the app' }
           $installed = Join-Path $env:LOCALAPPDATA 'Programs\Lorenz'
@@ -181,6 +188,31 @@ jobs:
           for ($i = 0; $i -lt 60 -and (Test-Path "$installed\lorenz.exe"); $i++) { Start-Sleep 1 }
           if (Test-Path "$installed\lorenz.exe") { throw 'uninstall left files' }
           if (Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Lorenz.lnk')) { throw 'uninstall left the desktop shortcut' }
+      # The runner has the Visual C++ runtime and Qt; a new PC and the machine
+      # winget validates on have neither. Same setup, in a clean Windows.
+      - name: Install on a clean Windows
+        timeout-minutes: 25
+        shell: pwsh
+        run: |
+          $build = [Environment]::OSVersion.Version.Build
+          $tag = if ($build -ge 26100) { 'ltsc2025' } elseif ($build -ge 20348) { 'ltsc2022' } else { throw "no Windows container image for build $build" }
+          $image = "mcr.microsoft.com/windows/servercore:$tag"
+          docker run --rm -v "${env:GITHUB_WORKSPACE}:C:\src" $image powershell -NoProfile -ExecutionPolicy Bypass -File C:\src\packaging\windows\test-clean-install.ps1
+          if ($LASTEXITCODE) { throw 'the install on a clean Windows failed' }
+      - name: EXPERIMENT the released setup without the runtime must fail the same test
+        timeout-minutes: 25
+        shell: pwsh
+        run: |
+          $build = [Environment]::OSVersion.Version.Build
+          $tag = if ($build -ge 26100) { 'ltsc2025' } elseif ($build -ge 20348) { 'ltsc2022' } else { throw "no Windows container image for build $build" }
+          $image = "mcr.microsoft.com/windows/servercore:$tag"
+          New-Item -ItemType Directory -Force old | Out-Null
+          gh release download v1.2.3 -R ${env:GITHUB_REPOSITORY} -p 'Lorenz-Setup-x64.exe' -D old
+          docker run --rm -v "${env:GITHUB_WORKSPACE}:C:\src" $image powershell -NoProfile -ExecutionPolicy Bypass -File C:\src\packaging\windows\test-clean-install.ps1 -Setup C:\src\old\Lorenz-Setup-x64.exe
+          Write-Host "EXPERIMENT exit code: $LASTEXITCODE"
+          if (-not $LASTEXITCODE) { throw 'EXPERIMENT: the old setup passed, so the clean test proves nothing' }
+        env:
+          GH_TOKEN: ${{ github.token }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-windows
