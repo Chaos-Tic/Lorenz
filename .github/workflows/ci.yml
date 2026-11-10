@@ -197,6 +197,10 @@ jobs:
           $build = [Environment]::OSVersion.Version.Build
           $tag = if ($build -ge 26100) { 'ltsc2025' } elseif ($build -ge 20348) { 'ltsc2022' } else { throw "no Windows container image for build $build" }
           $image = "mcr.microsoft.com/windows/servercore:$tag"
+          # The Docker service is not always started on the hosted runner.
+          if ((Get-Service docker).Status -ne 'Running') { Start-Service docker }
+          for ($i = 0; $i -lt 30; $i++) { docker info *> $null; if (-not $LASTEXITCODE) { break }; Start-Sleep 2 }
+          if ($LASTEXITCODE) { throw 'Docker did not start' }
           docker run --rm -v "${env:GITHUB_WORKSPACE}:C:\src" $image powershell -NoProfile -ExecutionPolicy Bypass -File C:\src\packaging\windows\test-clean-install.ps1
           if ($LASTEXITCODE) { throw 'the install on a clean Windows failed' }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
