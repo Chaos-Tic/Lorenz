@@ -137,6 +137,12 @@ jobs:
           New-Item -ItemType Directory -Force $root | Out-Null
           Copy-Item target/release/lorenz.exe, build/Release/lorenz-desktop.exe $root
           windeployqt --release --no-translations "$root/lorenz-desktop.exe"
+          # The Visual C++ runtime goes next to the programs: a clean Windows has
+          # none, and a per-user setup cannot install the redistributable.
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $crt = Get-ChildItem "$vs\VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT" -Directory | Sort-Object { [version]$_.Parent.Parent.Name } | Select-Object -Last 1
+          if (-not $crt) { throw 'Visual C++ runtime not found' }
+          Copy-Item (Join-Path $crt.FullName '*.dll') $root
           $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
           choco install -y --no-progress innosetup
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /Q "/DAppVersion=$version" packaging/windows/lorenz.iss
@@ -150,6 +156,18 @@ jobs:
           $installed = Join-Path $env:LOCALAPPDATA 'Programs\Lorenz'
           foreach ($file in 'lorenz.exe', 'lorenz-desktop.exe', 'Qt6Core.dll', 'platforms\qwindows.dll', 'unins000.exe', 'LICENSE.txt', 'LGPL-3.0.txt', 'THIRD-PARTY-NOTICES.txt') {
               if (-not (Test-Path (Join-Path $installed $file))) { throw "missing $file" }
+          }
+          # Every Visual C++ runtime library a shipped program asks for is shipped too.
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" | Select-Object -Last 1
+          if (-not $dumpbin) { throw 'dumpbin not found' }
+          $runtime = Get-ChildItem $installed -Recurse -Include *.exe, *.dll |
+              ForEach-Object { & $dumpbin.FullName /nologo /dependents $_.FullName } |
+              Where-Object { $_ -match '^\s+((msvcp|vcruntime|concrt|vccorlib|vcomp)\w*\.dll)\s*$' } |
+              ForEach-Object { $Matches[1].ToLower() } | Sort-Object -Unique
+          if (-not $runtime) { throw 'no Visual C++ runtime dependency found: the check is broken' }
+          foreach ($dll in $runtime) {
+              if (-not (Test-Path (Join-Path $installed $dll))) { throw "the Visual C++ runtime $dll is not bundled" }
           }
           foreach ($folder in 'SendTo', 'Programs', 'Desktop') {
               $link = Join-Path ([Environment]::GetFolderPath($folder)) 'Lorenz.lnk'

@@ -2,7 +2,7 @@
     "KPlugin": {
         "Name": "Lorenz Shift-drag wheel",
         "Description": "Show a local conversion wheel when Shift is pressed during a file drag",
-        "Version": "1.2.3",
+        "Version": "1.2.4",
         "EnabledByDefault": false
     }
 }
